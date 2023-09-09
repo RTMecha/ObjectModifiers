@@ -50,7 +50,7 @@ namespace ObjectModifiers.Functions
 
 		void OnTriggerEnter2D(Collider2D other)
 		{
-			Debug.LogFormat("{0}OnTriggerEnter2D: {1}", ObjectModifiersPlugin.className, other.name);
+			//Debug.LogFormat("{0}OnTriggerEnter2D: {1}", ObjectModifiersPlugin.className, other.name);
 			if (CheckCollider(other))
             {
 				bulletOver = true;
@@ -61,7 +61,7 @@ namespace ObjectModifiers.Functions
 
 		void OnTriggerEnter(Collider other)
 		{
-			Debug.LogFormat("{0}OnTriggerEnter: {1}", ObjectModifiersPlugin.className, other.name);
+			//Debug.LogFormat("{0}OnTriggerEnter: {1}", ObjectModifiersPlugin.className, other.name);
 			if (CheckCollider(other))
 			{
 				bulletOver = true;
@@ -70,7 +70,7 @@ namespace ObjectModifiers.Functions
 
 		void OnTriggerExit2D(Collider2D other)
 		{
-			Debug.LogFormat("{0}OnTriggerExit2D: {1}", ObjectModifiersPlugin.className, other.name);
+			//Debug.LogFormat("{0}OnTriggerExit2D: {1}", ObjectModifiersPlugin.className, other.name);
 			if (CheckCollider(other))
 			{
 				bulletOver = false;
@@ -81,7 +81,7 @@ namespace ObjectModifiers.Functions
 
 		void OnTriggerExit(Collider other)
 		{
-			Debug.LogFormat("{0}OnTriggerExit: {1}", ObjectModifiersPlugin.className, other.name);
+			//Debug.LogFormat("{0}OnTriggerExit: {1}", ObjectModifiersPlugin.className, other.name);
 			if (CheckCollider(other))
 			{
 				bulletOver = false;
