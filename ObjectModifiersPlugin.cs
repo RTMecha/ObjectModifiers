@@ -35,7 +35,7 @@ using Prefab = DataManager.GameData.Prefab;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.2")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.3")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -99,7 +99,11 @@ namespace ObjectModifiers
 
         public static Dictionary<string, ModifierObject> modifierObjects = new Dictionary<string, ModifierObject>();
 
+        public static Dictionary<string, Dictionary<string, ModifierObject>> prefabModifiers = new Dictionary<string, Dictionary<string, ModifierObject>>();
+
         public static List<BG> backgrounds = new List<BG>();
+
+        public static List<AnimationObject> animationObjects = new List<AnimationObject>();
 
         #endregion
 
@@ -111,7 +115,7 @@ namespace ObjectModifiers
 
         #endregion
 
-        private void Awake()
+        void Awake()
         {
             inst = this;
             // Plugin startup logic
@@ -133,6 +137,14 @@ namespace ObjectModifiers
             blur = GetBlur();
 
             SetModifierTypes();
+        }
+
+        void Update()
+        {
+            for (int i = 0; i < animationObjects.Count; i++)
+            {
+                animationObjects[i].Update();
+            }
         }
 
         [HarmonyPatch(typeof(ObjectManager), "Update")]
@@ -267,6 +279,8 @@ namespace ObjectModifiers
                             gameObject.transform.localScale = Vector3.zero;
                             var camParent = gameObject.AddComponent<CameraParent>();
 
+                            camParent.parentObject = beatmapObject;
+
                             camParent.positionParent = beatmapObject.GetParentType(0);
                             camParent.scaleParent = beatmapObject.GetParentType(1);
                             camParent.rotationParent = beatmapObject.GetParentType(2);
@@ -337,255 +351,259 @@ namespace ObjectModifiers
                         //}
                     }
 
-                    if (Objects.beatmapObjects.ContainsKey(beatmapObject.id) && modifierObjects.ContainsKey(beatmapObject.id))
+                    //Unused code
                     {
-                        var modifierObject = modifierObjects[beatmapObject.id];
-                        var functionObject = Objects.beatmapObjects[beatmapObject.id];
+                        //if (Objects.beatmapObjects.ContainsKey(beatmapObject.id) && modifierObjects.ContainsKey(beatmapObject.id))
+                        //{
+                        //    var modifierObject = modifierObjects[beatmapObject.id];
+                        //    var functionObject = Objects.beatmapObjects[beatmapObject.id];
 
-                        if (functionObject.otherComponents.ContainsKey("ModifierObject") && functionObject.otherComponents["ModifierObject"] == null)
-                        {
-                            functionObject.otherComponents["ModifierObject"] = modifierObject;
-                        }
-                        if (!functionObject.otherComponents.ContainsKey("ModifierObject"))
-                        {
-                            functionObject.otherComponents.Add("ModifierObject", modifierObject);
-                        }
-                        if (!functionObject.otherComponents.ContainsKey("ObjectOptimization"))
-                        {
-                            functionObject.otherComponents.Add("ObjectOptimization", modifierObject);
-                        }
-                    }
+                        //    if (functionObject.otherComponents.ContainsKey("ModifierObject") && functionObject.otherComponents["ModifierObject"] == null)
+                        //    {
+                        //        functionObject.otherComponents["ModifierObject"] = modifierObject;
+                        //    }
+                        //    if (!functionObject.otherComponents.ContainsKey("ModifierObject"))
+                        //    {
+                        //        functionObject.otherComponents.Add("ModifierObject", modifierObject);
+                        //    }
+                        //    if (!functionObject.otherComponents.ContainsKey("ObjectOptimization"))
+                        //    {
+                        //        functionObject.otherComponents.Add("ObjectOptimization", modifierObject);
+                        //    }
+                        //}
 
-                    //if (beatmapObject.parent == "CAMERA_PARENT")
-                    //{
-                    //    foreach (var cc in beatmapObject.GetChildChain())
-                    //    {
-                    //        for (int i = 0; i < cc.Count; i++)
-                    //        {
-                    //            var obj = cc[i];
+                        //if (beatmapObject.parent == "CAMERA_PARENT")
+                        //{
+                        //    foreach (var cc in beatmapObject.GetChildChain())
+                        //    {
+                        //        for (int i = 0; i < cc.Count; i++)
+                        //        {
+                        //            var obj = cc[i];
 
-                    //            if (obj.TimeWithinLifespan() && obj.GetGameObject() != null)
-                    //            {
-                    //                var top = obj.GetTransformChain()[0];
+                        //            if (obj.TimeWithinLifespan() && obj.GetGameObject() != null)
+                        //            {
+                        //                var top = obj.GetTransformChain()[0];
 
-                    //                if (beatmapObject.GetParentType(0))
-                    //                {
-                    //                    float camPosX = EventManager.inst.camParent.transform.position.x;
-                    //                    float camPosY = EventManager.inst.camParent.transform.position.y;
+                        //                if (beatmapObject.GetParentType(0))
+                        //                {
+                        //                    float camPosX = EventManager.inst.camParent.transform.position.x;
+                        //                    float camPosY = EventManager.inst.camParent.transform.position.y;
 
-                    //                    top.position = new Vector3(camPosX, camPosY, 0f) * beatmapObject.getParentOffset(0);
-                    //                }
-                    //                else
-                    //                {
-                    //                    top.position = Vector3.zero;
-                    //                }
+                        //                    top.position = new Vector3(camPosX, camPosY, 0f) * beatmapObject.getParentOffset(0);
+                        //                }
+                        //                else
+                        //                {
+                        //                    top.position = Vector3.zero;
+                        //                }
 
-                    //                if (beatmapObject.GetParentType(1))
-                    //                {
-                    //                    float camOrthoZoom = EventManager.inst.cam.orthographicSize / 20f;
-                    //                    top.localScale = new Vector3(camOrthoZoom, camOrthoZoom, 1f) * beatmapObject.getParentOffset(1);
-                    //                }
-                    //                else
-                    //                {
-                    //                    top.localScale = Vector3.one;
-                    //                }
+                        //                if (beatmapObject.GetParentType(1))
+                        //                {
+                        //                    float camOrthoZoom = EventManager.inst.cam.orthographicSize / 20f;
+                        //                    top.localScale = new Vector3(camOrthoZoom, camOrthoZoom, 1f) * beatmapObject.getParentOffset(1);
+                        //                }
+                        //                else
+                        //                {
+                        //                    top.localScale = Vector3.one;
+                        //                }
 
-                    //                if (beatmapObject.GetParentType(2))
-                    //                {
-                    //                    //var q = EventManager.inst.camParent.transform.rotation;
-                    //                    //var a = gameObjectRef.rotation;
+                        //                if (beatmapObject.GetParentType(2))
+                        //                {
+                        //                    //var q = EventManager.inst.camParent.transform.rotation;
+                        //                    //var a = gameObjectRef.rotation;
 
-                    //                    //gameObjectRef.rotation = new Quaternion(a.x + q.x * beatmapObject.getParentOffset(2), a.y + q.y * beatmapObject.getParentOffset(2), a.z + q.z * beatmapObject.getParentOffset(2), a.w + q.w * beatmapObject.getParentOffset(2));
+                        //                    //gameObjectRef.rotation = new Quaternion(a.x + q.x * beatmapObject.getParentOffset(2), a.y + q.y * beatmapObject.getParentOffset(2), a.z + q.z * beatmapObject.getParentOffset(2), a.w + q.w * beatmapObject.getParentOffset(2));
 
-                    //                    var camRot = EventManager.inst.camParent.transform.rotation.eulerAngles;
+                        //                    var camRot = EventManager.inst.camParent.transform.rotation.eulerAngles;
 
-                    //                    top.rotation = Quaternion.Euler(camRot * beatmapObject.getParentOffset(2));
-                    //                }
-                    //                else
-                    //                {
-                    //                    top.rotation = Quaternion.identity;
-                    //                }
-                    //            }
-                    //        }
-                    //    }
-                    //}
+                        //                    top.rotation = Quaternion.Euler(camRot * beatmapObject.getParentOffset(2));
+                        //                }
+                        //                else
+                        //                {
+                        //                    top.rotation = Quaternion.identity;
+                        //                }
+                        //            }
+                        //        }
+                        //    }
+                        //}
 
-                    //if (beatmapObject.parent == "PLAYER_PARENT")
-                    //{
-                    //    foreach (var cc in beatmapObject.GetChildChain())
-                    //    {
-                    //        for (int i = 0; i < cc.Count; i++)
-                    //        {
-                    //            var obj = cc[i];
+                        //if (beatmapObject.parent == "PLAYER_PARENT")
+                        //{
+                        //    foreach (var cc in beatmapObject.GetChildChain())
+                        //    {
+                        //        for (int i = 0; i < cc.Count; i++)
+                        //        {
+                        //            var obj = cc[i];
 
-                    //            var modifierObject = modifierObjects[obj.id];
+                        //            var modifierObject = modifierObjects[obj.id];
 
-                    //            if (obj.TimeWithinLifespan() && modifierObject.gameObject != null && modifierObject.top != null && modifierObject.delayTracker != null)
-                    //            {
-                    //                var top = modifierObject.top;
+                        //            if (obj.TimeWithinLifespan() && modifierObject.gameObject != null && modifierObject.top != null && modifierObject.delayTracker != null)
+                        //            {
+                        //                var top = modifierObject.top;
 
-                    //                var delayTracker = modifierObject.delayTracker;
-                    //                delayTracker.move = beatmapObject.GetParentType(0);
-                    //                delayTracker.rotate = beatmapObject.GetParentType(2);
-                    //                delayTracker.active = true;
+                        //                var delayTracker = modifierObject.delayTracker;
+                        //                delayTracker.move = beatmapObject.GetParentType(0);
+                        //                delayTracker.rotate = beatmapObject.GetParentType(2);
+                        //                delayTracker.active = true;
 
-                    //                delayTracker.moveSharpness = beatmapObject.getParentOffset(0);
-                    //                delayTracker.rotateSharpness = beatmapObject.getParentOffset(2);
+                        //                delayTracker.moveSharpness = beatmapObject.getParentOffset(0);
+                        //                delayTracker.rotateSharpness = beatmapObject.getParentOffset(2);
 
-                    //                var j = ObjectExtensions.ClosestPlayer(modifierObject.top.gameObject);
+                        //                var j = ObjectExtensions.ClosestPlayer(modifierObject.top.gameObject);
 
-                    //                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", j + 1));
+                        //                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", j + 1));
 
-                    //                if (player != null && delayTracker.leader != player)
-                    //                {
-                    //                    delayTracker.leader = player;
-                    //                }
-                    //            }
-                    //        }
-                    //    }
-                    //}
+                        //                if (player != null && delayTracker.leader != player)
+                        //                {
+                        //                    delayTracker.leader = player;
+                        //                }
+                        //            }
+                        //        }
+                        //    }
+                        //}
 
-                    if (ModCompatibility.catalyst == null && customSequences.ContainsKey(beatmapObject.id) && beatmapObject.objectType != BeatmapObject.ObjectType.Empty)
-                    {
-                        if (ObjectManager.inst.beatmapGameObjects.ContainsKey(beatmapObject.id) && ObjectManager.inst.beatmapGameObjects[beatmapObject.id].mat != null)
-                        {
-                            var gameObjectRef = ObjectManager.inst.beatmapGameObjects[beatmapObject.id];
 
-                            if (gameObjectRef.rend != null && gameObjectRef.rend.enabled)
-                            {
-                                DataManager.BeatmapTheme beatmapTheme = __instance.LiveTheme;
-                                if (EditorManager.inst != null && EventEditor.inst.showTheme)
-                                {
-                                    beatmapTheme = EventEditor.inst.previewTheme;
-                                }
+                        //if (ModCompatibility.catalyst == null && customSequences.ContainsKey(beatmapObject.id) && beatmapObject.objectType != BeatmapObject.ObjectType.Empty)
+                        //{
+                        //    if (ObjectManager.inst.beatmapGameObjects.ContainsKey(beatmapObject.id) && ObjectManager.inst.beatmapGameObjects[beatmapObject.id].mat != null)
+                        //    {
+                        //        var gameObjectRef = ObjectManager.inst.beatmapGameObjects[beatmapObject.id];
 
-                                var col = Color.Lerp(beatmapTheme.GetObjColor(gameObjectRef.sequence.LastColor), beatmapTheme.GetObjColor(gameObjectRef.sequence.NewColor), gameObjectRef.sequence.ColorValue);
+                        //        if (gameObjectRef.rend != null && gameObjectRef.rend.enabled)
+                        //        {
+                        //            DataManager.BeatmapTheme beatmapTheme = __instance.LiveTheme;
+                        //            if (EditorManager.inst != null && EventEditor.inst.showTheme)
+                        //            {
+                        //                beatmapTheme = EventEditor.inst.previewTheme;
+                        //            }
 
-                                var sequence = customSequences[beatmapObject.id];
+                        //            var col = Color.Lerp(beatmapTheme.GetObjColor(gameObjectRef.sequence.LastColor), beatmapTheme.GetObjColor(gameObjectRef.sequence.NewColor), gameObjectRef.sequence.ColorValue);
 
-                                float a = sequence.opacity;
+                        //            var sequence = customSequences[beatmapObject.id];
 
-                                float b = a - 1f;
+                        //            float a = sequence.opacity;
 
-                                b = -b;
+                        //            float b = a - 1f;
 
-                                float opacity = 1f;
+                        //            b = -b;
 
-                                if (beatmapObject.objectType != BeatmapObject.ObjectType.Helper)
-                                {
-                                    if (b >= 0f && b <= 1f)
-                                    {
-                                        if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
-                                        {
-                                            opacity = col.a * b * layerOpacityOffset;
-                                        }
-                                        else
-                                        {
-                                            opacity = col.a * b;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
-                                        {
-                                            opacity = col.a * layerOpacityOffset;
-                                        }
-                                        else
-                                        {
-                                            opacity = col.a;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (b >= 0f && b <= 1f)
-                                    {
-                                        if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
-                                        {
-                                            opacity = col.a * b * 0.35f * layerOpacityOffset;
-                                        }
-                                        else
-                                        {
-                                            opacity = col.a * b * 0.35f;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
-                                        {
-                                            opacity = col.a * 0.35f * layerOpacityOffset;
-                                        }
-                                        else
-                                        {
-                                            opacity = col.a * 0.35f;
-                                        }
-                                    }
-                                }
+                        //            float opacity = 1f;
 
-                                col = LSColors.fadeColor(col, opacity);
-                                //col = LSColors.fadeColor(RTHelpers.ChangeColorHSV(col, sequence.hue, sequence.sat, sequence.val), opacity);
+                        //            if (beatmapObject.objectType != BeatmapObject.ObjectType.Helper)
+                        //            {
+                        //                if (b >= 0f && b <= 1f)
+                        //                {
+                        //                    if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
+                        //                    {
+                        //                        opacity = col.a * b * layerOpacityOffset;
+                        //                    }
+                        //                    else
+                        //                    {
+                        //                        opacity = col.a * b;
+                        //                    }
+                        //                }
+                        //                else
+                        //                {
+                        //                    if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
+                        //                    {
+                        //                        opacity = col.a * layerOpacityOffset;
+                        //                    }
+                        //                    else
+                        //                    {
+                        //                        opacity = col.a;
+                        //                    }
+                        //                }
+                        //            }
+                        //            else
+                        //            {
+                        //                if (b >= 0f && b <= 1f)
+                        //                {
+                        //                    if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
+                        //                    {
+                        //                        opacity = col.a * b * 0.35f * layerOpacityOffset;
+                        //                    }
+                        //                    else
+                        //                    {
+                        //                        opacity = col.a * b * 0.35f;
+                        //                    }
+                        //                }
+                        //                else
+                        //                {
+                        //                    if (showOnlyOnLayer && EditorManager.inst != null && beatmapObject.editorData.Layer != EditorManager.inst.layer)
+                        //                    {
+                        //                        opacity = col.a * 0.35f * layerOpacityOffset;
+                        //                    }
+                        //                    else
+                        //                    {
+                        //                        opacity = col.a * 0.35f;
+                        //                    }
+                        //                }
+                        //            }
 
-                                if (gameObjectRef.obj.GetComponentInChildren<TextMeshPro>())
-                                {
-                                    gameObjectRef.obj.GetComponentInChildren<TextMeshPro>().color = col;
-                                }
-                                if (gameObjectRef.obj.GetComponentInChildren<SpriteRenderer>())
-                                {
-                                    gameObjectRef.obj.GetComponentInChildren<SpriteRenderer>().material.color = col;
-                                }
-                                else
-                                {
-                                    if (gameObjectRef.mat.HasProperty("_Color"))
-                                    {
-                                        if (beatmapObject.GetGameObject().GetComponentByName("RTObject"))
-                                        {
-                                            var rt = beatmapObject.GetGameObject().GetComponentByName("RTObject");
-                                            var selected = (bool)rt.GetType().GetField("selected", BindingFlags.Public | BindingFlags.Instance).GetValue(rt);
+                        //            col = LSColors.fadeColor(col, opacity);
+                        //            //col = LSColors.fadeColor(RTHelpers.ChangeColorHSV(col, sequence.hue, sequence.sat, sequence.val), opacity);
 
-                                            if (selected)
-                                            {
-                                                if (Input.GetKey(KeyCode.LeftShift))
-                                                {
-                                                    Color colorHover = new Color(highlightObjectsDoubleColor.r, highlightObjectsDoubleColor.g, highlightObjectsDoubleColor.b);
+                        //            if (gameObjectRef.obj.GetComponentInChildren<TextMeshPro>())
+                        //            {
+                        //                gameObjectRef.obj.GetComponentInChildren<TextMeshPro>().color = col;
+                        //            }
+                        //            if (gameObjectRef.obj.GetComponentInChildren<SpriteRenderer>())
+                        //            {
+                        //                gameObjectRef.obj.GetComponentInChildren<SpriteRenderer>().material.color = col;
+                        //            }
+                        //            else
+                        //            {
+                        //                if (gameObjectRef.mat.HasProperty("_Color"))
+                        //                {
+                        //                    if (beatmapObject.GetGameObject().GetComponentByName("RTObject"))
+                        //                    {
+                        //                        var rt = beatmapObject.GetGameObject().GetComponentByName("RTObject");
+                        //                        var selected = (bool)rt.GetType().GetField("selected", BindingFlags.Public | BindingFlags.Instance).GetValue(rt);
 
-                                                    if (col.r > 0.9f && col.g > 0.9f && col.b > 0.9f)
-                                                    {
-                                                        colorHover = new Color(-highlightObjectsDoubleColor.r, -highlightObjectsDoubleColor.g, -highlightObjectsDoubleColor.b);
-                                                    }
+                        //                        if (selected)
+                        //                        {
+                        //                            if (Input.GetKey(KeyCode.LeftShift))
+                        //                            {
+                        //                                Color colorHover = new Color(highlightObjectsDoubleColor.r, highlightObjectsDoubleColor.g, highlightObjectsDoubleColor.b);
 
-                                                    gameObjectRef.mat.color = col + new Color(colorHover.r, colorHover.g, colorHover.b, 0f);
-                                                }
-                                                else
-                                                {
-                                                    Color colorHover = new Color(highlightObjectsColor.r, highlightObjectsColor.g, highlightObjectsColor.b);
+                        //                                if (col.r > 0.9f && col.g > 0.9f && col.b > 0.9f)
+                        //                                {
+                        //                                    colorHover = new Color(-highlightObjectsDoubleColor.r, -highlightObjectsDoubleColor.g, -highlightObjectsDoubleColor.b);
+                        //                                }
 
-                                                    if (col.r > 0.95f && col.g > 0.95f && col.b > 0.95f)
-                                                    {
-                                                        colorHover = new Color(-highlightObjectsColor.r, -highlightObjectsColor.g, -highlightObjectsColor.b);
-                                                    }
+                        //                                gameObjectRef.mat.color = col + new Color(colorHover.r, colorHover.g, colorHover.b, 0f);
+                        //                            }
+                        //                            else
+                        //                            {
+                        //                                Color colorHover = new Color(highlightObjectsColor.r, highlightObjectsColor.g, highlightObjectsColor.b);
 
-                                                    gameObjectRef.mat.color = col + new Color(colorHover.r, colorHover.g, colorHover.b, 0f);
-                                                }
-                                            }
-                                            else
-                                                gameObjectRef.mat.color = col;
-                                        }
-                                        else
-                                            gameObjectRef.mat.color = col;
-                                    }
-                                }
-                            }
-                        }
+                        //                                if (col.r > 0.95f && col.g > 0.95f && col.b > 0.95f)
+                        //                                {
+                        //                                    colorHover = new Color(-highlightObjectsColor.r, -highlightObjectsColor.g, -highlightObjectsColor.b);
+                        //                                }
 
-                        var sequencer = customSequences[beatmapObject.id];
+                        //                                gameObjectRef.mat.color = col + new Color(colorHover.r, colorHover.g, colorHover.b, 0f);
+                        //                            }
+                        //                        }
+                        //                        else
+                        //                            gameObjectRef.mat.color = col;
+                        //                    }
+                        //                    else
+                        //                        gameObjectRef.mat.color = col;
+                        //                }
+                        //            }
+                        //        }
+                        //    }
 
-                        sequencer.sequence.Goto(AudioManager.inst.CurrentAudioSource.time, false);
-                    }
+                        //    var sequencer = customSequences[beatmapObject.id];
 
-                    if (beatmapObject.name.Contains("object.collision"))
-                    {
-                        beatmapObject.name = beatmapObject.name.Replace("object.collsion", "");
-                        beatmapObject.objectType = (BeatmapObject.ObjectType)4;
+                        //    sequencer.sequence.Goto(AudioManager.inst.CurrentAudioSource.time, false);
+                        //}
+
+                        //if (beatmapObject.name.Contains("object.collision"))
+                        //{
+                        //    beatmapObject.name = beatmapObject.name.Replace("object.collsion", "");
+                        //    beatmapObject.objectType = (BeatmapObject.ObjectType)4;
+                        //}
                     }
                 }
             }
@@ -1151,6 +1169,8 @@ namespace ObjectModifiers
 
         public static Dictionary<string, AudioSource> audioSources = new Dictionary<string, AudioSource>();
 
+        //CA [DLC1] - Hub/CA [DLC1] - Regain Control
+
         public static IEnumerator ParseStoryLevel(string _level)
         {
             Debug.LogFormat("{0}Parsing {1}...", className, _level);
@@ -1171,7 +1191,7 @@ namespace ObjectModifiers
             if (RTFile.FileExists(audioPath))
             {
                 Debug.LogFormat("{0}File exists so play", className);
-                inst.StartCoroutine(FileManager.inst.LoadMusicFile(audioPath, delegate (AudioClip _newSound)
+                inst.StartCoroutine(FileManager.inst.LoadMusicFile(audioPath.Replace(RTFile.ApplicationDirectory, ""), delegate (AudioClip _newSound)
                 {
                     _newSound.name = _level;
                     saveQueue.BeatmapSong = _newSound;
@@ -1184,11 +1204,11 @@ namespace ObjectModifiers
             yield break;
         }
 
-        public static DataManager.GameData.PrefabObject AddPrefabObjectToLevel(Prefab _prefab, float startTime, Vector2 pos, Vector2 sca, float rot)
+        public static DataManager.GameData.PrefabObject AddPrefabObjectToLevel(Prefab prefab, float startTime, Vector2 pos, Vector2 sca, float rot)
         {
             DataManager.GameData.PrefabObject prefabObject = new DataManager.GameData.PrefabObject();
             prefabObject.ID = LSText.randomString(16);
-            prefabObject.prefabID = _prefab.ID;
+            prefabObject.prefabID = prefab.ID;
 
             prefabObject.StartTime = startTime;
 
@@ -1222,10 +1242,10 @@ namespace ObjectModifiers
                 Directory.CreateDirectory(RTFile.ApplicationDirectory + "profile");
             }
 
-            string rawProfileJSON = FileManager.inst.LoadJSONFile("profile/" + _path + ".ses");
-
             if (RTFile.FileExists(RTFile.ApplicationDirectory + "profile/" + _path + ".ses"))
             {
+                string rawProfileJSON = FileManager.inst.LoadJSONFile("profile/" + _path + ".ses");
+
                 var jsonnode = JSON.Parse(rawProfileJSON);
 
                 jsonnode[_chapter][_level] = _data.ToString();
@@ -1920,6 +1940,71 @@ namespace ObjectModifiers
             }, //blackHole
             new ModifierObject.Modifier
             {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = true,
+                command = new List<string>
+                {
+                    "setAlpha"
+                },
+                value = "0"
+            }, //setAlpha
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = true,
+                command = new List<string>
+                {
+                    "setAlphaOther",
+                    "Objects Name"
+                },
+                value = "0"
+            }, //setAlphaOther
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = true,
+                command = new List<string>
+                {
+                    "addColor",
+                    "0"
+                },
+                value = "0"
+            }, //addColor
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = true,
+                command = new List<string>
+                {
+                    "addColorOther",
+                    "Objects Name",
+                    "0"
+                },
+                value = "0"
+            }, //addColorOther
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = true,
+                command = new List<string>
+                {
+                    "addColorPlayerDistance",
+                    "0"
+                },
+                value = "0"
+            }, //addColorPlayerDistance
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = false,
+                command = new List<string>
+                {
+                    "updateObjects"
+                },
+                value = "0"
+            }, //updateObjects
+            new ModifierObject.Modifier
+            {
                 type = ModifierObject.Modifier.Type.Trigger,
                 constant = true,
                 command = new List<string>
@@ -2388,6 +2473,80 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //pitchGreater
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "inZenMode"
+                },
+                value = "0"
+            }, //inZenMode
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "inNormal"
+                },
+                value = "0"
+            }, //inNormal
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "in1Life"
+                },
+                value = "0"
+            }, //in1Life
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "inNoHit"
+                },
+                value = "0"
+            }, //inNoHit
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "inEditor"
+                },
+                value = "0"
+            }, //inEditor
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "randomGreater",
+                    "0",
+                    "1"
+                },
+                value = "0"
+            }, //randomGreater
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Trigger,
+                constant = true,
+                command = new List<string>
+                {
+                    "randomLesser",
+                    "0",
+                    "1"
+                },
+                value = "0"
+            }, //randomLesser
         };
 
         public static Dictionary<string, CustomSequence> customSequences = new Dictionary<string, CustomSequence>();
