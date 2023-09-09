@@ -75,7 +75,7 @@ namespace ObjectModifiers.Modifiers
 
                 return modifier;
             }
-
+            
             public Modifier()
             {
             }
@@ -237,17 +237,20 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var hit = int.Parse(value);
 
-                                    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                                    if (rt != null)
-                                        return (bool)rt.GetType().GetProperty("PlayerAlive", BindingFlags.Public | BindingFlags.Instance).GetValue(rt);
-                                    else
+                                    if (i == hit)
                                     {
-                                        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                        {
-                                            var p = InputDataManager.inst.players[i].player;
+                                        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
 
-                                            return (bool)p.GetType().GetProperty("PlayerAlive", BindingFlags.Public | BindingFlags.Instance).GetValue(p);
+                                        if (rt != null)
+                                            return (bool)rt.GetType().GetProperty("PlayerAlive", BindingFlags.Public | BindingFlags.Instance).GetValue(rt);
+                                        else
+                                        {
+                                            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                                            {
+                                                var p = InputDataManager.inst.players[i].player;
+
+                                                return (bool)p.GetType().GetProperty("PlayerAlive", BindingFlags.Public | BindingFlags.Instance).GetValue(p);
+                                            }
                                         }
                                     }
                                 }
@@ -317,6 +320,41 @@ namespace ObjectModifiers.Modifiers
                                     return Vector2.Distance(player.transform.position, Objects.beatmapObjects[modifierObject.id].gameObject.transform.position) < float.Parse(value);
                                 }
                             }
+
+                            break;
+                        }
+                    case "playerCountEquals":
+                        {
+                            if (InputDataManager.inst.players.Count == int.Parse(value))
+                                return true;
+
+                            break;
+                        }
+                    case "playerCountLesserEquals":
+                        {
+                            if (InputDataManager.inst.players.Count <= int.Parse(value))
+                                return true;
+
+                            break;
+                        }
+                    case "playerCountGreaterEquals":
+                        {
+                            if (InputDataManager.inst.players.Count >= int.Parse(value))
+                                return true;
+
+                            break;
+                        }
+                    case "playerCountLesser":
+                        {
+                            if (InputDataManager.inst.players.Count < int.Parse(value))
+                                return true;
+
+                            break;
+                        }
+                    case "playerCountGreater":
+                        {
+                            if (InputDataManager.inst.players.Count > int.Parse(value))
+                                return true;
 
                             break;
                         }
@@ -649,6 +687,45 @@ namespace ObjectModifiers.Modifiers
 
                             break;
                         }
+
+                    case "inZenMode":
+                        {
+                            return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 0;
+                        }
+                    case "inNormal":
+                        {
+                            return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 1;
+                        }
+                    case "in1Life":
+                        {
+                            return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 2;
+                        }
+                    case "inNoHit":
+                        {
+                            return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 3;
+                        }
+                    case "inEditor":
+                        {
+                            return EditorManager.inst != null;
+                        }
+                    case "randomGreater":
+                        {
+                            if (float.TryParse(command[1], out float x) && float.TryParse(command[2], out float y) && float.TryParse(value, out float z))
+                            {
+                                return Random.Range(x, y) > z;
+                            }
+
+                            break;
+                        }
+                    case "randomLesser":
+                        {
+                            if (float.TryParse(command[1], out float x) && float.TryParse(command[2], out float y) && float.TryParse(value, out float z))
+                            {
+                                return Random.Range(x, y) < z;
+                            }
+
+                            break;
+                        }
                 }
                 return false;
             }
@@ -659,44 +736,51 @@ namespace ObjectModifiers.Modifiers
                 {
                     case "setPitch":
                         {
-                            if (GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager"))
+                            if (float.TryParse(value, out float num))
                             {
-                                var rt = GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager");
+                                if (GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager"))
+                                {
+                                    var rt = GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager");
 
-                                rt.GetType().GetField("pitchOffset", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, float.Parse(value));
-                            }
-                            else
-                            {
-                                AudioManager.inst.pitch = float.Parse(value) * GameManager.inst.getPitch();
+                                    rt.GetType().GetField("pitchOffset", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, num);
+                                }
+                                else
+                                {
+                                    AudioManager.inst.pitch = num * GameManager.inst.getPitch();
+                                }
                             }
 
                             break;
                         }
                     case "addPitch":
                         {
-                            if (GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager"))
+                            if (float.TryParse(value, out float num))
                             {
-                                var rt = GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager");
+                                if (GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager"))
+                                {
+                                    var rt = GameObject.Find("Game Systems/EventManager").GetComponentByName("RTEventManager");
 
-                                var pitchCurrent = (float)rt.GetType().GetField("pitchOffset", BindingFlags.Public | BindingFlags.Instance).GetValue(rt);
+                                    var pitchCurrent = (float)rt.GetType().GetField("pitchOffset", BindingFlags.Public | BindingFlags.Instance).GetValue(rt);
 
-                                rt.GetType().GetField("pitchOffset", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, pitchCurrent + float.Parse(value));
-                            }
-                            else
-                            {
-                                AudioManager.inst.pitch = (AudioManager.inst.pitch + float.Parse(value)) * GameManager.inst.getPitch();
+                                    rt.GetType().GetField("pitchOffset", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, pitchCurrent + num);
+                                }
+                                else
+                                {
+                                    AudioManager.inst.pitch = (AudioManager.inst.pitch + num) * GameManager.inst.getPitch();
+                                }
                             }
 
                             break;
                         }
                     case "setMusicTime":
                         {
-                            AudioManager.inst.SetMusicTime(float.Parse(value));
+                            if (float.TryParse(value, out float num))
+                                AudioManager.inst.SetMusicTime(num);
                             break;
                         }
                     case "playSound":
                         {
-                            if (command.Count > 1)
+                            if (command.Count > 1 && bool.TryParse(command[1], out bool global) && float.TryParse(command[2], out float pitch) && float.TryParse(command[3], out float vol) && bool.TryParse(command[4], out bool loop))
                             {
                                 if (command.Count < 4)
                                 {
@@ -704,7 +788,7 @@ namespace ObjectModifiers.Modifiers
                                     command.Add("False");
                                 }
                                 if (command.Count > 4)
-                                    ObjectModifiersPlugin.GetSoundPath(modifierObject.id, value, bool.Parse(command[1]), float.Parse(command[2]), float.Parse(command[3]), bool.Parse(command[4]));
+                                    ObjectModifiersPlugin.GetSoundPath(modifierObject.id, value, global, pitch, vol, loop);
                             }
                             else
                             {
@@ -714,7 +798,7 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "loadLevel":
                         {
-                            if (EditorManager.inst != null && !EditorManager.inst.isEditing)
+                            if (EditorManager.inst != null && EditorManager.inst.isEditing)
                             {
                                 if (ObjectModifiersPlugin.editorLoadLevel.Value)
                                 {
@@ -724,13 +808,15 @@ namespace ObjectModifiers.Modifiers
                                     }
 
                                     string str = RTFile.basePath;
-                                    if (RTFile.FileExists(RTFile.ApplicationDirectory + str + "/level-modifier-backup.lsb"))
+                                    string modBackup = RTFile.ApplicationDirectory + str + "level-modifier-backup.lsb";
+                                    if (RTFile.FileExists(modBackup))
                                     {
-                                        System.IO.File.Delete(RTFile.ApplicationDirectory + str + "/level-modifier-backup.lsb");
+                                        System.IO.File.Delete(modBackup);
                                     }
 
-                                    if (RTFile.FileExists(RTFile.ApplicationDirectory + str + "/level.lsb"))
-                                        System.IO.File.Copy(RTFile.ApplicationDirectory + str + "/level.lsb", RTFile.ApplicationDirectory + str + "/level-modifier-backup.lsb");
+                                    string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
+                                    if (RTFile.FileExists(lvl))
+                                        System.IO.File.Copy(lvl, modBackup);
 
                                     EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel(value));
                                 }
@@ -971,12 +1057,19 @@ namespace ObjectModifiers.Modifiers
                                 }
                                 else
                                 {
-                                    refModifier.tr.time = float.Parse(value);
+                                    if (float.TryParse(value, out float time))
+                                    {
+                                        refModifier.tr.time = time;
+                                    }
+
                                     refModifier.tr.emitting = !(mod.transform.lossyScale.x < 0.001f && mod.transform.lossyScale.x > -0.001f || mod.transform.lossyScale.y < 0.001f && mod.transform.lossyScale.y > -0.001f) && mod.activeSelf && mod.activeInHierarchy;
 
-                                    var t = mod.transform.lossyScale.magnitude * 0.576635f;
-                                    refModifier.tr.startWidth = float.Parse(command[1]) * t;
-                                    refModifier.tr.endWidth = float.Parse(command[2]) * t;
+                                    if (float.TryParse(command[1], out float startWidth) && float.TryParse(command[2], out float endWidth))
+                                    {
+                                        var t = mod.transform.lossyScale.magnitude * 0.576635f;
+                                        refModifier.tr.startWidth = startWidth * t;
+                                        refModifier.tr.endWidth = endWidth * t;
+                                    }
 
                                     var beatmapTheme = GameManager.inst.LiveTheme;
                                     if (EventEditor.inst != null && EventEditor.inst.showTheme)
@@ -984,21 +1077,25 @@ namespace ObjectModifiers.Modifiers
                                         beatmapTheme = EventEditor.inst.previewTheme;
                                     }
 
-                                    refModifier.tr.startColor = LSFunctions.LSColors.fadeColor(beatmapTheme.GetObjColor(int.Parse(command[3])), float.Parse(command[4]));
-                                    refModifier.tr.endColor = LSFunctions.LSColors.fadeColor(beatmapTheme.GetObjColor(int.Parse(command[5])), float.Parse(command[6]));
+                                    if (int.TryParse(command[3], out int startColor) && float.TryParse(command[4], out float startOpacity))
+                                        refModifier.tr.startColor = LSFunctions.LSColors.fadeColor(beatmapTheme.GetObjColor(startColor), startOpacity);
+                                    if (int.TryParse(command[5], out int endColor) && float.TryParse(command[6], out float endOpacity))
+                                        refModifier.tr.endColor = LSFunctions.LSColors.fadeColor(beatmapTheme.GetObjColor(endColor), endOpacity);
                                 }
                             }
                             break;
                         }
                     case "spawnPrefab":
                         {
-                            if (!constant && DataManager.inst.gameData.prefabs.Count > 0 && DataManager.inst.gameData.prefabs.Count > int.Parse(value))
+                            if (!constant && int.TryParse(value, out int num) && DataManager.inst.gameData.prefabs.Count > num
+                                && float.TryParse(command[1], out float posX) && float.TryParse(command[2], out float posY)
+                                && float.TryParse(command[3], out float scaX) && float.TryParse(command[4], out float scaY) && float.TryParse(command[5], out float rot))
                             {
-                                result = ObjectModifiersPlugin.AddPrefabObjectToLevel(DataManager.inst.gameData.prefabs[int.Parse(value)],
+                                result = ObjectModifiersPlugin.AddPrefabObjectToLevel(DataManager.inst.gameData.prefabs[num],
                                     AudioManager.inst.CurrentAudioSource.time,
-                                    new Vector2(float.Parse(command[1]), float.Parse(command[2])),
-                                    new Vector2(float.Parse(command[3]), float.Parse(command[4])),
-                                    float.Parse(command[5]));
+                                    new Vector2(posX, posY),
+                                    new Vector2(scaX, scaY),
+                                    rot);
                             }
 
                             break;
@@ -1010,10 +1107,8 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
 
-                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(value, out int hit))
                                     {
-                                        var hit = int.Parse(value);
-
                                         var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
 
                                         if (rt != null)
@@ -1044,10 +1139,8 @@ namespace ObjectModifiers.Modifiers
                             if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !constant)
                                 for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
                                 {
-                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(value, out int hit))
                                     {
-                                        var hit = int.Parse(value);
-
                                         var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
 
                                         if (rt != null)
@@ -1077,10 +1170,8 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
 
-                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(value, out int hit))
                                     {
-                                        var hit = int.Parse(value);
-
                                         InputDataManager.inst.players[i].health += hit;
 
                                         var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
@@ -1105,10 +1196,8 @@ namespace ObjectModifiers.Modifiers
                             if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !constant)
                                 for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
                                 {
-                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                                    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(value, out int hit))
                                     {
-                                        var hit = int.Parse(value);
-
                                         InputDataManager.inst.players[i].health += hit;
 
                                         var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
@@ -1493,9 +1582,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "save":
                         {
-                            if (EditorManager.inst == null || !EditorManager.inst.isEditing)
+                            if ((EditorManager.inst == null || !EditorManager.inst.isEditing) && float.TryParse(value, out float num))
                             {
-                                ObjectModifiersPlugin.SaveProgress(command[1], command[2], command[3], float.Parse(value));
+                                ObjectModifiersPlugin.SaveProgress(command[1], command[2], command[3], num);
                             }
                             break;
                         }
@@ -1509,14 +1598,17 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactivePos":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sampleX) && float.TryParse(command[3], out float intensityX) && int.TryParse(command[2], out int sampleY) && float.TryParse(command[4], out float intensityY) && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
                                 AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactivePositionX = samples[int.Parse(command[1])] * float.Parse(command[3]) * float.Parse(value);
-                                float reactivePositionY = samples[int.Parse(command[2])] * float.Parse(command[4]) * float.Parse(value);
+                                sampleX = Mathf.Clamp(sampleX, 0, 255);
+                                sampleY = Mathf.Clamp(sampleY, 0, 255);
+
+                                float reactivePositionX = samples[sampleX] * intensityX * val;
+                                float reactivePositionY = samples[sampleY] * intensityY * val;
 
                                 var functionObject = Objects.beatmapObjects[modifierObject.id];
 
@@ -1532,14 +1624,17 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactiveSca":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sampleX) && float.TryParse(command[3], out float intensityX) && int.TryParse(command[2], out int sampleY) && float.TryParse(command[4], out float intensityY) && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
                                 AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactiveScaleX = samples[int.Parse(command[1])] * float.Parse(command[3]) * float.Parse(value);
-                                float reactiveScaleY = samples[int.Parse(command[2])] * float.Parse(command[4]) * float.Parse(value);
+                                sampleX = Mathf.Clamp(sampleX, 0, 255);
+                                sampleY = Mathf.Clamp(sampleY, 0, 255);
+
+                                float reactiveScaleX = samples[sampleX] * intensityX * val;
+                                float reactiveScaleY = samples[sampleY] * intensityY * val;
 
                                 var functionObject = Objects.beatmapObjects[modifierObject.id];
 
@@ -1552,41 +1647,43 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactiveRot":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sample) && float.TryParse(value, out float val))
                             {
-                                var ch = refModifier.beatmapObject.GetChildChain();
-
                                 float[] samples = new float[256];
 
                                 AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactiveRotation = samples[int.Parse(command[1])] * float.Parse(value);
+                                sample = Mathf.Clamp(sample, 0, 255);
+
+                                float reactiveRotation = samples[sample] * val;
 
                                 var functionObject = Objects.beatmapObjects[modifierObject.id];
 
                                 if (functionObject.gameObject != null)
                                 {
-                                    var e = functionObject.gameObject.transform.localRotation;
+                                    var e = functionObject.gameObject.transform.parent.localRotation;
                                     e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
-                                    functionObject.gameObject.transform.localRotation = e;
+                                    functionObject.gameObject.transform.parent.localRotation = e;
                                 }
                             }
                             break;
                         }
                     case "reactiveCol":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sample) && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
                                 AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactiveColor = samples[int.Parse(command[1])] * float.Parse(value);
+                                sample = Mathf.Clamp(sample, 0, 255);
+
+                                float reactiveColor = samples[sample] * val;
 
                                 var functionObject = Objects.beatmapObjects[modifierObject.id];
 
-                                if (functionObject.renderer != null)
-                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[int.Parse(command[2])] * reactiveColor;
+                                if (functionObject.renderer != null && int.TryParse(command[2], out int col))
+                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[col] * reactiveColor;
                             }
                             break;
                         }
@@ -1926,6 +2023,109 @@ namespace ObjectModifiers.Modifiers
                             }
                             break;
                         }
+                    case "addColor":
+                        {
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int index) && float.TryParse(value, out float num))
+                            {
+                                var functionObject = Objects.beatmapObjects[modifierObject.id];
+
+                                index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+
+                                if (functionObject.renderer != null)
+                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
+                            }
+
+                            break;
+                        }
+                    case "addColorOther":
+                        {
+                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == command[1]))
+                            {
+                                if (bm != null && Objects.beatmapObjects.ContainsKey(bm.id) && int.TryParse(command[2], out int index) && float.TryParse(value, out float num))
+                                {
+                                    var functionObject = Objects.beatmapObjects[bm.id];
+
+                                    index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+
+                                    if (functionObject.renderer != null)
+                                        functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
+                                }
+                            }
+
+
+                            break;
+                        }
+                    case "addColorPlayerDistance":
+                        {
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null && int.TryParse(command[1], out int index) && float.TryParse(value, out float num))
+                            {
+                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+
+                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                                var distance = Vector2.Distance(player.transform.position, Objects.beatmapObjects[modifierObject.id].gameObject.transform.position);
+
+                                var functionObject = Objects.beatmapObjects[modifierObject.id];
+
+                                index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+
+                                if (functionObject.renderer != null)
+                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * distance * num;
+                            }
+
+                            break;
+                        }
+                    case "setAlpha":
+                        {
+                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && float.TryParse(value, out float num))
+                            {
+                                var functionObject = Objects.beatmapObjects[modifierObject.id];
+
+                                if (functionObject.renderer != null)
+                                    functionObject.renderer.material.color = LSFunctions.LSColors.fadeColor(functionObject.renderer.material.color, num);
+                            }
+
+                            break;
+                        }
+                    case "setAlphaOther":
+                        {
+                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == command[1]))
+                            {
+                                if (bm != null && Objects.beatmapObjects.ContainsKey(bm.id) && float.TryParse(value, out float num))
+                                {
+                                    var functionObject = Objects.beatmapObjects[bm.id];
+
+                                    if (functionObject.renderer != null)
+                                        functionObject.renderer.material.color = LSFunctions.LSColors.fadeColor(functionObject.renderer.material.color, num);
+                                }
+                            }
+
+                            break;
+                        }
+                    case "updateObjects":
+                        {
+                            if (!constant)
+                                ObjectManager.inst.updateObjects();
+                            break;
+                        }
+                    case "updateObject":
+                        {
+                            if (!constant && DataManager.inst.gameData.beatmapObjects.Find(x => x.name == value) != null)
+                            {
+                                foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == value))
+                                {
+                                    var objectSelection = new ObjEditor.ObjectSelection(ObjEditor.ObjectSelection.SelectionType.Object, DataManager.inst.gameData.beatmapObjects.IndexOf(bm));
+
+                                    ObjectManager.inst.updateObjects(objectSelection);
+                                }
+                            }
+                            break;
+                        }
+                    case "animationObject":
+                        {
+
+                            break;
+                        }
                 }
             }
 
@@ -2006,31 +2206,37 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "disableObject":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
+                            if (!hasChanged && modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
                             {
                                 var tf = Objects.beatmapObjects[modifierObject.id].transformChain;
-                                if (tf != null && tf.Count > 0)
-                                    tf[0].gameObject.SetActive(false);
+                                if (tf != null && tf.Count > 0 && tf[0] != null)
+                                    tf[0].gameObject.SetActive(true);
+                                hasChanged = true;
                             }
 
                             break;
                         }
                     case "disableObjectTree":
                         {
-                            var parentChain = modifierObject.GetParentChain();
-
-                            foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                            if (!hasChanged)
                             {
-                                for (int o = 0; o < cc.Count; o++)
+                                var parentChain = modifierObject.GetParentChain();
+
+                                foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
                                 {
-                                    if (cc[o] != null && Objects.beatmapObjects.ContainsKey(cc[o].id))
+                                    for (int o = 0; o < cc.Count; o++)
                                     {
-                                        var tf = Objects.beatmapObjects[cc[o].id].transformChain;
-                                        if (tf != null && tf.Count > 0)
-                                            tf[0].gameObject.SetActive(false);
+                                        if (cc[o] != null && Objects.beatmapObjects.ContainsKey(cc[o].id))
+                                        {
+                                            var tf = Objects.beatmapObjects[cc[o].id].transformChain;
+                                            if (tf != null && tf.Count > 0 && tf[0] != null)
+                                                tf[0].gameObject.SetActive(true);
+                                        }
                                     }
                                 }
+                                hasChanged = true;
                             }
+
                             break;
                         }
                 }
