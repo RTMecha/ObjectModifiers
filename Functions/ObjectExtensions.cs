@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 
 using ObjectModifiers.Modifiers;
 
@@ -20,6 +21,16 @@ namespace ObjectModifiers.Functions
 {
     public static class ObjectExtensions
     {
+        public static AnimationObject ToAnimationObject(this Prefab prefab)
+        {
+            var list = new List<AnimationObject.BeatmapObject>();
+            foreach (var beatmapObject in prefab.objects)
+            {
+                list.Add(AnimationObject.BeatmapObject.DeepCopy(beatmapObject));
+            }
+            return new AnimationObject(list);
+        }
+
         public static void DestroyTimelineObject(this ObjEditor _inst, string id)
         {
             if (_inst != null)
@@ -75,6 +86,8 @@ namespace ObjectModifiers.Functions
 
         public static bool IsTouchingPlayer(this BeatmapObject beatmapObject)
         {
+            var list = new List<bool>();
+
             if (Objects.beatmapObjects.ContainsKey(beatmapObject.id))
             {
                 var modifier = Objects.beatmapObjects[beatmapObject.id];
@@ -87,13 +100,14 @@ namespace ObjectModifiers.Functions
                     {
                         if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
                         {
-                            var player = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1));
-                            return player.GetComponentInChildren<Collider2D>().IsTouching(collider);
+                            var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+                            list.Add(player.GetComponent<Collider2D>().IsTouching(collider));
                         }
                     }
                 }
             }
-            return false;
+
+            return list.Any(x => x == true);
         }
 
         public static void AddTrigger(this BeatmapObject _beatmapObject, int index)
@@ -143,28 +157,60 @@ namespace ObjectModifiers.Functions
         public static ModifierObject AddModifierObject(this BeatmapObject _beatmapObject)
         {
             var p = new ModifierObject(_beatmapObject, new List<ModifierObject.Modifier> { });
+
             if (!ObjectModifiersPlugin.modifierObjects.ContainsKey(_beatmapObject.id))
-            {
                 ObjectModifiersPlugin.modifierObjects.Add(_beatmapObject.id, p);
-            }
+
             return p;
         }
 
-        public static ModifierObject GetModifierObject(this BeatmapObject _beatmapObject)
+        public static ModifierObject AddModifierPrefab(this Prefab prefab, BeatmapObject beatmapObject)
         {
-            if (ObjectModifiersPlugin.modifierObjects.ContainsKey(_beatmapObject.id))
+            var p = new ModifierObject(beatmapObject, new List<ModifierObject.Modifier> { });
+
+            if (!ObjectModifiersPlugin.prefabModifiers.ContainsKey(prefab.ID))
+                ObjectModifiersPlugin.prefabModifiers.Add(prefab.ID, new Dictionary<string, ModifierObject>());
+
+            if (!ObjectModifiersPlugin.prefabModifiers[prefab.ID].ContainsKey(beatmapObject.id))
+                ObjectModifiersPlugin.prefabModifiers[prefab.ID].Add(beatmapObject.id, p);
+
+            return p;
+        }
+
+        public static ModifierObject GetModifierObject(this BeatmapObject _beatmapObject, bool fromPrefab = false)
+        {
+            if (ObjectModifiersPlugin.modifierObjects.ContainsKey(_beatmapObject.id) && !fromPrefab)
             {
                 return ObjectModifiersPlugin.modifierObjects[_beatmapObject.id];
             }
+
+            if (ObjectModifiersPlugin.prefabModifiers.ContainsKey(_beatmapObject.prefabID) && ObjectModifiersPlugin.prefabModifiers[_beatmapObject.prefabID].ContainsKey(_beatmapObject.id))
+                return ObjectModifiersPlugin.prefabModifiers[_beatmapObject.prefabID][_beatmapObject.id];
+
             return null;
         }
 
-        public static void RemoveModifierObject(this BeatmapObject _beatmapObject)
+        public static void RemoveModifierObject(this BeatmapObject _beatmapObject, bool fromPrefab = false)
         {
-            if (ObjectModifiersPlugin.modifierObjects.ContainsKey(_beatmapObject.id))
+            if (ObjectModifiersPlugin.modifierObjects.ContainsKey(_beatmapObject.id) && !fromPrefab)
             {
                 ObjectModifiersPlugin.modifierObjects.Remove(_beatmapObject.id);
-                Debug.Log("Removed ModifierObject at " + _beatmapObject.id);
+                Debug.LogFormat("{0}Removed ModifierObject at {1}", ObjectModifiersPlugin.className, _beatmapObject.id);
+            }
+
+            if (ObjectModifiersPlugin.prefabModifiers.ContainsKey(_beatmapObject.prefabID) && ObjectModifiersPlugin.prefabModifiers[_beatmapObject.prefabID].ContainsKey(_beatmapObject.id))
+            {
+                ObjectModifiersPlugin.prefabModifiers[_beatmapObject.prefabID].Remove(_beatmapObject.id);
+                Debug.LogFormat("{0}Removed ModifierObject at Prefab: {1} - BeatmapObject: {2}", ObjectModifiersPlugin.className, _beatmapObject.prefabID, _beatmapObject.id);
+            }
+        }
+
+        public static void RemoveModifierPrefab(this Prefab prefab)
+        {
+            if (ObjectModifiersPlugin.prefabModifiers.ContainsKey(prefab.ID))
+            {
+                ObjectModifiersPlugin.prefabModifiers.Remove(prefab.ID);
+                Debug.LogFormat("{0}Removed ModifierObject at Prefab: {1}", ObjectModifiersPlugin.className, prefab.ID);
             }
         }
 
@@ -213,7 +259,42 @@ namespace ObjectModifiers.Functions
 
         public static List<BeatmapObject> GetChildren(this BeatmapObject _beatmapObject)
         {
-            return DataManager.inst.gameData.beatmapObjects.FindAll(x => x.parent == _beatmapObject.id);
+            var dictionary = new Dictionary<string, BeatmapObject>();
+
+            var select = _beatmapObject;
+
+            var findAll = DataManager.inst.gameData.beatmapObjects.FindAll(x => x.parent == select.id);
+
+            while (findAll.Count > 0)
+            {
+                foreach (var bm in findAll)
+                {
+                    if (!dictionary.ContainsKey(bm.id))
+                        dictionary.Add(bm.id, bm);
+
+                    findAll.AddRange(DataManager.inst.gameData.beatmapObjects.FindAll(x => x.parent == bm.id));
+                }
+            }
+
+            return dictionary.ValuesToList();
+        }
+
+        public static List<TValue> ValuesToList<TKey, TValue>(this Dictionary<TKey, TValue> keyValuePairs)
+        {
+            var list = new List<TValue>();
+            foreach (var value in keyValuePairs)
+                list.Add(value.Value);
+
+            return list;
+        }
+        
+        public static List<TKey> KeysToList<TKey, TValue>(this Dictionary<TKey, TValue> keyValuePairs)
+        {
+            var list = new List<TKey>();
+            foreach (var value in keyValuePairs)
+                list.Add(value.Key);
+
+            return list;
         }
 
         public static float EventValuesZ1(DataManager.GameData.EventKeyframe _posEvent, int _beatmapObject)
