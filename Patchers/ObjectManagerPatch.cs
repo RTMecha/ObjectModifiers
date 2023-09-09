@@ -182,7 +182,7 @@ namespace ObjectModifiers.Patchers
         {
             if (__0 != null && !string.IsNullOrEmpty(__0.ID) && ObjectModifiersPlugin.customSequences.ContainsKey(__0.ID) && __0.IsObject() && __0.GetObjectData() != null)
             {
-                ObjectModifiersPlugin.customSequences[__0.ID].sequence.Kill(false);
+                ObjectModifiersPlugin.customSequences[__0.ID].sequence.Kill();
                 ObjectModifiersPlugin.customSequences.Remove(__0.ID);
 
                 for (int i = 0; i < 4; i++)
