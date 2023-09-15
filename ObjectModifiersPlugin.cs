@@ -29,6 +29,7 @@ using ObjectModifiers.Patchers;
 using RTFunctions.Functions;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
+using RTFunctions.Functions.Managers.Networking;
 
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 using Prefab = DataManager.GameData.Prefab;
@@ -149,7 +150,7 @@ namespace ObjectModifiers
 
         [HarmonyPatch(typeof(ObjectManager), "Update")]
         [HarmonyPostfix]
-        private static void ObjectUpdate(ObjectManager __instance)
+        static void ObjectUpdate(ObjectManager __instance)
         {
             if (ModCompatibility.catalyst == null)
             {
@@ -249,7 +250,7 @@ namespace ObjectModifiers
 
         [HarmonyPatch(typeof(GameManager), "SpawnPlayers")]
         [HarmonyPostfix]
-        private static void PlayerCollisionFix()
+        static void PlayerCollisionFix()
         {
             foreach (var player in InputDataManager.inst.players)
             {
@@ -263,7 +264,7 @@ namespace ObjectModifiers
 
         [HarmonyPatch(typeof(GameManager), "Update")]
         [HarmonyPostfix]
-        private static void UpdatePatch(GameManager __instance)
+        static void UpdatePatch(GameManager __instance)
         {
             if (DataManager.inst.gameData != null && DataManager.inst.gameData.beatmapObjects.Count > 0 && ObjectManager.inst != null)
             {
@@ -935,7 +936,7 @@ namespace ObjectModifiers
 
         [HarmonyPatch(typeof(GameManager), "EndOfLevel")]
         [HarmonyPrefix]
-        private static void EndOfLevelPrefix()
+        static void EndOfLevelPrefix()
         {
             modifierObjects.Clear();
         }
@@ -1142,6 +1143,22 @@ namespace ObjectModifiers
                     _newSound.name = _sound;
                     PlaySound(id, _newSound, _pitch, _volume, _loop);
                 }));
+            }
+        }
+
+        public static void DownloadSoundAndPlay(string id, string _sound, float _pitch = 1f, float _volume = 1f, bool _loop = false)
+        {
+            try
+            {
+                if (_sound.ToLower().Substring(_sound.ToLower().Length - 4, 4) == ".ogg")
+                    inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip(_sound, AudioType.OGGVORBIS, delegate (AudioClip audioClip)
+                    {
+                        PlaySound(id, audioClip, _pitch, _volume, _loop);
+                    }));
+            }
+            catch
+            {
+
             }
         }
 

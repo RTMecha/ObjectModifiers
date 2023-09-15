@@ -796,6 +796,26 @@ namespace ObjectModifiers.Modifiers
                             }
                             break;
                         }
+                    case "playSoundOnline":
+                        {
+                            if (command.Count > 1 && bool.TryParse(command[1], out bool global) && float.TryParse(command[2], out float pitch) && float.TryParse(command[3], out float vol) && bool.TryParse(command[4], out bool loop))
+                            {
+                                if (command.Count < 4)
+                                {
+                                    command.Add("1");
+                                    command.Add("False");
+                                }
+                                if (command.Count > 4)
+                                {
+                                    ObjectModifiersPlugin.DownloadSoundAndPlay(modifierObject.id, value, pitch, vol, loop);
+                                }
+                            }
+                            else
+                            {
+                                ObjectModifiersPlugin.DownloadSoundAndPlay(modifierObject.id, value);
+                            }
+                            break;
+                        }
                     case "loadLevel":
                         {
                             if (EditorManager.inst != null && EditorManager.inst.isEditing)
@@ -1619,6 +1639,8 @@ namespace ObjectModifiers.Modifiers
 
                                     functionObject.gameObject.transform.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, 1f);
                                 }
+
+                                samples = null;
                             }
                             break;
                         }
@@ -1639,9 +1661,9 @@ namespace ObjectModifiers.Modifiers
                                 var functionObject = Objects.beatmapObjects[modifierObject.id];
 
                                 if (functionObject.gameObject != null)
-                                {
                                     functionObject.gameObject.transform.localScale = new Vector3(1f + reactiveScaleX, 1f + reactiveScaleY, 1f);
-                                }
+
+                                samples = null;
                             }
                             break;
                         }
@@ -1661,10 +1683,13 @@ namespace ObjectModifiers.Modifiers
 
                                 if (functionObject.gameObject != null)
                                 {
-                                    var e = functionObject.gameObject.transform.parent.localRotation;
-                                    e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
-                                    functionObject.gameObject.transform.parent.localRotation = e;
+                                    functionObject.gameObject.transform.localRotation = Quaternion.Euler(0f, 0f, reactiveRotation);
+                                    //var e = functionObject.gameObject.transform.parent.localRotation;
+                                    //e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
+                                    //functionObject.gameObject.transform.parent.localRotation = e;
                                 }
+
+                                samples = null;
                             }
                             break;
                         }
@@ -1684,6 +1709,8 @@ namespace ObjectModifiers.Modifiers
 
                                 if (functionObject.renderer != null && int.TryParse(command[2], out int col))
                                     functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[col] * reactiveColor;
+
+                                samples = null;
                             }
                             break;
                         }
