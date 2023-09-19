@@ -36,7 +36,7 @@ using Prefab = DataManager.GameData.Prefab;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.3")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.4")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -1150,10 +1150,15 @@ namespace ObjectModifiers
         {
             try
             {
-                if (_sound.ToLower().Substring(_sound.ToLower().Length - 4, 4) == ".ogg")
-                    inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip(_sound, AudioType.OGGVORBIS, delegate (AudioClip audioClip)
+                var audioType = RTFile.GetAudioType(_sound);
+
+                if (audioType != AudioType.UNKNOWN)
+                    inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip(_sound, RTFile.GetAudioType(_sound), delegate (AudioClip audioClip)
                     {
                         PlaySound(id, audioClip, _pitch, _volume, _loop);
+                    }, delegate (string onError)
+                    {
+                        Debug.Log($"{className}Error! Could not download audioclip.\n{onError}");
                     }));
             }
             catch
@@ -2020,6 +2025,16 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //updateObjects
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = false,
+                command = new List<string>
+                {
+                    "code"
+                },
+                value = "float x = 1f; float y = 5f; x / y;"
+            }, //code
             new ModifierObject.Modifier
             {
                 type = ModifierObject.Modifier.Type.Trigger,
