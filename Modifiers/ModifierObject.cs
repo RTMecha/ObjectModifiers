@@ -2153,6 +2153,22 @@ namespace ObjectModifiers.Modifiers
 
                             break;
                         }
+                    case "code":
+                        {
+                            string id = "";
+                            if (refModifier != null && refModifier.beatmapObject != null)
+                                id = refModifier.beatmapObject.id;
+
+                            int index;
+                            if (ObjectModifiersPlugin.modifierObjects.ContainsKey(id))
+                                index = ObjectModifiersPlugin.modifierObjects[id].modifiers.IndexOf(this);
+                            else index = -1;
+
+                            string codeToInclude = $"var refID = {id}; var refModifierIndex = {index};";
+
+                            RTCode.Evaluate(codeToInclude + value);
+                            break;
+                        }
                 }
             }
 
