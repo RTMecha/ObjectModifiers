@@ -36,7 +36,7 @@ using Prefab = DataManager.GameData.Prefab;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.4")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.5")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -1482,6 +1482,20 @@ namespace ObjectModifiers
                 },
                 value = "sounds/audio.wav"
             }, //playSound
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = false,
+                command = new List<string>
+                {
+                    "playSoundOnline",
+                    "False",
+                    "1",
+                    "1",
+                    "False"
+                },
+                value = "sounds/audio.wav"
+            }, //playSoundOnline
             new ModifierObject.Modifier
             {
                 type = ModifierObject.Modifier.Type.Action,
