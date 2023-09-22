@@ -19,6 +19,7 @@ using RTFunctions.Functions.Managers;
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 using PrefabObject = DataManager.GameData.PrefabObject;
 using Prefab = DataManager.GameData.Prefab;
+using Ease = RTFunctions.Functions.Animation.Ease;
 
 namespace ObjectModifiers.Modifiers
 {
@@ -805,12 +806,12 @@ namespace ObjectModifiers.Modifiers
                                     command.Add("1");
                                     command.Add("False");
                                 }
-                                if (command.Count > 4)
+                                if (command.Count > 4 && !string.IsNullOrEmpty(value))
                                 {
                                     ObjectModifiersPlugin.DownloadSoundAndPlay(modifierObject.id, value, pitch, vol, loop);
                                 }
                             }
-                            else
+                            else if (!string.IsNullOrEmpty(value))
                             {
                                 ObjectModifiersPlugin.DownloadSoundAndPlay(modifierObject.id, value);
                             }
@@ -919,12 +920,12 @@ namespace ObjectModifiers.Modifiers
                             {
                                 var rend = Objects.beatmapObjects[modifierObject.id].renderer;
                                 rend.material = ObjectModifiersPlugin.blur;
-                                if (command.Count > 1 && bool.Parse(command[1]) == true && ObjectModifiersPlugin.customSequences.ContainsKey(modifierObject.id))
+                                if (command.Count > 1 && bool.Parse(command[1]) == true)
                                 {
-                                    float a = ObjectModifiersPlugin.customSequences[modifierObject.id].opacity - 1f;
-                                    a = -a;
+                                    //float a = ObjectModifiersPlugin.customSequences[modifierObject.id].opacity - 1f;
+                                    //a = -a;
 
-                                    rend.material.SetFloat("_blurSizeXY", a * float.Parse(value));
+                                    rend.material.SetFloat("_blurSizeXY", -(Interpolate() - 1f) * float.Parse(value));
                                 }
                                 else
                                     rend.material.SetFloat("_blurSizeXY", float.Parse(value));
@@ -2155,7 +2156,7 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "code":
                         {
-                            string id = "";
+                            string id = "a";
                             if (refModifier != null && refModifier.beatmapObject != null)
                                 id = refModifier.beatmapObject.id;
 
@@ -2164,9 +2165,13 @@ namespace ObjectModifiers.Modifiers
                                 index = ObjectModifiersPlugin.modifierObjects[id].modifiers.IndexOf(this);
                             else index = -1;
 
-                            string codeToInclude = $"var refID = {id}; var refModifierIndex = {index};";
+                            string codeToInclude = $"var refID = \"{id}\"; var refModifierIndex = {index};";
 
-                            RTCode.Evaluate(codeToInclude + value);
+                            string code = "";
+                            if (!code.Contains("System.IO.File.") && !code.Contains("File."))
+                                code = value;
+
+                            RTCode.Evaluate($"{codeToInclude}{code}");
                             break;
                         }
                 }
@@ -2282,6 +2287,59 @@ namespace ObjectModifiers.Modifiers
 
                             break;
                         }
+                }
+            }
+
+
+            float Interpolate()
+            {
+                var time = AudioManager.inst.CurrentAudioSource.time - modifierObject.StartTime;
+
+                var i = 3;
+
+                var nextKFIndex = modifierObject.events[i].FindIndex(x => x.eventTime > time);
+
+                if (nextKFIndex >= 0)
+                {
+                    var prevKFIndex = nextKFIndex - 1;
+                    if (prevKFIndex < 0)
+                        prevKFIndex = 0;
+
+                    var nextKF = modifierObject.events[i][nextKFIndex];
+                    var prevKF = modifierObject.events[i][prevKFIndex];
+
+                    var j = 1;
+                    var next = nextKF.eventValues[j];
+                    var prev = prevKF.eventValues[j];
+
+                    if (float.IsNaN(prev))
+                        prev = 0f;
+
+                    if (float.IsNaN(next))
+                        next = 0f;
+
+                    var x = RTMath.Lerp(prev, next, Ease.GetEaseFunction(nextKF.curveType.Name)(RTMath.InverseLerp(prevKF.eventTime, nextKF.eventTime, time)));
+
+                    if (prevKFIndex == nextKFIndex)
+                        x = next;
+
+                    if (float.IsNaN(x) || float.IsInfinity(x))
+                        x = next;
+
+                    return x;
+                }
+                else
+                {
+                    var j = 1;
+                    var x = modifierObject.events[i][modifierObject.events[i].Count - 1].eventValues[j];
+
+                    if (float.IsNaN(x))
+                        x = 0f;
+
+                    if (float.IsNaN(x) || float.IsInfinity(x))
+                        x = modifierObject.events[i][modifierObject.events[i].Count - 1].eventValues[j];
+
+                    return x;
                 }
             }
         }
