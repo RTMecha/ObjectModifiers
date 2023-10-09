@@ -1,13 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using UnityEngine;
 
 using ObjectModifiers.Functions;
-using ObjectModifiers.Functions.Components;
 
 using SimpleJSON;
 using DG.Tweening;
@@ -15,6 +12,9 @@ using DG.Tweening;
 using RTFunctions.Functions;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
+using RTFunctions.Functions.Optimization;
+using RTFunctions.Functions.Optimization.Objects;
+using RTFunctions.Functions.Optimization.Objects.Visual;
 
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 using PrefabObject = DataManager.GameData.PrefabObject;
@@ -302,10 +302,10 @@ namespace ObjectModifiers.Modifiers
                         {
                             for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
                             {
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                                 {
                                     var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-                                    return Vector2.Distance(player.transform.position, Objects.beatmapObjects[modifierObject.id].gameObject.transform.position) > float.Parse(value);
+                                    return Vector2.Distance(player.transform.position, levelObject.visualObject.GameObject.transform.position) > float.Parse(value);
                                 }
                             }
 
@@ -315,10 +315,10 @@ namespace ObjectModifiers.Modifiers
                         {
                             for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
                             {
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                                 {
                                     var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-                                    return Vector2.Distance(player.transform.position, Objects.beatmapObjects[modifierObject.id].gameObject.transform.position) < float.Parse(value);
+                                    return Vector2.Distance(player.transform.position, levelObject.visualObject.GameObject.transform.position) < float.Parse(value);
                                 }
                             }
 
@@ -410,27 +410,33 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "mouseOver":
                         {
-                            if (modifierObject != null && refModifier != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && refModifier != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
                                 if (refModifier.optimization == null)
                                 {
-                                    refModifier.optimization = Objects.beatmapObjects[modifierObject.id].gameObject.AddComponent<ObjectOptimization>();
+                                    if (!levelObject.visualObject.GameObject.GetComponent<ObjectOptimization>())
+                                        refModifier.optimization = levelObject.visualObject.GameObject.AddComponent<ObjectOptimization>();
+                                    else refModifier.optimization = levelObject.visualObject.GameObject.GetComponent<ObjectOptimization>();
+
+                                    refModifier.optimization.beatmapObject = modifierObject;
+                                    refModifier.optimization.modifierObject = refModifier;
                                 }
 
                                 if (refModifier.optimization != null)
-                                {
                                     return refModifier.optimization.hovered;
-                                }
                             }
                             break;
                         }
                     case "bulletCollide":
                         {
-                            if (modifierObject != null && refModifier != null && modifierObject.TimeWithinLifespan() && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && refModifier != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
                                 if (refModifier.optimization == null)
                                 {
-                                    refModifier.optimization = Objects.beatmapObjects[modifierObject.id].gameObject.AddComponent<ObjectOptimization>();
+                                    if (!levelObject.visualObject.GameObject.GetComponent<ObjectOptimization>())
+                                        refModifier.optimization = levelObject.visualObject.GameObject.AddComponent<ObjectOptimization>();
+                                    else refModifier.optimization = levelObject.visualObject.GameObject.GetComponent<ObjectOptimization>();
+
                                     refModifier.optimization.beatmapObject = modifierObject;
                                     refModifier.optimization.modifierObject = refModifier;
                                 }
@@ -916,9 +922,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "blur":
                         {
-                            if (modifierObject != null && modifierObject.objectType != BeatmapObject.ObjectType.Empty && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null && Objects.beatmapObjects[modifierObject.id].renderer != null)
+                            if (modifierObject != null && modifierObject.objectType != BeatmapObject.ObjectType.Empty && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer)
                             {
-                                var rend = Objects.beatmapObjects[modifierObject.id].renderer;
+                                var rend = levelObject.visualObject.Renderer;
                                 rend.material = ObjectModifiersPlugin.blur;
                                 if (command.Count > 1 && bool.Parse(command[1]) == true)
                                 {
@@ -934,9 +940,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "particleSystem":
                         {
-                            if (refModifier != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (refModifier != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var mod = Objects.beatmapObjects[modifierObject.id].gameObject;
+                                var mod = levelObject.visualObject.GameObject;
 
                                 if (refModifier.ps == null)
                                 {
@@ -1065,9 +1071,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "trailRenderer":
                         {
-                            if (refModifier != null && modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (refModifier != null && modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var mod = Objects.beatmapObjects[modifierObject.id].gameObject;
+                                var mod = levelObject.visualObject.GameObject;
 
                                 if (refModifier.tr == null)
                                 {
@@ -1124,9 +1130,9 @@ namespace ObjectModifiers.Modifiers
                     case "playerHit":
                         {
                             if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !constant)
-                                if (Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                                if (Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                                 {
-                                    var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                    var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                     if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(value, out int hit))
                                     {
@@ -1187,9 +1193,9 @@ namespace ObjectModifiers.Modifiers
                     case "playerHeal":
                         {
                             if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !constant)
-                                if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                                if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                                 {
-                                    var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                    var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                     if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(value, out int hit))
                                     {
@@ -1241,9 +1247,9 @@ namespace ObjectModifiers.Modifiers
                     case "playerKill":
                         {
                             if ((EditorManager.inst == null || !EditorManager.inst.isEditing) && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 && !constant)
-                                if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                                if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                                 {
-                                    var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                    var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                     InputDataManager.inst.players[i].health = 0;
                                 }
@@ -1263,9 +1269,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "playerMove":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                 if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
                                 {
@@ -1307,9 +1313,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "playerMoveX":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                 if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
                                 {
@@ -1355,9 +1361,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "playerMoveY":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                 if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
                                 {
@@ -1403,9 +1409,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "playerRotate":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                 if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
                                 {
@@ -1447,9 +1453,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "playerBoost":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null && !constant)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !constant)
                             {
-                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                 if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
                                 {
@@ -1534,9 +1540,7 @@ namespace ObjectModifiers.Modifiers
                     case "hideMouse":
                         {
                             if (EditorManager.inst == null || !EditorManager.inst.isEditing)
-                            {
                                 LSFunctions.LSHelpers.HideCursor();
-                            }
                             break;
                         }
                     case "addVariable":
@@ -1574,9 +1578,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "disableObject":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].transformChain != null && Objects.beatmapObjects[modifierObject.id].transformChain.Count > 0)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
                             {
-                                Objects.beatmapObjects[modifierObject.id].transformChain[0].gameObject.SetActive(false);
+                                levelObject.transformChain[0].gameObject.SetActive(false);
                             }
                             break;
                         }
@@ -1588,14 +1592,9 @@ namespace ObjectModifiers.Modifiers
                             {
                                 for (int o = 0; o < cc.Count; o++)
                                 {
-                                    if (cc[o] != null && Objects.beatmapObjects.ContainsKey(cc[o].id))
+                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
                                     {
-                                        var mod = Objects.beatmapObjects[cc[o].id];
-
-                                        if (mod.transformChain != null && mod.transformChain.Count > 0)
-                                        {
-                                            mod.transformChain[0].gameObject.SetActive(false);
-                                        }
+                                        levelObject.transformChain[0].gameObject.SetActive(false);
                                     }
                                 }
                             }
@@ -1619,7 +1618,10 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactivePos":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sampleX) && float.TryParse(command[3], out float intensityX) && int.TryParse(command[2], out int sampleY) && float.TryParse(command[4], out float intensityY) && float.TryParse(value, out float val))
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject
+                                && int.TryParse(command[1], out int sampleX) && float.TryParse(command[3], out float intensityX)
+                                && int.TryParse(command[2], out int sampleY) && float.TryParse(command[4], out float intensityY)
+                                && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
@@ -1631,15 +1633,10 @@ namespace ObjectModifiers.Modifiers
                                 float reactivePositionX = samples[sampleX] * intensityX * val;
                                 float reactivePositionY = samples[sampleY] * intensityY * val;
 
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
+                                var x = modifierObject.origin.x;
+                                var y = modifierObject.origin.y;
 
-                                if (functionObject.gameObject != null)
-                                {
-                                    var x = modifierObject.origin.x;
-                                    var y = modifierObject.origin.y;
-
-                                    functionObject.gameObject.transform.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, 1f);
-                                }
+                                levelObject.visualObject.GameObject.transform.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, 1f);
 
                                 samples = null;
                             }
@@ -1647,7 +1644,10 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactiveSca":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sampleX) && float.TryParse(command[3], out float intensityX) && int.TryParse(command[2], out int sampleY) && float.TryParse(command[4], out float intensityY) && float.TryParse(value, out float val))
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject
+                                && int.TryParse(command[1], out int sampleX) && float.TryParse(command[3], out float intensityX)
+                                && int.TryParse(command[2], out int sampleY) && float.TryParse(command[4], out float intensityY)
+                                && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
@@ -1659,10 +1659,7 @@ namespace ObjectModifiers.Modifiers
                                 float reactiveScaleX = samples[sampleX] * intensityX * val;
                                 float reactiveScaleY = samples[sampleY] * intensityY * val;
 
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
-
-                                if (functionObject.gameObject != null)
-                                    functionObject.gameObject.transform.localScale = new Vector3(1f + reactiveScaleX, 1f + reactiveScaleY, 1f);
+                                levelObject.visualObject.GameObject.transform.localScale = new Vector3(1f + reactiveScaleX, 1f + reactiveScaleY, 1f);
 
                                 samples = null;
                             }
@@ -1670,7 +1667,8 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactiveRot":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sample) && float.TryParse(value, out float val))
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject
+                                && int.TryParse(command[1], out int sample) && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
@@ -1680,15 +1678,7 @@ namespace ObjectModifiers.Modifiers
 
                                 float reactiveRotation = samples[sample] * val;
 
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
-
-                                if (functionObject.gameObject != null)
-                                {
-                                    functionObject.gameObject.transform.localRotation = Quaternion.Euler(0f, 0f, reactiveRotation);
-                                    //var e = functionObject.gameObject.transform.parent.localRotation;
-                                    //e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
-                                    //functionObject.gameObject.transform.parent.localRotation = e;
-                                }
+                                levelObject.visualObject.GameObject.transform.localRotation = Quaternion.Euler(0f, 0f, reactiveRotation);
 
                                 samples = null;
                             }
@@ -1696,7 +1686,7 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactiveCol":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int sample) && float.TryParse(value, out float val))
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(command[1], out int sample) && float.TryParse(value, out float val))
                             {
                                 float[] samples = new float[256];
 
@@ -1706,10 +1696,8 @@ namespace ObjectModifiers.Modifiers
 
                                 float reactiveColor = samples[sample] * val;
 
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
-
-                                if (functionObject.renderer != null && int.TryParse(command[2], out int col))
-                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[col] * reactiveColor;
+                                if (levelObject.visualObject.Renderer != null && int.TryParse(command[2], out int col))
+                                    levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[col] * reactiveColor;
 
                                 samples = null;
                             }
@@ -1717,230 +1705,140 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "reactivePosChain":
                         {
-                            if (refModifier != null)
-                            {
-                                var ch = refModifier.beatmapObject.GetChildChain();
+                            //if (refModifier != null)
+                            //{
+                            //    var ch = refModifier.beatmapObject.GetChildChain();
 
-                                float[] samples = new float[256];
+                            //    float[] samples = new float[256];
 
-                                AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+                            //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactivePositionX = samples[int.Parse(command[1])] * float.Parse(command[3]) * float.Parse(value);
-                                float reactivePositionY = samples[int.Parse(command[2])] * float.Parse(command[4]) * float.Parse(value);
+                            //    float reactivePositionX = samples[int.Parse(command[1])] * float.Parse(command[3]) * float.Parse(value);
+                            //    float reactivePositionY = samples[int.Parse(command[2])] * float.Parse(command[4]) * float.Parse(value);
 
-                                foreach (var cc in ch)
-                                {
-                                    for (int i = 0; i < cc.Count; i++)
-                                    {
-                                        if (Objects.beatmapObjects.ContainsKey(cc[i].id))
-                                        {
-                                            var modifier = Objects.beatmapObjects[cc[i].id];
+                            //    foreach (var cc in ch)
+                            //    {
+                            //        for (int i = 0; i < cc.Count; i++)
+                            //        {
+                            //            if (Objects.beatmapObjects.ContainsKey(cc[i].id))
+                            //            {
+                            //                var modifier = Objects.beatmapObjects[cc[i].id];
 
-                                            var tf = modifier.transformChain;
+                            //                var tf = modifier.transformChain;
 
-                                            if (tf != null && tf.Count > 2)
-                                            {
-                                                var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
+                            //                if (tf != null && tf.Count > 2)
+                            //                {
+                            //                    var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
 
-                                                if (tf[tf.Count - 2 - index].name != "top")
-                                                {
-                                                    if (ModCompatibility.catalyst != null && ModCompatibility.catalystType == ModCompatibility.CatalystType.Editor)
-                                                    {
-                                                        tf[tf.Count - 2 - index].localPosition += new Vector3(reactivePositionX, reactivePositionY, 0f);
-                                                    }
-                                                    else
-                                                    {
-                                                        var nextKF = cc[i].NextEventKeyframe(0);
-                                                        var prevKF = cc[i].PrevEventKeyframe(0);
-
-                                                        if (nextKF != null)
-                                                        {
-                                                            var t = (AudioManager.inst.CurrentAudioSource.time - cc[i].StartTime) / nextKF.eventTime;
-
-                                                            var x = RTMath.InterpolateOverCurve(nextKF.curveType.Animation, prevKF.eventValues[0], nextKF.eventValues[0], t);
-                                                            var y = RTMath.InterpolateOverCurve(nextKF.curveType.Animation, prevKF.eventValues[1], nextKF.eventValues[1], t);
-
-                                                            var tf2 = tf[tf.Count - 2 - index];
-                                                            tf2.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, tf2.localPosition.z);
-                                                        }
-                                                        else
-                                                        {
-                                                            var x = prevKF.eventValues[0];
-                                                            var y = prevKF.eventValues[1];
-
-                                                            var tf2 = tf[tf.Count - 2 - index];
-                                                            tf2.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, tf2.localPosition.z);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            //                    if (tf[tf.Count - 2 - index].name != "top")
+                            //                        tf[tf.Count - 2 - index].localPosition += new Vector3(reactivePositionX, reactivePositionY, 0f);
+                            //                }
+                            //            }
+                            //        }
+                            //    }
+                            //}
                             break;
                         }
                     case "reactiveScaChain":
                         {
-                            if (refModifier != null)
-                            {
-                                var ch = refModifier.beatmapObject.GetChildChain();
+                            //if (refModifier != null)
+                            //{
+                            //    var ch = refModifier.beatmapObject.GetChildChain();
 
-                                float[] samples = new float[256];
+                            //    float[] samples = new float[256];
 
-                                AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+                            //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactiveScaleX = samples[int.Parse(command[1])] * float.Parse(command[3]) * float.Parse(value);
-                                float reactiveScaleY = samples[int.Parse(command[2])] * float.Parse(command[4]) * float.Parse(value);
+                            //    float reactiveScaleX = samples[int.Parse(command[1])] * float.Parse(command[3]) * float.Parse(value);
+                            //    float reactiveScaleY = samples[int.Parse(command[2])] * float.Parse(command[4]) * float.Parse(value);
 
-                                foreach (var cc in ch)
-                                {
-                                    for (int i = 0; i < cc.Count; i++)
-                                    {
-                                        if (Objects.beatmapObjects.ContainsKey(cc[i].id))
-                                        {
-                                            var modifier = Objects.beatmapObjects[cc[i].id];
+                            //    foreach (var cc in ch)
+                            //    {
+                            //        for (int i = 0; i < cc.Count; i++)
+                            //        {
+                            //            if (Objects.beatmapObjects.ContainsKey(cc[i].id))
+                            //            {
+                            //                var modifier = Objects.beatmapObjects[cc[i].id];
 
-                                            var tf = modifier.transformChain;
+                            //                var tf = modifier.transformChain;
 
-                                            if (tf != null && tf.Count > 2)
-                                            {
-                                                var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
+                            //                if (tf != null && tf.Count > 2)
+                            //                {
+                            //                    var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
 
-                                                if (tf[tf.Count - 2 - index].name != "top")
-                                                {
-                                                    if (ModCompatibility.catalyst != null && ModCompatibility.catalystType == ModCompatibility.CatalystType.Editor)
-                                                    {
-                                                        tf[tf.Count - 2 - index].localScale += new Vector3(reactiveScaleX, reactiveScaleY, 0f);
-                                                    }
-                                                    else
-                                                    {
-                                                        var nextKF = cc[i].NextEventKeyframe(1);
-                                                        var prevKF = cc[i].PrevEventKeyframe(1);
-
-                                                        if (nextKF != null)
-                                                        {
-                                                            var t = (AudioManager.inst.CurrentAudioSource.time - cc[i].StartTime) / nextKF.eventTime;
-
-                                                            var x = RTMath.InterpolateOverCurve(nextKF.curveType.Animation, prevKF.eventValues[0], nextKF.eventValues[0], t);
-                                                            var y = RTMath.InterpolateOverCurve(nextKF.curveType.Animation, prevKF.eventValues[1], nextKF.eventValues[1], t);
-
-                                                            var tf2 = tf[tf.Count - 2 - index];
-                                                            tf2.localScale = new Vector3(x + reactiveScaleX, y + reactiveScaleY, tf2.localScale.z);
-                                                        }
-                                                        else
-                                                        {
-                                                            var x = prevKF.eventValues[0];
-                                                            var y = prevKF.eventValues[1];
-
-                                                            var tf2 = tf[tf.Count - 2 - index];
-                                                            tf2.localScale = new Vector3(x + reactiveScaleX, y + reactiveScaleY, tf2.localScale.z);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            //                    if (tf[tf.Count - 2 - index].name != "top")
+                            //                        tf[tf.Count - 2 - index].localScale += new Vector3(reactiveScaleX, reactiveScaleY, 0f);
+                            //                }
+                            //            }
+                            //        }
+                            //    }
+                            //}
                             break;
                         }
                     case "reactiveRotChain":
                         {
-                            if (refModifier != null)
-                            {
-                                var ch = refModifier.beatmapObject.GetChildChain();
+                            //if (refModifier != null)
+                            //{
+                            //    var ch = refModifier.beatmapObject.GetChildChain();
 
-                                float[] samples = new float[256];
+                            //    float[] samples = new float[256];
 
-                                AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+                            //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactiveRotation = samples[int.Parse(command[1])] * float.Parse(value);
+                            //    float reactiveRotation = samples[int.Parse(command[1])] * float.Parse(value);
 
-                                foreach (var cc in ch)
-                                {
-                                    for (int i = 0; i < cc.Count; i++)
-                                    {
-                                        if (Objects.beatmapObjects.ContainsKey(cc[i].id))
-                                        {
-                                            var modifier = Objects.beatmapObjects[cc[i].id];
+                            //    foreach (var cc in ch)
+                            //    {
+                            //        for (int i = 0; i < cc.Count; i++)
+                            //        {
+                            //            if (Objects.beatmapObjects.ContainsKey(cc[i].id))
+                            //            {
+                            //                var modifier = Objects.beatmapObjects[cc[i].id];
 
-                                            var tf = modifier.transformChain;
+                            //                var tf = modifier.transformChain;
 
-                                            if (tf != null && tf.Count > 2)
-                                            {
-                                                var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
+                            //                if (tf != null && tf.Count > 2)
+                            //                {
+                            //                    var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
 
-                                                if (tf[tf.Count - 2 - index].name != "top")
-                                                {
-                                                    var parent = tf[tf.Count - 2 - index];
+                            //                    if (tf[tf.Count - 2 - index].name != "top")
+                            //                    {
+                            //                        var parent = tf[tf.Count - 2 - index];
 
-
-                                                    if (ModCompatibility.catalyst != null && ModCompatibility.catalystType == ModCompatibility.CatalystType.Editor)
-                                                    {
-                                                        var e = parent.localRotation;
-                                                        e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
-                                                        parent.localRotation = e;
-                                                    }
-                                                    else
-                                                    {
-                                                        var nextKF = cc[i].NextEventKeyframe(2);
-                                                        var prevKF = cc[i].PrevEventKeyframe(2);
-
-                                                        if (nextKF != null)
-                                                        {
-                                                            var t = (AudioManager.inst.CurrentAudioSource.time - cc[i].StartTime) / nextKF.eventTime;
-
-                                                            var x = RTMath.InterpolateOverCurve(nextKF.curveType.Animation, prevKF.eventValues[0], nextKF.eventValues[0], t);
-                                                            var y = RTMath.InterpolateOverCurve(nextKF.curveType.Animation, prevKF.eventValues[1], nextKF.eventValues[1], t);
-
-                                                            var e = parent.localRotation;
-                                                            e.eulerAngles += new Vector3(0f, 0f, x + reactiveRotation);
-                                                            parent.localRotation = e;
-                                                        }
-                                                        else
-                                                        {
-                                                            var x = prevKF.eventValues[0];
-                                                            var y = prevKF.eventValues[1];
-
-                                                            var e = parent.localRotation;
-                                                            e.eulerAngles += new Vector3(0f, 0f, x + reactiveRotation);
-                                                            parent.localRotation = e;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            //                        var e = parent.localRotation;
+                            //                        e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
+                            //                        parent.localRotation = e;
+                            //                    }
+                            //                }
+                            //            }
+                            //        }
+                            //    }
+                            //}
                             break;
                         }
                     case "reactiveColChain":
                         {
-                            if (refModifier != null)
-                            {
-                                var ch = refModifier.beatmapObject.GetChildChain();
+                            //if (refModifier != null)
+                            //{
+                            //    var ch = refModifier.beatmapObject.GetChildChain();
 
-                                float[] samples = new float[256];
+                            //    float[] samples = new float[256];
 
-                                AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+                            //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
 
-                                float reactiveColor = samples[int.Parse(command[1])] * float.Parse(value);
+                            //    float reactiveColor = samples[int.Parse(command[1])] * float.Parse(value);
 
-                                foreach (var cc in ch)
-                                {
-                                    for (int i = 0; i < cc.Count; i++)
-                                    {
-                                        var modifier = Objects.beatmapObjects[cc[i].id];
+                            //    foreach (var cc in ch)
+                            //    {
+                            //        for (int i = 0; i < cc.Count; i++)
+                            //        {
+                            //            var modifier = Objects.beatmapObjects[cc[i].id];
 
-                                        if (modifier.renderer != null)
-                                        {
-                                            modifier.renderer.material.color += GameManager.inst.LiveTheme.objectColors[int.Parse(command[2])] * reactiveColor;
-                                        }
-                                    }
-                                }
-                            }
+                            //            if (modifier.renderer != null)
+                            //                modifier.renderer.material.color += GameManager.inst.LiveTheme.objectColors[int.Parse(command[2])] * reactiveColor;
+                            //        }
+                            //    }
+                            //}
                             break;
                         }
                     case "setPlayerModel":
@@ -1969,60 +1867,60 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "legacyTail":
                         {
-                            if (!tailDone)
-                            {
-                                var parent = new GameObject(modifierObject.id);
-                                parent.transform.SetParent(ObjectManager.inst.objectParent.transform);
-                                parent.transform.localScale = Vector3.one;
-                                var legacyTracker = parent.AddComponent<LegacyTracker>();
+                            //if (!tailDone)
+                            //{
+                            //    var parent = new GameObject(modifierObject.id);
+                            //    parent.transform.SetParent(ObjectManager.inst.objectParent.transform);
+                            //    parent.transform.localScale = Vector3.one;
+                            //    var legacyTracker = parent.AddComponent<LegacyTracker>();
 
-                                var ch = modifierObject.GetChildChain();
+                            //    var ch = modifierObject.GetChildChain();
 
-                                foreach (var cc in ch)
-                                {
-                                    for (int i = 0; i < cc.Count; i++)
-                                    {
-                                        var obj = cc[i];
+                            //    foreach (var cc in ch)
+                            //    {
+                            //        for (int i = 0; i < cc.Count; i++)
+                            //        {
+                            //            var obj = cc[i];
 
-                                        if (Objects.beatmapObjects.ContainsKey(obj.id))
-                                        {
-                                            var modifier = Objects.beatmapObjects[cc[i].id];
+                            //            if (Objects.beatmapObjects.ContainsKey(obj.id))
+                            //            {
+                            //                var modifier = Objects.beatmapObjects[cc[i].id];
 
-                                            var tf = modifier.transformChain;
+                            //                var tf = modifier.transformChain;
 
-                                            if (tf != null && tf.Count > 0)
-                                            {
-                                                var top = tf[0];
+                            //                if (tf != null && tf.Count > 0)
+                            //                {
+                            //                    var top = tf[0];
 
-                                                var id = LSFunctions.LSText.randomNumString(16);
+                            //                    var id = LSFunctions.LSText.randomNumString(16);
 
-                                                var rt = new LegacyTracker.RTObject(top.gameObject);
-                                                rt.values.Add("Renderer", top.GetComponentInChildren<Renderer>());
-                                                legacyTracker.originals.Add(id, rt);
-                                            }
-                                        }
-                                    }
-                                }
+                            //                    var rt = new LegacyTracker.RTObject(top.gameObject);
+                            //                    rt.values.Add("Renderer", top.GetComponentInChildren<Renderer>());
+                            //                    legacyTracker.originals.Add(id, rt);
+                            //                }
+                            //            }
+                            //        }
+                            //    }
 
-                                legacyTracker.distance = float.Parse(value);
-                                if (command.Count > 1)
-                                    legacyTracker.tailCount = int.Parse(command[1]);
-                                if (command.Count > 2)
-                                    legacyTracker.transformSpeed = float.Parse(command[2]);
-                                if (command.Count > 3)
-                                    legacyTracker.distanceSpeed = float.Parse(command[3]);
+                            //    legacyTracker.distance = float.Parse(value);
+                            //    if (command.Count > 1)
+                            //        legacyTracker.tailCount = int.Parse(command[1]);
+                            //    if (command.Count > 2)
+                            //        legacyTracker.transformSpeed = float.Parse(command[2]);
+                            //    if (command.Count > 3)
+                            //        legacyTracker.distanceSpeed = float.Parse(command[3]);
 
-                                legacyTracker.Setup();
+                            //    legacyTracker.Setup();
 
-                                tailDone = true;
-                            }
+                            //    tailDone = true;
+                            //}
                             break;
                         }
                     case "blackHole":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null)
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var gm = Objects.beatmapObjects[modifierObject.id].gameObject;
+                                var gm = levelObject.visualObject.GameObject;
 
                                 for (int i = 0; i < InputDataManager.inst.players.Count; i++)
                                 {
@@ -2053,14 +1951,12 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "addColor":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && int.TryParse(command[1], out int index) && float.TryParse(value, out float num))
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(command[1], out int index) && float.TryParse(value, out float num))
                             {
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
-
                                 index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
 
-                                if (functionObject.renderer != null)
-                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
+                                if (levelObject.visualObject.Renderer != null)
+                                    levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
                             }
 
                             break;
@@ -2069,14 +1965,11 @@ namespace ObjectModifiers.Modifiers
                         {
                             foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == command[1]))
                             {
-                                if (bm != null && Objects.beatmapObjects.ContainsKey(bm.id) && int.TryParse(command[2], out int index) && float.TryParse(value, out float num))
+                                if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(command[2], out int index) && float.TryParse(value, out float num))
                                 {
-                                    var functionObject = Objects.beatmapObjects[bm.id];
-
                                     index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
 
-                                    if (functionObject.renderer != null)
-                                        functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
+                                    levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
                                 }
                             }
 
@@ -2085,33 +1978,25 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "addColorPlayerDistance":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && Objects.beatmapObjects[modifierObject.id].gameObject != null && int.TryParse(command[1], out int index) && float.TryParse(value, out float num))
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && levelObject.visualObject.Renderer && int.TryParse(command[1], out int index) && float.TryParse(value, out float num))
                             {
-                                var i = ObjectExtensions.ClosestPlayer(Objects.beatmapObjects[modifierObject.id].gameObject);
+                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
                                 var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
 
-                                var distance = Vector2.Distance(player.transform.position, Objects.beatmapObjects[modifierObject.id].gameObject.transform.position);
-
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
+                                var distance = Vector2.Distance(player.transform.position, levelObject.visualObject.GameObject.transform.position);
 
                                 index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
 
-                                if (functionObject.renderer != null)
-                                    functionObject.renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * distance * num;
+                                levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * distance * num;
                             }
 
                             break;
                         }
                     case "setAlpha":
                         {
-                            if (modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id) && float.TryParse(value, out float num))
-                            {
-                                var functionObject = Objects.beatmapObjects[modifierObject.id];
-
-                                if (functionObject.renderer != null)
-                                    functionObject.renderer.material.color = LSFunctions.LSColors.fadeColor(functionObject.renderer.material.color, num);
-                            }
+                            if (modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer && float.TryParse(value, out float num))
+                                levelObject.visualObject.Renderer.material.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
 
                             break;
                         }
@@ -2119,13 +2004,8 @@ namespace ObjectModifiers.Modifiers
                         {
                             foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == command[1]))
                             {
-                                if (bm != null && Objects.beatmapObjects.ContainsKey(bm.id) && float.TryParse(value, out float num))
-                                {
-                                    var functionObject = Objects.beatmapObjects[bm.id];
-
-                                    if (functionObject.renderer != null)
-                                        functionObject.renderer.material.color = LSFunctions.LSColors.fadeColor(functionObject.renderer.material.color, num);
-                                }
+                                if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && float.TryParse(value, out float num))
+                                    levelObject.visualObject.Renderer.material.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
                             }
 
                             break;
@@ -2254,11 +2134,9 @@ namespace ObjectModifiers.Modifiers
                         }
                     case "disableObject":
                         {
-                            if (!hasChanged && modifierObject != null && Objects.beatmapObjects.ContainsKey(modifierObject.id))
+                            if (!hasChanged && modifierObject != null && Updater.TryGetObject(modifierObject, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
                             {
-                                var tf = Objects.beatmapObjects[modifierObject.id].transformChain;
-                                if (tf != null && tf.Count > 0 && tf[0] != null)
-                                    tf[0].gameObject.SetActive(true);
+                                levelObject.transformChain[0].gameObject.SetActive(true);
                                 hasChanged = true;
                             }
 
@@ -2274,12 +2152,8 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     for (int o = 0; o < cc.Count; o++)
                                     {
-                                        if (cc[o] != null && Objects.beatmapObjects.ContainsKey(cc[o].id))
-                                        {
-                                            var tf = Objects.beatmapObjects[cc[o].id].transformChain;
-                                            if (tf != null && tf.Count > 0 && tf[0] != null)
-                                                tf[0].gameObject.SetActive(true);
-                                        }
+                                        if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                            levelObject.transformChain[0].gameObject.SetActive(true);
                                     }
                                 }
                                 hasChanged = true;
@@ -2289,7 +2163,6 @@ namespace ObjectModifiers.Modifiers
                         }
                 }
             }
-
 
             float Interpolate()
             {
