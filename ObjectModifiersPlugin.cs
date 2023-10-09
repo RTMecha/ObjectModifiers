@@ -1,7 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -13,12 +10,7 @@ using HarmonyLib;
 using LSFunctions;
 
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
-using TMPro;
-using DG.Tweening;
-using DG.Tweening.Core;
 using SimpleJSON;
 
 using ObjectModifiers.Modifiers;
@@ -30,13 +22,15 @@ using RTFunctions.Functions;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
 using RTFunctions.Functions.Managers.Networking;
+using RTFunctions.Functions.Optimization;
+using RTFunctions.Functions.Optimization.Objects;
 
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 using Prefab = DataManager.GameData.Prefab;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.1.5")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.2.0")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -148,105 +142,104 @@ namespace ObjectModifiers
             }
         }
 
-        [HarmonyPatch(typeof(ObjectManager), "Update")]
-        [HarmonyPostfix]
-        static void ObjectUpdate(ObjectManager __instance)
-        {
-            if (ModCompatibility.catalyst == null)
-            {
-                foreach (var beatmapObject in DataManager.inst.gameData.beatmapObjects)
-                {
-                    if (!customSequences.ContainsKey(beatmapObject.id))
-                    {
-                        customSequences.Add(beatmapObject.id, new CustomSequence(beatmapObject));
-                    }
-                }
+        //[HarmonyPatch(typeof(ObjectManager), "Update")]
+        //[HarmonyPostfix]
+        //static void ObjectUpdate(ObjectManager __instance)
+        //{
+            //if (ModCompatibility.catalyst == null)
+            //{
+            //    foreach (var beatmapObject in DataManager.inst.gameData.beatmapObjects)
+            //    {
+            //        if (!customSequences.ContainsKey(beatmapObject.id))
+            //        {
+            //            customSequences.Add(beatmapObject.id, new CustomSequence(beatmapObject));
+            //        }
+            //    }
 
-                //var beatmapGameObjects = __instance.beatmapGameObjects;
-                foreach (var beatmapObject in DataManager.inst.gameData.beatmapObjects)
-                {
-                    float startTime = Mathf.Clamp(beatmapObject.StartTime, 0.0001f, AudioManager.inst.CurrentAudioSource.clip.length);
-                    string sequenceIDAssignment = beatmapObject.id;
+            //    foreach (var beatmapObject in DataManager.inst.gameData.beatmapObjects)
+            //    {
+            //        float startTime = Mathf.Clamp(beatmapObject.StartTime, 0.0001f, AudioManager.inst.CurrentAudioSource.clip.length);
+            //        string sequenceIDAssignment = beatmapObject.id;
 
-                    int currentIndex = 0;
-                    var colorKeyframes = beatmapObject.events[3].OrderBy(x => x.eventTime).ToList();
-                    foreach (DataManager.GameData.EventKeyframe currentKF in colorKeyframes)
-                    {
-                        if (!currentKF.active)
-                        {
-                            currentKF.active = true;
-                            int previousIndex = currentIndex - 1;
-                            if (previousIndex < 0)
-                                previousIndex = 0;
-                            DataManager.GameData.EventKeyframe previousKF = colorKeyframes[previousIndex];
-                            float atPosition = startTime + previousKF.eventTime;
-                            float duration = currentKF.eventTime - previousKF.eventTime;
-                            if (duration == 0.0)
-                            {
-                                atPosition = Mathf.Clamp(atPosition - 0.0001f, 0.0001f, float.PositiveInfinity);
-                                duration = 0.0001f;
-                            }
+            //        int currentIndex = 0;
+            //        var colorKeyframes = beatmapObject.events[3].OrderBy(x => x.eventTime).ToList();
+            //        foreach (DataManager.GameData.EventKeyframe currentKF in colorKeyframes)
+            //        {
+            //            if (!currentKF.active)
+            //            {
+            //                currentKF.active = true;
+            //                int previousIndex = currentIndex - 1;
+            //                if (previousIndex < 0)
+            //                    previousIndex = 0;
+            //                DataManager.GameData.EventKeyframe previousKF = colorKeyframes[previousIndex];
+            //                float atPosition = startTime + previousKF.eventTime;
+            //                float duration = currentKF.eventTime - previousKF.eventTime;
+            //                if (duration == 0.0)
+            //                {
+            //                    atPosition = Mathf.Clamp(atPosition - 0.0001f, 0.0001f, float.PositiveInfinity);
+            //                    duration = 0.0001f;
+            //                }
 
-                            float a = currentKF.eventValues[1];
-                            float h = 0f;
-                            float s = 0f;
-                            float v = 0f;
+            //                float a = currentKF.eventValues[1];
+            //                float h = 0f;
+            //                float s = 0f;
+            //                float v = 0f;
 
-                            if (currentKF.eventValues.Length > 2)
-                            {
-                                h = currentKF.eventValues[2];
-                                s = currentKF.eventValues[3];
-                                v = currentKF.eventValues[4];
-                            }
+            //                if (currentKF.eventValues.Length > 2)
+            //                {
+            //                    h = currentKF.eventValues[2];
+            //                    s = currentKF.eventValues[3];
+            //                    v = currentKF.eventValues[4];
+            //                }
 
-                            if (currentKF.random != 0)
-                                a = ObjectManager.inst.RandomFloatParser(currentKF);
+            //                if (currentKF.random != 0)
+            //                    a = ObjectManager.inst.RandomFloatParser(currentKF);
 
-                            if (currentIndex == 0)
-                            {
-                                if (customSequences.ContainsKey(sequenceIDAssignment))
-                                {
-                                    customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].opacity = x, a, a, 0f).SetEase(EventManager.inst.customInstantEase));
-                                    //customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].hue = x, h, h, 0f).SetEase(EventManager.inst.customInstantEase));
-                                    //customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].sat = x, s, s, 0f).SetEase(EventManager.inst.customInstantEase));
-                                    //customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].val = x, v, v, 0f).SetEase(EventManager.inst.customInstantEase));
-                                }
-                            }
-                            if (customSequences.ContainsKey(sequenceIDAssignment))
-                            {
-                                customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].opacity = x, previousKF.eventValues[1], a, duration).SetEase(currentKF.curveType.Animation));
-                                if (previousKF.eventValues.Length > 2)
-                                {
-                                    //customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].hue = x, previousKF.eventValues[2], h, duration).SetEase(currentKF.curveType.Animation));
-                                    //customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].sat = x, previousKF.eventValues[3], s, duration).SetEase(currentKF.curveType.Animation));
-                                    //customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].val = x, previousKF.eventValues[4], v, duration).SetEase(currentKF.curveType.Animation));
-                                }
-                            }
-                            ++currentIndex;
-                        }
-                    }
+            //                if (currentIndex == 0)
+            //                {
+            //                    if (customSequences.ContainsKey(sequenceIDAssignment))
+            //                    {
+            //                        customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].opacity = x, a, a, 0f).SetEase(EventManager.inst.customInstantEase));
+            //                        //customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].hue = x, h, h, 0f).SetEase(EventManager.inst.customInstantEase));
+            //                        //customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].sat = x, s, s, 0f).SetEase(EventManager.inst.customInstantEase));
+            //                        //customSequences[sequenceIDAssignment].sequence.Insert(0f, DOTween.To(x => customSequences[sequenceIDAssignment].val = x, v, v, 0f).SetEase(EventManager.inst.customInstantEase));
+            //                    }
+            //                }
+            //                if (customSequences.ContainsKey(sequenceIDAssignment))
+            //                {
+            //                    customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].opacity = x, previousKF.eventValues[1], a, duration).SetEase(currentKF.curveType.Animation));
+            //                    if (previousKF.eventValues.Length > 2)
+            //                    {
+            //                        //customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].hue = x, previousKF.eventValues[2], h, duration).SetEase(currentKF.curveType.Animation));
+            //                        //customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].sat = x, previousKF.eventValues[3], s, duration).SetEase(currentKF.curveType.Animation));
+            //                        //customSequences[sequenceIDAssignment].sequence.Insert(atPosition, DOTween.To(x => customSequences[sequenceIDAssignment].val = x, previousKF.eventValues[4], v, duration).SetEase(currentKF.curveType.Animation));
+            //                    }
+            //                }
+            //                ++currentIndex;
+            //            }
+            //        }
 
-                    if (Objects.beatmapObjects.ContainsKey(beatmapObject.id) && Objects.beatmapObjects[beatmapObject.id].gameObject != null && beatmapObject.objectType == (BeatmapObject.ObjectType)4)
-                    {
-                        var modifierObject = Objects.beatmapObjects[beatmapObject.id];
+            //        if (Objects.beatmapObjects.ContainsKey(beatmapObject.id) && Objects.beatmapObjects[beatmapObject.id].gameObject != null && beatmapObject.objectType == (BeatmapObject.ObjectType)4)
+            //        {
+            //            var modifierObject = Objects.beatmapObjects[beatmapObject.id];
 
-                        if (modifierObject.gameObject != null && modifierObject.collider != null && modifierObject.gameObject.tag != "Helper")
-                        {
-                            modifierObject.gameObject.tag = "Helper";
+            //            if (modifierObject.gameObject != null && modifierObject.collider != null && modifierObject.gameObject.tag != "Helper")
+            //            {
+            //                modifierObject.gameObject.tag = "Helper";
 
-                            if (modifierObject.transformChain != null && modifierObject.transformChain.Count > 0)
-                                foreach (var tf in modifierObject.transformChain)
-                                {
-                                    tf.tag = "Helper";
-                                }
+            //                if (modifierObject.transformChain != null && modifierObject.transformChain.Count > 0)
+            //                    foreach (var tf in modifierObject.transformChain)
+            //                    {
+            //                        tf.tag = "Helper";
+            //                    }
 
-                            if (modifierObject.collider != null)
-                                modifierObject.collider.isTrigger = false;
-                        }
-                    }
-                }
-            }
-        }
+            //                if (modifierObject.collider != null)
+            //                    modifierObject.collider.isTrigger = false;
+            //            }
+            //        }
+            //    }
+            //}
+        //}
 
         [HarmonyPatch(typeof(GameManager), "SpawnPlayers")]
         [HarmonyPostfix]
@@ -295,15 +288,15 @@ namespace ObjectModifiers
                                 for (int i = 0; i < cc.Count; i++)
                                 {
                                     var obj = cc[i];
-                                    if (obj.objectType != BeatmapObject.ObjectType.Empty && Objects.beatmapObjects.ContainsKey(obj.id) && Objects.beatmapObjects[obj.id].transformChain != null && Objects.beatmapObjects[obj.id].transformChain.Count > 1 && Objects.beatmapObjects[obj.id].transformChain[0].name != "CAMERA_PARENT [" + beatmapObject.id + "]")
+                                    if (obj.objectType != BeatmapObject.ObjectType.Empty && Updater.TryGetObject(obj, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] && levelObject.transformChain[0].name != "CAMERA_PARENT [" + beatmapObject.id + "]")
                                     {
-                                        var tf1 = Objects.beatmapObjects[obj.id].transformChain[0];
+                                        var tf1 = levelObject.transformChain[0];
                                         var ogScale = tf1.localScale;
                                         tf1.SetParent(gameObject.transform);
 
                                         tf1.localScale = ogScale;
 
-                                        Objects.beatmapObjects[obj.id].transformChain.Insert(0, gameObject.transform);
+                                        levelObject.transformChain.Insert(0, gameObject.transform);
                                     }
                                 }
                             }
@@ -733,179 +726,6 @@ namespace ObjectModifiers
                 if (DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key) == null || !DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key).TimeWithinLifespan())
                 {
                     DeleteKey(audioSource.Key, audioSource.Value);
-                }
-            }
-
-            if (homingObjects.Count > 0)
-            {
-                foreach (var homingObject in homingObjects)
-                {
-                    if (!homingObject.active && homingObject.startTime >= AudioManager.inst.CurrentAudioSource.time)
-                    {
-                        homingObject.active = true;
-                        GameObject bullet = Instantiate(ObjectManager.inst.objectPrefabs[homingObject.shape].options[homingObject.shapeOption]);
-                        homingObject.gameObject = bullet;
-                        bullet.transform.SetParent(GameObject.Find("GameObjects").transform);
-                        bullet.transform.localScale = Vector3.one;
-                        var logic = bullet.AddComponent<HomingLogic>();
-                        logic.angleChangingSpeed = 200f;
-                        logic.movementSpeed = 20f;
-                        logic.target = InputDataManager.inst.players[0].player.transform.Find("Player");
-
-                        float z = 0.1f * homingObject.depth;
-                        float calc = homingObject.events[0][0].eventValues[2] / 10f;
-                        z += calc;
-
-                        bullet.transform.GetChild(0).position = new Vector3(homingObject.events[0][0].eventValues[0], homingObject.events[0][0].eventValues[1], z);
-                        bullet.transform.GetChild(0).localScale = new Vector3(homingObject.events[1][0].eventValues[0], homingObject.events[1][0].eventValues[1], 1f);
-                        bullet.transform.GetChild(0).eulerAngles = new Vector3(0f, 0f, homingObject.events[2][0].eventValues[0]);
-
-                        if (bullet.transform.GetChild(0).GetComponent<SelectObjectInEditor>())
-                        {
-                            Destroy(bullet.transform.GetChild(0).GetComponent<SelectObjectInEditor>());
-                        }
-                        if (bullet.transform.GetChild(0).gameObject.GetComponentByName("RTObject"))
-                        {
-                            Destroy(bullet.transform.GetChild(0).gameObject.GetComponentByName("RTObject"));
-                        }
-
-                        if (bullet.transform.GetChild(0).GetComponent<Collider2D>())
-                        {
-                            var collider = bullet.transform.GetChild(0).GetComponent<Collider2D>();
-                            collider.enabled = true;
-                            collider.isTrigger = !homingObject.collide;
-                            if (homingObject.deco)
-                            {
-                                collider.tag = "Helper";
-                            }
-                        }
-
-                        float time = Time.time;
-                        var listTime = new List<float>();
-
-                        if (bullet.transform.GetChild(0).GetComponent<Renderer>())
-                        {
-                            var bulletRenderer = bullet.transform.GetChild(0).GetComponent<Renderer>();
-                            bulletRenderer.enabled = true;
-                            bulletRenderer.material.color = new Color(homingObject.events[3][0].eventValues[0], homingObject.events[3][0].eventValues[1], homingObject.events[3][0].eventValues[2], homingObject.events[3][0].eventValues[3]);
-
-                            logic.mat = bulletRenderer.material;
-                            for (int i = 0; i < homingObject.events[3].Count;)
-                            {
-                                switch (homingObject.events[3][i].homingType)
-                                {
-                                    case HomingObject.HomingKeyframe.HomingType.Static:
-                                        {
-                                            var color = bulletRenderer.material.DOColor(GameManager.inst.LiveTheme.objectColors[(int)homingObject.events[3][i].eventValues[0]], homingObject.events[3][i].eventTime).SetEase(homingObject.events[3][i].curveType.Animation);
-                                            color.Play();
-                                            homingObject.homingLogic.followColor = false;
-                                            break;
-                                        }
-                                    case HomingObject.HomingKeyframe.HomingType.Dynamic:
-                                        {
-                                            homingObject.homingLogic.colRange = homingObject.events[3][i].range;
-                                            homingObject.homingLogic.followColor = true;
-                                            break;
-                                        }
-                                }
-                                if (homingObject.events[3][i].eventTime > AudioManager.inst.CurrentAudioSource.time - homingObject.startTime + homingObject.events[3][i].eventTime)
-                                {
-                                    i++;
-                                }
-                            }
-                        }
-
-                        if (homingObject.events[0].Count > 1)
-                        {
-                            for (int i = 0; i < homingObject.events[0].Count;)
-                            {
-                                switch (homingObject.events[0][i].homingType)
-                                {
-                                    case HomingObject.HomingKeyframe.HomingType.Static:
-                                        {
-                                            if (!homingObject.events[0][i].targetPlayer)
-                                            {
-                                                var position = bullet.transform.GetChild(0).DOLocalMove(new Vector3(homingObject.events[0][i].eventValues[0], homingObject.events[0][i].eventValues[1]), homingObject.events[0][i].eventTime).SetEase(homingObject.events[0][i].curveType.Animation);
-                                                position.Play();
-                                            }
-                                            else
-                                            {
-                                                if (!homingObject.multiple)
-                                                {
-                                                    var position = bullet.transform.GetChild(0).DOLocalMove(InputDataManager.inst.players[(int)homingObject.events[0][i].eventValues[0]].player.transform.Find("Player").position, homingObject.events[0][i].eventTime).SetEase(homingObject.events[0][i].curveType.Animation);
-                                                    position.Play();
-                                                }
-                                            }
-                                            homingObject.homingLogic.followPos = false;
-                                            break;
-                                        }
-                                    case HomingObject.HomingKeyframe.HomingType.Dynamic:
-                                        {
-                                            homingObject.homingLogic.posRange = homingObject.events[0][i].range;
-                                            homingObject.homingLogic.followPos = true;
-                                            break;
-                                        }
-                                }
-                                if (homingObject.events[0][i].eventTime > AudioManager.inst.CurrentAudioSource.time - homingObject.startTime + homingObject.events[0][i].eventTime)
-                                {
-                                    i++;
-                                }
-                            }
-                        }
-
-                        if (homingObject.events[1].Count > 1)
-                        {
-                            for (int i = 0; i < homingObject.events[1].Count;)
-                            {
-                                var scale = bullet.transform.GetChild(0).DOScale(new Vector3(homingObject.events[1][i].eventValues[0], homingObject.events[1][i].eventValues[1], 1f), homingObject.events[1][i].eventTime).SetEase(homingObject.events[1][i].curveType.Animation);
-                                scale.Play();
-
-                                if (homingObject.events[1][i].eventTime > AudioManager.inst.CurrentAudioSource.time - homingObject.startTime + homingObject.events[1][i].eventTime)
-                                {
-                                    i++;
-                                }
-                            }
-                        }
-
-                        if (homingObject.events[2].Count > 1)
-                        {
-                            for (int i = 0; i < homingObject.events[2].Count;)
-                            {
-                                var rotation = bullet.transform.GetChild(0).DORotate(new Vector3(0f, 0f, homingObject.events[2][i].eventValues[0]), homingObject.events[2][i].eventTime, RotateMode.LocalAxisAdd).SetEase(homingObject.events[2][i].curveType.Animation);
-                                rotation.Play();
-
-                                if (homingObject.events[1][i].eventTime > AudioManager.inst.CurrentAudioSource.time - homingObject.startTime + homingObject.events[1][i].eventTime)
-                                {
-                                    i++;
-                                }
-                            }
-                        }
-
-                        listTime = (from x in listTime
-                                    orderby x
-                                    select x).ToList();
-
-                        homingObject.totalDuration = listTime[listTime.Count - 1];
-
-                        Tweener tw = GameObject.Find("ObjectModifiers PluginThing").transform.DOScale(1f, homingObject.totalDuration);
-
-                        tw.OnComplete(delegate ()
-                        {
-                            bullet.transform.DOKill();
-                            if (bullet.transform.GetChild(0).GetComponent<Renderer>())
-                            {
-                                bullet.transform.GetChild(0).GetComponent<Renderer>().material.DOKill();
-                            }
-                            Destroy(bullet);
-                        });
-                    }
-                    else
-                    {
-                        if (homingObject.gameObject != null)
-                        {
-                            Destroy(homingObject.gameObject);
-                        }
-                    }
                 }
             }
         }
@@ -2594,25 +2414,6 @@ namespace ObjectModifiers
                 value = "0"
             }, //randomLesser
         };
-
-        public static Dictionary<string, CustomSequence> customSequences = new Dictionary<string, CustomSequence>();
-
-        public class CustomSequence
-        {
-            public CustomSequence(BeatmapObject _bm)
-            {
-                bm = _bm;
-                sequence = DOTween.Sequence();
-            }
-
-            public BeatmapObject bm;
-            public float opacity;
-            //public float hue;
-            //public float sat;
-            //public float val;
-
-            public Sequence sequence;
-        }
 
         public static List<AnimationPreset> animationLibrary = new List<AnimationPreset>();
 

@@ -110,46 +110,27 @@ namespace ObjectModifiers.Patchers
         [HarmonyPostfix]
         private static void updateObjects1Postfix()
         {
-            foreach (var sequence in ObjectModifiersPlugin.customSequences.Values)
+            foreach (var beatmapObject in DataManager.inst.gameData.beatmapObjects)
             {
-                sequence.sequence.Kill();
-            }
-
-            if (GameObject.Find("BepInEx_Manager").GetComponentByName("CatalystBase"))
-            {
-                foreach (var beatmapObject in DataManager.inst.gameData.beatmapObjects)
+                for (int i = 0; i < 4; i++)
                 {
-                    for (int i = 0; i < 4; i++)
+                    foreach (var keyframe in beatmapObject.events[i])
                     {
-                        foreach (var keyframe in beatmapObject.events[i])
-                        {
-                            keyframe.active = false;
-                        }
+                        keyframe.active = false;
                     }
                 }
             }
-
-            ObjectModifiersPlugin.customSequences.Clear();
         }
 
         [HarmonyPatch("updateObjects", new Type[] { typeof(ObjEditor.ObjectSelection), typeof(bool) })]
         [HarmonyPostfix]
         private static void updateObjects2Postfix(ObjEditor.ObjectSelection __0, bool __1)
         {
-            if (ObjectModifiersPlugin.customSequences.ContainsKey(__0.ID))
+            for (int i = 0; i < 4; i++)
             {
-                ObjectModifiersPlugin.customSequences[__0.ID].sequence.Kill();
-                ObjectModifiersPlugin.customSequences.Remove(__0.ID);
-
-                if (GameObject.Find("BepInEx_Manager").GetComponentByName("CatalystBase"))
+                foreach (var keyframe in __0.GetObjectData().events[i])
                 {
-                    for (int i = 0; i < 4; i++)
-                    {
-                        foreach (var keyframe in __0.GetObjectData().events[i])
-                        {
-                            keyframe.active = false;
-                        }
-                    }
+                    keyframe.active = false;
                 }
             }
         }
@@ -160,17 +141,11 @@ namespace ObjectModifiers.Patchers
         {
             if (__0 != null)
             {
-                if (ObjectModifiersPlugin.customSequences.ContainsKey(__0))
+                for (int i = 0; i < 4; i++)
                 {
-                    ObjectModifiersPlugin.customSequences[__0].sequence.Kill();
-                    ObjectModifiersPlugin.customSequences.Remove(__0);
-
-                    for (int i = 0; i < 4; i++)
+                    foreach (var keyframe in DataManager.inst.gameData.beatmapObjects.ID(__0).events[i])
                     {
-                        foreach (var keyframe in DataManager.inst.gameData.beatmapObjects.ID(__0).events[i])
-                        {
-                            keyframe.active = false;
-                        }
+                        keyframe.active = false;
                     }
                 }
             }
@@ -180,11 +155,8 @@ namespace ObjectModifiers.Patchers
         [HarmonyPostfix]
         private static void terminateObjectsPostfix(ObjEditor.ObjectSelection __0)
         {
-            if (__0 != null && !string.IsNullOrEmpty(__0.ID) && ObjectModifiersPlugin.customSequences.ContainsKey(__0.ID) && __0.IsObject() && __0.GetObjectData() != null)
+            if (__0 != null && !string.IsNullOrEmpty(__0.ID) && __0.GetObjectData() != null)
             {
-                ObjectModifiersPlugin.customSequences[__0.ID].sequence.Kill();
-                ObjectModifiersPlugin.customSequences.Remove(__0.ID);
-
                 for (int i = 0; i < 4; i++)
                 {
                     foreach (var keyframe in __0.GetObjectData().events[i])
