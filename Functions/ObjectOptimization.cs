@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 using UnityEngine;
 
-using BeatmapObject = DataManager.GameData.BeatmapObject;
-
 using ObjectModifiers.Modifiers;
+
+using BeatmapObject = DataManager.GameData.BeatmapObject;
 
 namespace ObjectModifiers.Functions
 {
@@ -24,29 +20,14 @@ namespace ObjectModifiers.Functions
 
 		List<Collider2D> colliders = new List<Collider2D>();
 
-		void Update()
-        {
-			bulletOver = false;
-        }
+		void Update() => bulletOver = false;
 
-        void OnMouseEnter()
-        {
-            hovered = true;
-        }
+        void OnMouseEnter() => hovered = true;
 
-        void OnMouseExit()
-        {
-            hovered = false;
-        }
+        void OnMouseExit() => hovered = false;
 
-		bool CheckCollider(Collider other)
-        {
-			return other.tag != "Player" && other.gameObject.name.Contains("bullet (Player");
-		}
-		bool CheckCollider(Collider2D other)
-        {
-			return other.tag != "Player" && other.gameObject.name.Contains("bullet (Player") && !colliders.Contains(other);
-		}
+		bool CheckCollider(Collider other) => other.tag != "Player" && other.gameObject.name.Contains("bullet (Player");
+		bool CheckCollider(Collider2D other) => other.tag != "Player" && other.gameObject.name.Contains("bullet (Player") && !colliders.Contains(other);
 
 		void OnTriggerEnter2D(Collider2D other)
 		{
@@ -63,9 +44,7 @@ namespace ObjectModifiers.Functions
 		{
 			//Debug.LogFormat("{0}OnTriggerEnter: {1}", ObjectModifiersPlugin.className, other.name);
 			if (CheckCollider(other))
-			{
 				bulletOver = true;
-			}
 		}
 
 		void OnTriggerExit2D(Collider2D other)
@@ -83,25 +62,19 @@ namespace ObjectModifiers.Functions
 		{
 			//Debug.LogFormat("{0}OnTriggerExit: {1}", ObjectModifiersPlugin.className, other.name);
 			if (CheckCollider(other))
-			{
 				bulletOver = false;
-			}
 		}
 
 		void OnTriggerStay2D(Collider2D other)
 		{
 			if (CheckCollider(other))
-			{
 				bulletOver = true;
-			}
 		}
 
 		void OnTriggerStay(Collider other)
 		{
 			if (CheckCollider(other))
-			{
 				bulletOver = true;
-			}
 		}
 	}
 }

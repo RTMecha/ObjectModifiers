@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 using UnityEngine;
-
-using RTFunctions.Functions;
-
-using BeatmapObject = DataManager.GameData.BeatmapObject;
 
 namespace ObjectModifiers.Functions.Components
 {

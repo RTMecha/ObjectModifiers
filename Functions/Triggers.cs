@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using EventKeyframe = DataManager.GameData.EventKeyframe;
+﻿using EventKeyframe = DataManager.GameData.EventKeyframe;
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 
 namespace ObjectModifiers.Functions

@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
 
 using ObjectModifiers.Modifiers;
 
 using UnityEngine;
 
-using RTFunctions.Functions;
-using RTFunctions.Functions.IO;
-using RTFunctions.Functions.Managers;
+using RTFunctions.Functions.Optimization;
+using RTFunctions.Functions.Optimization.Objects;
 
 using Object = UnityEngine.Object;
 
@@ -21,6 +19,7 @@ namespace ObjectModifiers.Functions
 {
     public static class ObjectExtensions
     {
+
         public static AnimationObject ToAnimationObject(this Prefab prefab)
         {
             var list = new List<AnimationObject.BeatmapObject>();
@@ -88,13 +87,11 @@ namespace ObjectModifiers.Functions
         {
             var list = new List<bool>();
 
-            if (Objects.beatmapObjects.ContainsKey(beatmapObject.id))
+            if (Updater.TryGetObject(beatmapObject, out LevelObject levelObject) && levelObject.visualObject.Collider)
             {
-                var modifier = Objects.beatmapObjects[beatmapObject.id];
-
-                if (modifier.collider != null)
+                if (levelObject.visualObject.Collider)
                 {
-                    var collider = modifier.collider;
+                    var collider = levelObject.visualObject.Collider;
 
                     for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
                     {
