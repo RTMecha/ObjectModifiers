@@ -14,9 +14,44 @@ namespace ObjectModifiers.Patchers
 	[HarmonyPatch(typeof(BackgroundManager))]
     public class BackgroundManagerPatch : MonoBehaviour
     {
+		public static IEnumerator LoadBackground(BackgroundManager __instance)
+		{
+			float delay = 0f;
+			while (GameManager.inst.gameState != GameManager.State.Playing)
+			{
+				yield return new WaitForSeconds(delay);
+				delay += 0.0001f;
+			}
+
+			audio = AudioManager.inst.CurrentAudioSource;
+
+			__instance.samples = new float[256];
+
+			var clip = audio.clip;
+			if (clip != null)
+			{
+				clip.GetData(__instance.samples, 0);
+			}
+
+			Debug.Log($"{ObjectModifiersPlugin.className}Begin loading BG Objects: {DataManager.inst.gameData.backgroundObjects}");
+			foreach (var background in DataManager.inst.gameData.backgroundObjects)
+			{
+				var bg = new BG(new BG.Reactive(new int[2], new float[2]), background);
+				Debug.Log($"{ObjectModifiersPlugin.className}Loading new BG: {background} {bg}");
+				ObjectModifiersPlugin.backgrounds.Add(bg);
+			}
+
+			foreach (var background in DataManager.inst.gameData.backgroundObjects)
+			{
+				__instance.CreateBackgroundObject(background);
+			}
+			yield break;
+		}
+
+
 		[HarmonyPatch("CreateBackgroundObject")]
 		[HarmonyPrefix]
-		private static bool CreateBackgroundObject(BackgroundManager __instance, ref GameObject __result, DataManager.GameData.BackgroundObject __0)
+		static bool CreateBackgroundObject(BackgroundManager __instance, ref GameObject __result, DataManager.GameData.BackgroundObject __0)
 		{
 			GameObject gameObject = Instantiate(__instance.backgroundPrefab, new Vector3(__0.pos.x, __0.pos.y, (float)(32 + __0.layer * 10)), Quaternion.identity);
 			gameObject.name = __0.name;
@@ -56,7 +91,7 @@ namespace ObjectModifiers.Patchers
 
 		[HarmonyPatch("Update")]
 		[HarmonyPrefix]
-		private static bool UpdatePatch(BackgroundManager __instance)
+		static bool UpdatePatch(BackgroundManager __instance)
         {
 			if (audio != null)
             {
@@ -67,7 +102,7 @@ namespace ObjectModifiers.Patchers
 
 		[HarmonyPatch("UpdateBackgroundObjects")]
 		[HarmonyPrefix]
-		private static bool UpdateBackgroundObjects(BackgroundManager __instance)
+		static bool UpdateBackgroundObjects(BackgroundManager __instance)
 		{
 			if (GameManager.inst.gameState == GameManager.State.Playing)
 			{
@@ -118,15 +153,15 @@ namespace ObjectModifiers.Patchers
 
 		[HarmonyPatch("LoadBackground")]
 		[HarmonyPrefix]
-		private static bool LoadBackgroundPatch(BackgroundManager __instance)
+		static bool LoadBackgroundPatch(BackgroundManager __instance)
         {
-			ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.LoadBackground(__instance));
+			ObjectModifiersPlugin.inst.StartCoroutine(LoadBackground(__instance));
 			return false;
         }
 
 		[HarmonyPatch("UpdateBackgrounds")]
 		[HarmonyPrefix]
-		public static bool UpdateBackgrounds(BackgroundManager __instance)
+		static bool UpdateBackgrounds(BackgroundManager __instance)
 		{
 			foreach (GameObject gameObject in __instance.backgroundObjects)
 			{
