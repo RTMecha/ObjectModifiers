@@ -30,7 +30,7 @@ using Prefab = DataManager.GameData.Prefab;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.2.0")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.2.1")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
