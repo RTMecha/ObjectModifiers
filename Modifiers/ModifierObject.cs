@@ -14,7 +14,6 @@ using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
 using RTFunctions.Functions.Optimization;
 using RTFunctions.Functions.Optimization.Objects;
-using RTFunctions.Functions.Optimization.Objects.Visual;
 
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 using PrefabObject = DataManager.GameData.PrefabObject;
@@ -39,22 +38,10 @@ namespace ObjectModifiers.Modifiers
 
         public BeatmapObject beatmapObject;
 
-        //public DelayTracker delayTracker;
-
-        //public GameObject gameObject;
-
-        //public GameObject top;
-
-        //public Renderer renderer;
-
         public ObjectOptimization optimization;
-
-        //public Collider2D collider;
 
         public ParticleSystem ps;
         public TrailRenderer tr;
-
-        public bool logged = false;
 
         public List<Modifier> modifiers = new List<Modifier>();
 
@@ -121,9 +108,9 @@ namespace ObjectModifiers.Modifiers
 
             public bool not = false;
 
-            private object result;
+            object result;
 
-            private List<int> currentHealths = new List<int>
+            List<int> currentHealths = new List<int>
             {
                 -1,
                 -1,
@@ -827,9 +814,9 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (EditorManager.inst != null && EditorManager.inst.isEditing)
                             {
-                                if (ObjectModifiersPlugin.editorLoadLevel.Value)
+                                if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                                 {
-                                    if (ObjectModifiersPlugin.editorSavesBeforeLoad.Value)
+                                    if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
                                     {
                                         EditorManager.inst.SaveBeatmap();
                                     }
@@ -858,9 +845,9 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (EditorManager.inst != null && !EditorManager.inst.isEditing)
                             {
-                                if (ObjectModifiersPlugin.editorLoadLevel.Value)
+                                if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                                 {
-                                    if (ObjectModifiersPlugin.editorSavesBeforeLoad.Value)
+                                    if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
                                     {
                                         EditorManager.inst.SaveBeatmap();
                                     }
@@ -895,9 +882,9 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (EditorManager.inst != null && !EditorManager.inst.isEditing)
                             {
-                                if (ObjectModifiersPlugin.editorLoadLevel.Value)
+                                if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                                 {
-                                    if (ObjectModifiersPlugin.editorSavesBeforeLoad.Value)
+                                    if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
                                     {
                                         EditorManager.inst.SaveBeatmap();
                                     }
@@ -2057,9 +2044,7 @@ namespace ObjectModifiers.Modifiers
                 }
             }
 
-            private bool tailDone = false;
-
-            private bool hasChanged = false;
+            bool hasChanged = false;
             
             public void Inactive()
             {

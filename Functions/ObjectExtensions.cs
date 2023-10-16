@@ -293,37 +293,5 @@ namespace ObjectModifiers.Functions
 
             return list;
         }
-
-        public static float EventValuesZ1(DataManager.GameData.EventKeyframe _posEvent, int _beatmapObject)
-        {
-            BeatmapObject bo = null;
-            if (DataManager.inst.gameData.beatmapObjects.Find((BeatmapObject x) => x.events[0].Contains(_posEvent)) != null)
-            {
-                bo = DataManager.inst.gameData.beatmapObjects.Find((BeatmapObject x) => x.events[0].Contains(_posEvent));
-            }
-            float z = 0.0005f * bo.Depth;
-            if (_posEvent.eventValues.Length > 2 && bo != null)
-            {
-                float calc = _posEvent.eventValues[2] / 10f;
-                z = z + calc;
-            }
-            return z;
-        }
-
-        public static float EventValuesZ2(DataManager.GameData.EventKeyframe _posEvent, int _beatmapObject)
-        {
-            BeatmapObject bo = null;
-            if (DataManager.inst.gameData.beatmapObjects.Find((BeatmapObject x) => x.events[0].Contains(_posEvent)) != null)
-            {
-                bo = DataManager.inst.gameData.beatmapObjects.Find((BeatmapObject x) => x.events[0].Contains(_posEvent));
-            }
-            float z = 0.1f * bo.Depth;
-            if (_posEvent.eventValues.Length > 2 && bo != null)
-            {
-                float calc = _posEvent.eventValues[2] / 10f;
-                z = z + calc;
-            }
-            return z;
-        }
     }
 }

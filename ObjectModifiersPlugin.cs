@@ -15,15 +15,11 @@ using SimpleJSON;
 
 using ObjectModifiers.Modifiers;
 using ObjectModifiers.Functions;
-using ObjectModifiers.Functions.Components;
-using ObjectModifiers.Patchers;
 
 using RTFunctions.Functions;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
 using RTFunctions.Functions.Managers.Networking;
-using RTFunctions.Functions.Optimization;
-using RTFunctions.Functions.Optimization.Objects;
 
 using BeatmapObject = DataManager.GameData.BeatmapObject;
 using Prefab = DataManager.GameData.Prefab;
@@ -37,15 +33,8 @@ namespace ObjectModifiers
     {
         //TODO
         //Modifiers:
-        //-Action Modifier that sets an updates the player model in CreativePlayers.
-        //Homing Objects need to use the random keyframe system. (Worry about this wayy later)
-
-        //Feature List:
-        //New and Improved Modifier system based on the ObjectTags mod.
-        //Integrated camera parent.
-        //Moved pos Z axis to here and added opacity value to color keyframes.
-        //Added Solid object type, players will not be able to pass through the object but should not take damage.
-        //
+        //Animation Action (Makes an object play a preset animation depending on if it's been activated.
+        //Chain Object Action (With chain following and more)
 
         #region Variables
 
@@ -96,15 +85,13 @@ namespace ObjectModifiers
 
         public static Dictionary<string, Dictionary<string, ModifierObject>> prefabModifiers = new Dictionary<string, Dictionary<string, ModifierObject>>();
 
-        public static List<BG> backgrounds = new List<BG>();
-
         public static List<AnimationObject> animationObjects = new List<AnimationObject>();
 
         #endregion
 
         #region ConfigEntries
-        public static ConfigEntry<bool> editorLoadLevel { get; set; }
-        public static ConfigEntry<bool> editorSavesBeforeLoad { get; set; }
+        public static ConfigEntry<bool> EditorLoadLevel { get; set; }
+        public static ConfigEntry<bool> EditorSavesBeforeLoad { get; set; }
 
         public static ConfigEntry<bool> ResetVariables { get; set; }
 
@@ -113,25 +100,24 @@ namespace ObjectModifiers
         void Awake()
         {
             inst = this;
-            // Plugin startup logic
-            Logger.LogInfo($"Plugin Object Modifiers is loaded!");
 
+            // Wtf was this
             GameObject gameObject = new GameObject("ObjectModifiers PluginThing");
             DontDestroyOnLoad(gameObject);
 
-            editorLoadLevel = Config.Bind("Editor", "Modifier Loads Level", false, "Any modifiers with the \"loadLevel\" function will load the level whilst in the editor. This is only to prevent the loss of progress.");
-            editorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", true, "The level will be saved before a level is loaded using a loadLevel modifier.");
+            EditorLoadLevel = Config.Bind("Editor", "Modifier Loads Level", false, "Any modifiers with the \"loadLevel\" function will load the level whilst in the editor. This is only to prevent the loss of progress.");
+            EditorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", true, "The level will be saved before a level is loaded using a loadLevel modifier.");
 
             ResetVariables = Config.Bind("Editor", "Reset Variable", false, "Resets the variables of every object when not in preview mode.");
 
             harmony.PatchAll(typeof(ObjectModifiersPlugin));
-            //harmony.PatchAll(typeof(BackgroundManagerPatch));
-            harmony.PatchAll(typeof(DataManagerPatch));
-            harmony.PatchAll(typeof(ObjectManagerPatch));
 
             blur = GetBlur();
 
             SetModifierTypes();
+
+            // Plugin startup logic
+            Logger.LogInfo($"Plugin Object Modifiers is loaded!");
         }
 
         void Update()
@@ -146,7 +132,7 @@ namespace ObjectModifiers
         {
             foreach (var player in InputDataManager.inst.players)
             {
-                if (player.player != null)
+                if (player.player)
                 {
                     player.player.gameObject.GetComponentInChildren<Collider2D>().isTrigger = false;
                     player.player.gameObject.GetComponentInChildren<Rigidbody2D>().collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -162,7 +148,7 @@ namespace ObjectModifiers
             {
                 if (modifierObject.modifiers.Count > 0)
                 {
-                    List<ModifierObject.Modifier> actions = new List<ModifierObject.Modifier>();
+                    var actions = new List<ModifierObject.Modifier>();
 
                     foreach (var act in modifierObject.modifiers)
                     {
@@ -172,7 +158,7 @@ namespace ObjectModifiers
                         }
                     }
 
-                    List<ModifierObject.Modifier> triggers = new List<ModifierObject.Modifier>();
+                    var triggers = new List<ModifierObject.Modifier>();
                     foreach (var act in modifierObject.modifiers)
                     {
                         if (act.type == ModifierObject.Modifier.Type.Trigger && !triggers.Contains(act))
@@ -246,7 +232,7 @@ namespace ObjectModifiers
                     }
                 }
 
-                if (EditorManager.inst != null && EditorManager.inst.isEditing && ResetVariables.Value)
+                if (EditorManager.inst && EditorManager.inst.isEditing && ResetVariables.Value)
                 {
                     modifierObject.variable = 0;
                 }
@@ -460,13 +446,9 @@ namespace ObjectModifiers
         public static void ClearModifierObjects()
         {
             if (modifierObjects == null)
-            {
                 modifierObjects = new Dictionary<string, ModifierObject>();
-            }
             else
-            {
                 modifierObjects.Clear();
-            }
         }
 
         public static ModifierObject GetModifierObject(BeatmapObject _beatmapObject)
@@ -581,11 +563,6 @@ namespace ObjectModifiers
 
             ModCompatibility.sharedFunctions.Add("ObjectModifiersModifierList", list);
         }
-
-        //Modifer ideas:
-        //Animation Trigger (Makes an object play a preset animation depending on if it's been activated.
-        //Chain Object (With chain following and more)
-        //Homing Object (Duplicates the original object, removes the animation stuff and replaces it with homing types.)
 
         public static Dictionary<string, ModifierObject.Modifier> modifierTypesDictionary = new Dictionary<string, ModifierObject.Modifier>();
 
@@ -1748,6 +1725,7 @@ namespace ObjectModifiers
             }, //randomLesser
         };
 
+        // I plan on making an animation library at some point. This will allow creators to reuse animations or play them with a Modifier as an Animation Object.
         public static List<AnimationPreset> animationLibrary = new List<AnimationPreset>();
 
         public class AnimationPreset
@@ -1790,7 +1768,7 @@ namespace ObjectModifiers
                     new DataManager.GameData.EventKeyframe
                     {
                         eventTime = 0f,
-                        eventValues = new float[2]
+                        eventValues = new float[5]
                     }
                 },
             };
