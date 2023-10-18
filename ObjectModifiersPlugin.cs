@@ -26,7 +26,7 @@ using Prefab = DataManager.GameData.Prefab;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.2.1")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.2.2")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -241,9 +241,7 @@ namespace ObjectModifiers
             foreach (var audioSource in audioSources)
             {
                 if (DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key) == null || !DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key).TimeWithinLifespan())
-                {
                     DeleteKey(audioSource.Key, audioSource.Value);
-                }
             }
         }
 
@@ -269,9 +267,13 @@ namespace ObjectModifiers
             string text = "beatmaps/soundlibrary/" + _sound;
 
             if (!fromSoundLibrary)
-            {
                 text = RTFile.basePath + _sound;
-            }
+
+            if (!_sound.Contains(".ogg") && RTFile.FileExists(RTFile.ApplicationDirectory + text + ".ogg"))
+                text += ".ogg";
+            
+            if (!_sound.Contains(".wav") && RTFile.FileExists(RTFile.ApplicationDirectory + text + ".wav"))
+                text += ".wav";
 
             Debug.LogFormat("{0}Filepath: {1}", className, text);
             if (RTFile.FileExists(RTFile.ApplicationDirectory + text))
@@ -335,10 +337,11 @@ namespace ObjectModifiers
         public static IEnumerator ParseStoryLevel(string _level)
         {
             Debug.LogFormat("{0}Parsing {1}...", className, _level);
-            string audioPath = RTFile.ApplicationDirectory + "beatmaps/story/" + _level + "/level.ogg";
-            string beatmapJSON = FileManager.inst.LoadJSONFile("beatmaps/story/" + _level + "/level.lsb");
 
-            string rawMetadataJSON = FileManager.inst.LoadJSONFile("beatmaps/story/" + _level + "/metadata.lsb");
+            string audioPath = RTFile.ApplicationDirectory + $"beatmaps/story/{_level}/level.ogg";
+            string beatmapJSON = FileManager.inst.LoadJSONFile($"beatmaps/story/{_level}/level.lsb");
+
+            string rawMetadataJSON = FileManager.inst.LoadJSONFile($"beatmaps/story/{_level}/metadata.lsb");
 
             var metadata = DataManager.inst.ParseMetadata(rawMetadataJSON);
 
@@ -1162,6 +1165,17 @@ namespace ObjectModifiers
             new ModifierObject.Modifier
             {
                 type = ModifierObject.Modifier.Type.Action,
+                constant = true,
+                command = new List<string>
+                {
+                    "copyColor",
+                    "0"
+                },
+                value = "Object Name"
+            }, //copyColor
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
                 constant = false,
                 command = new List<string>
                 {
@@ -1169,6 +1183,16 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //updateObjects
+            new ModifierObject.Modifier
+            {
+                type = ModifierObject.Modifier.Type.Action,
+                constant = false,
+                command = new List<string>
+                {
+                    "updateObject"
+                },
+                value = "Object Name"
+            }, //updateObject
             new ModifierObject.Modifier
             {
                 type = ModifierObject.Modifier.Type.Action,
