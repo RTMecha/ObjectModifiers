@@ -918,7 +918,10 @@ namespace ObjectModifiers.Modifiers
                                     //float a = ObjectModifiersPlugin.customSequences[modifierObject.id].opacity - 1f;
                                     //a = -a;
 
+                                    //RTMath.Interpolate(modifierObject, 3, 1);
+
                                     rend.material.SetFloat("_blurSizeXY", -(Interpolate() - 1f) * float.Parse(value));
+                                    //rend.material.SetFloat("_blurSizeXY", -(RTMath.Interpolate(modifierObject, 3, 1) - 1f) * float.Parse(value));
                                 }
                                 else
                                     rend.material.SetFloat("_blurSizeXY", float.Parse(value));
@@ -1997,6 +2000,51 @@ namespace ObjectModifiers.Modifiers
 
                             break;
                         }
+                    case "copyColor":
+                        {
+                            if (DataManager.inst.gameData.beatmapObjects.TryFind(x => x.name == value, out BeatmapObject beatmapObject) &&
+                                Updater.TryGetObject(beatmapObject, out LevelObject otherLevelObject) &&
+                                otherLevelObject.visualObject.Renderer &&
+                                Updater.TryGetObject(modifierObject, out LevelObject levelObject) &&
+                                levelObject.visualObject.Renderer)
+                            {
+                                levelObject.visualObject.Renderer.material.color = otherLevelObject.visualObject.Renderer.material.color;
+
+                                //var time = AudioManager.inst.CurrentAudioSource.time;
+
+                                //var nextKFIndex = beatmapObject.events[3].FindIndex(x => x.eventTime > time);
+
+                                //if (nextKFIndex >= 0)
+                                //{
+                                //    var prevKFIndex = nextKFIndex - 1;
+                                //    if (prevKFIndex < 0)
+                                //        prevKFIndex = 0;
+
+                                //    var nextKF = beatmapObject.events[3][nextKFIndex];
+                                //    var prevKF = beatmapObject.events[3][prevKFIndex];
+
+                                //    var themeKFList = DataManager.inst.gameData.eventObjects.allEvents[4];
+                                //    var nextThemeKFIndex = themeKFList.FindIndex(x => x.eventTime > time);
+
+                                //    if (nextThemeKFIndex >= 0)
+                                //    {
+                                //        var prevThemeKFIndex = nextThemeKFIndex - 1;
+                                //        if (prevThemeKFIndex < 0)
+                                //            prevThemeKFIndex = 0;
+
+                                //        var nextThemeKF = themeKFList[nextThemeKFIndex];
+                                //        var prevThemeKF = themeKFList[prevThemeKFIndex];
+
+                                //        var nextTheme = DataManager.inst.AllThemes.Find(x => int.TryParse(x.id, out int n) && n == (int)nextThemeKF.eventValues[0]);
+                                //        var prevTheme = DataManager.inst.AllThemes.Find(x => int.TryParse(x.id, out int n) && n == (int)prevThemeKF.eventValues[0]);
+
+                                        
+                                //    }
+                                //}
+                            }
+
+                            break;
+                        }
                     case "updateObjects":
                         {
                             if (!constant)
@@ -2009,7 +2057,7 @@ namespace ObjectModifiers.Modifiers
                             {
                                 foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == value))
                                 {
-                                    var objectSelection = new ObjEditor.ObjectSelection(ObjEditor.ObjectSelection.SelectionType.Object, DataManager.inst.gameData.beatmapObjects.IndexOf(bm));
+                                    var objectSelection = new ObjEditor.ObjectSelection(ObjEditor.ObjectSelection.SelectionType.Object, bm.id);
 
                                     ObjectManager.inst.updateObjects(objectSelection);
                                 }
@@ -2144,6 +2192,14 @@ namespace ObjectModifiers.Modifiers
                                 hasChanged = true;
                             }
 
+                            break;
+                        }
+                    case "playSound":
+                        {
+                            if (command.Count > 1 && bool.TryParse(command[4], out bool loop))
+                            {
+                                ObjectModifiersPlugin.DeleteKey(modifierObject.id, ObjectModifiersPlugin.audioSources[modifierObject.id]);
+                            }
                             break;
                         }
                 }
