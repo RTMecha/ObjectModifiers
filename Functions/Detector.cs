@@ -8,15 +8,13 @@ using BeatmapObject = DataManager.GameData.BeatmapObject;
 
 namespace ObjectModifiers.Functions
 {
-    public class ObjectOptimization : MonoBehaviour
+    public class Detector : MonoBehaviour
     {
         public BeatmapObject beatmapObject;
 
         public bool hovered;
 
 		public bool bulletOver;
-
-		public ModifierObject modifierObject;
 
 		List<Collider2D> colliders = new List<Collider2D>();
 

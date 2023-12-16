@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace ObjectModifiers.Functions.Components
 {
+    /// <summary>
+    /// Figure out a more optimized way of doing this. (or remove it, idk)
+    /// </summary>
     public class LegacyTracker : MonoBehaviour
     {
         public TailUpdateMode updateMode = TailUpdateMode.FixedUpdate;

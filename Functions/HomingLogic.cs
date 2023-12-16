@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace ObjectModifiers.Functions
 {
+    /// <summary>
+    /// Need to somehow implement this to EventKeyframes.
+    /// </summary>
     public class HomingLogic : MonoBehaviour
     {
         public Transform target;
@@ -25,7 +28,7 @@ namespace ObjectModifiers.Functions
             Color.white
         };
 
-        private void Awake()
+        void Awake()
         {
             rb = gameObject.AddComponent<Rigidbody2D>();
             rb.gravityScale = 0f;
@@ -33,7 +36,7 @@ namespace ObjectModifiers.Functions
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         }
 
-        private void FixedUpdate()
+        void FixedUpdate()
         {
             if (target != null && rb != null && followPos && Vector2.Distance(transform.position, target.position) < posRange)
             {

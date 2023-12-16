@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -17,16 +18,18 @@ using ObjectModifiers.Modifiers;
 using ObjectModifiers.Functions;
 
 using RTFunctions.Functions;
+using RTFunctions.Functions.Data;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
 using RTFunctions.Functions.Managers.Networking;
 
-using BeatmapObject = DataManager.GameData.BeatmapObject;
-using Prefab = DataManager.GameData.Prefab;
+using BaseBeatmapObject = DataManager.GameData.BeatmapObject;
+using BasePrefab = DataManager.GameData.Prefab;
+using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.2.2")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.3.0")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -72,20 +75,9 @@ namespace ObjectModifiers
             return AssetBundle.LoadFromFile(Path.Combine(_filepath, _bundle));
         }
 
-        public static Harmony harmony = new Harmony("ObjectModifiers");
+        readonly Harmony harmony = new Harmony("ObjectModifiers");
         public static ObjectModifiersPlugin inst;
         public static string className = "[<color=#F5501B>ObjectModifiers</color>]\n";
-
-        public static List<HomingObject> homingObjects = new List<HomingObject>();
-
-        public static HomingObject homingSelection;
-        public static List<HomingObject> selectedHomingObjects = new List<HomingObject>();
-
-        public static Dictionary<string, ModifierObject> modifierObjects = new Dictionary<string, ModifierObject>();
-
-        public static Dictionary<string, Dictionary<string, ModifierObject>> prefabModifiers = new Dictionary<string, Dictionary<string, ModifierObject>>();
-
-        public static List<AnimationObject> animationObjects = new List<AnimationObject>();
 
         #endregion
 
@@ -101,10 +93,6 @@ namespace ObjectModifiers
         {
             inst = this;
 
-            // Wtf was this
-            GameObject gameObject = new GameObject("ObjectModifiers PluginThing");
-            DontDestroyOnLoad(gameObject);
-
             EditorLoadLevel = Config.Bind("Editor", "Modifier Loads Level", false, "Any modifiers with the \"loadLevel\" function will load the level whilst in the editor. This is only to prevent the loss of progress.");
             EditorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", true, "The level will be saved before a level is loaded using a loadLevel modifier.");
 
@@ -116,14 +104,15 @@ namespace ObjectModifiers
 
             SetModifierTypes();
 
+            if (!ModCompatibility.mods.ContainsKey("ObjectModifiers"))
+            {
+                var mod = new ModCompatibility.Mod(inst, GetType());
+                mod.Methods.Add("AddModifierToObject", (Action<BeatmapObject, int>)AddModifierToObject);
+                ModCompatibility.mods.Add("ObjectModifiers", mod);
+            }
+
             // Plugin startup logic
             Logger.LogInfo($"Plugin Object Modifiers is loaded!");
-        }
-
-        void Update()
-        {
-            for (int i = 0; i < animationObjects.Count; i++)
-                animationObjects[i].Update();
         }
 
         [HarmonyPatch(typeof(GameManager), "SpawnPlayers")]
@@ -134,8 +123,10 @@ namespace ObjectModifiers
             {
                 if (player.player)
                 {
-                    player.player.gameObject.GetComponentInChildren<Collider2D>().isTrigger = false;
-                    player.player.gameObject.GetComponentInChildren<Rigidbody2D>().collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+                    var p = player.player.gameObject.GetComponentInChildren<Collider2D>();
+                    p.isTrigger = false;
+                    p.attachedRigidbody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+                    //player.player.gameObject.GetComponentInChildren<Rigidbody2D>().collisionDetectionMode = CollisionDetectionMode2D.Continuous;
                 }
             }
         }
@@ -144,61 +135,49 @@ namespace ObjectModifiers
         [HarmonyPostfix]
         static void UpdatePatch(GameManager __instance)
         {
-            foreach (var modifierObject in modifierObjects.Values)
+            foreach (var b in DataManager.inst.gameData.beatmapObjects)
             {
-                if (modifierObject.modifiers.Count > 0)
+                var beatmapObject = (BeatmapObject)b;
+
+                if (beatmapObject.modifiers.Count > 0)
                 {
-                    var actions = new List<ModifierObject.Modifier>();
-
-                    foreach (var act in modifierObject.modifiers)
+                    beatmapObject.modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
                     {
-                        if (act.type == ModifierObject.Modifier.Type.Action && !actions.Contains(act))
-                        {
-                            actions.Add(act);
-                        }
-                    }
+                        modifier.Action = ModifierMethods.Action;
+                        modifier.Trigger = ModifierMethods.Trigger;
+                        modifier.Inactive = ModifierMethods.Inactive;
+                    });
 
-                    var triggers = new List<ModifierObject.Modifier>();
-                    foreach (var act in modifierObject.modifiers)
-                    {
-                        if (act.type == ModifierObject.Modifier.Type.Trigger && !triggers.Contains(act))
-                        {
-                            triggers.Add(act);
-                        }
-                    }
+                    var actions = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
+                    var triggers = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
 
-                    if (modifierObject.beatmapObject != null && modifierObject.beatmapObject.TimeWithinLifespan())
+                    if (beatmapObject.TimeWithinLifespan())
                     {
-                        if (triggers.Count > 0)
+                        if (triggers.Count() > 0)
                         {
-                            if (triggers.All(x => !x.active && (x.Trigger() && !x.not || !x.Trigger() && x.not)))
+                            if (triggers.All(x => !x.active && (x.Trigger(x) && !x.not || !x.Trigger(x) && x.not)))
                             {
                                 foreach (var act in actions)
                                 {
                                     if (!act.active)
                                     {
                                         if (!act.constant)
-                                        {
                                             act.active = true;
-                                        }
-                                        act.Action();
+
+                                        act.Action?.Invoke(act);
                                     }
                                 }
 
                                 foreach (var trig in triggers)
                                 {
                                     if (!trig.constant)
-                                    {
                                         trig.active = true;
-                                    }
                                 }
                             }
                             else
                             {
                                 foreach (var act in actions)
-                                {
                                     act.active = false;
-                                }
                             }
                         }
                         else
@@ -211,7 +190,7 @@ namespace ObjectModifiers
                                     {
                                         act.active = true;
                                     }
-                                    act.Action();
+                                    act.Action?.Invoke(act);
                                 }
                             }
                         }
@@ -221,27 +200,32 @@ namespace ObjectModifiers
                         foreach (var act in actions)
                         {
                             act.active = false;
-                            act.Inactive();
+                            act.Inactive?.Invoke(act);
                         }
 
                         foreach (var trig in triggers)
                         {
                             trig.active = false;
-                            trig.Inactive();
+                            trig.Inactive?.Invoke(trig);
                         }
                     }
                 }
 
                 if (EditorManager.inst && EditorManager.inst.isEditing && ResetVariables.Value)
-                {
-                    modifierObject.variable = 0;
-                }
+                    beatmapObject.integerVariable = 0;
             }
 
             foreach (var audioSource in audioSources)
             {
-                if (DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key) == null || !DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key).TimeWithinLifespan())
-                    DeleteKey(audioSource.Key, audioSource.Value);
+                try
+                {
+                    if (DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key) == null || !DataManager.inst.gameData.beatmapObjects.ID(audioSource.Key).TimeWithinLifespan())
+                        DeleteKey(audioSource.Key, audioSource.Value);
+                }
+                catch
+                {
+
+                }
             }
         }
 
@@ -254,32 +238,31 @@ namespace ObjectModifiers
             }
         }
 
-        public static void SetShowable(bool _show, float _opacity, bool _highlightObjects, Color _highlightObjectsColor, Color _highlightObjectsDoubleColor) => Debug.Log($"{className}Unused SetShowable");
-
-        [HarmonyPatch(typeof(GameManager), "EndOfLevel")]
-        [HarmonyPrefix]
-        static void EndOfLevelPrefix() => modifierObjects.Clear();
-
         #region Modifier Functions
 
         public static void GetSoundPath(string id, string _sound, bool fromSoundLibrary = false, float _pitch = 1f, float _volume = 1f, bool _loop = false)
         {
-            string text = "beatmaps/soundlibrary/" + _sound;
+            string text = RTFile.ApplicationDirectory + "beatmaps/soundlibrary/" + _sound;
 
             if (!fromSoundLibrary)
-                text = RTFile.basePath + _sound;
+                text = RTFile.BasePath + _sound;
 
-            if (!_sound.Contains(".ogg") && RTFile.FileExists(RTFile.ApplicationDirectory + text + ".ogg"))
+            if (!_sound.Contains(".ogg") && RTFile.FileExists(text + ".ogg"))
                 text += ".ogg";
             
-            if (!_sound.Contains(".wav") && RTFile.FileExists(RTFile.ApplicationDirectory + text + ".wav"))
+            if (!_sound.Contains(".wav") && RTFile.FileExists(text + ".wav"))
                 text += ".wav";
 
-            Debug.LogFormat("{0}Filepath: {1}", className, text);
-            if (RTFile.FileExists(RTFile.ApplicationDirectory + text))
+            //Debug.LogFormat("{0}Filepath: {1}", className, text);
+            if (RTFile.FileExists(text))
             {
-                Debug.LogFormat("{0}File exists so play", className);
-                inst.StartCoroutine(FileManager.inst.LoadMusicFile(text, delegate (AudioClip _newSound)
+                //Debug.LogFormat("{0}File exists so play", className);
+                //inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip("file://" + text, RTFile.GetAudioType(text), delegate (AudioClip audioClip)
+                //{
+                //    audioClip.name = _sound;
+                //    PlaySound(id, audioClip, _pitch, _volume, _loop);
+                //}));
+                inst.StartCoroutine(LoadMusicFileRaw(text, delegate (AudioClip _newSound)
                 {
                     _newSound.name = _sound;
                     PlaySound(id, _newSound, _pitch, _volume, _loop);
@@ -314,11 +297,11 @@ namespace ObjectModifiers
             audioSource.clip = _clip;
             audioSource.playOnAwake = true;
             audioSource.loop = _loop;
-            audioSource.pitch = _pitch * AudioManager.inst.pitch;
+            audioSource.pitch = _pitch * AudioManager.inst.CurrentAudioSource.pitch;
             audioSource.volume = Mathf.Clamp(_volume, 0f, 2f) * AudioManager.inst.sfxVol;
             audioSource.Play();
 
-            float x = _pitch * AudioManager.inst.pitch;
+            float x = _pitch * AudioManager.inst.CurrentAudioSource.pitch;
             if (x == 0f)
                 x = 1f;
             if (x < 0f)
@@ -328,6 +311,34 @@ namespace ObjectModifiers
                 inst.StartCoroutine(AudioManager.inst.DestroyWithDelay(audioSource, _clip.length / x));
             else if (!audioSources.ContainsKey(id))
                 audioSources.Add(id, audioSource);
+        }
+
+        public static IEnumerator LoadMusicFileRaw(string _filepath, Action<AudioClip> callback)
+        {
+            if (!File.Exists(_filepath))
+            {
+                Debug.LogFormat("{0}Could not load Music file [{1}]", new object[]
+                {
+                    FileManager.className,
+                    _filepath
+                });
+            }
+            else
+            {
+                var www = new WWW("file://" + _filepath);
+                while (!www.isDone)
+                    yield return null;
+
+                AudioClip beatmapAudio = www.GetAudioClip(false, false);
+                while (beatmapAudio.loadState != AudioDataLoadState.Loaded)
+                {
+                    yield return null;
+                }
+                callback(beatmapAudio);
+                beatmapAudio = null;
+                www = null;
+            }
+            yield break;
         }
 
         public static Dictionary<string, AudioSource> audioSources = new Dictionary<string, AudioSource>();
@@ -368,9 +379,9 @@ namespace ObjectModifiers
             yield break;
         }
 
-        public static DataManager.GameData.PrefabObject AddPrefabObjectToLevel(Prefab prefab, float startTime, Vector2 pos, Vector2 sca, float rot)
+        public static PrefabObject AddPrefabObjectToLevel(BasePrefab prefab, float startTime, Vector2 pos, Vector2 sca, float rot)
         {
-            DataManager.GameData.PrefabObject prefabObject = new DataManager.GameData.PrefabObject();
+            var prefabObject = new PrefabObject();
             prefabObject.ID = LSText.randomString(16);
             prefabObject.prefabID = prefab.ID;
 
@@ -386,14 +397,10 @@ namespace ObjectModifiers
                 prefabObject.editorData.Layer = EditorManager.inst.layer;
 
             DataManager.inst.gameData.prefabObjects.Add(prefabObject);
-            ObjectManager.inst.updateObjects(prefabObject.ID);
+            Updater.UpdatePrefab(prefabObject);
             if (EditorManager.inst != null && !EditorManager.inst.isEditing && prefabObject.editorData.Layer != EditorManager.inst.layer)
             {
                 EditorManager.inst.SetLayer(prefabObject.editorData.Layer);
-            }
-            if (EditorManager.inst != null)
-            {
-                ObjEditor.inst.RenderTimelineObject(new ObjEditor.ObjectSelection(ObjEditor.ObjectSelection.SelectionType.Prefab, prefabObject.ID));
             }
 
             return prefabObject;
@@ -428,184 +435,52 @@ namespace ObjectModifiers
 
         #endregion
 
-        #region ModCompatibility Reference
-
-        public static void AddModifierObject(BeatmapObject _beatmapObject)
+        public static void AddModifierToObject(BeatmapObject beatmapObject, int index)
         {
-            if (!modifierObjects.ContainsKey(_beatmapObject.id))
+            var copy = BeatmapObject.Modifier.DeepCopy(modifierTypes[index]);
+            copy.modifierObject = beatmapObject;
+            beatmapObject.modifiers.Add(copy);
+        }
+
+        public static void SetModifierTypes() => ModCompatibility.sharedFunctions.Add("DefaultModifierList", modifierTypes);
+
+        public static List<BeatmapObject.Modifier> modifierTypes = new List<BeatmapObject.Modifier>
+        {
+            new BeatmapObject.Modifier
             {
-                _beatmapObject.AddModifierObject();
-            }
-        }
-
-        public static void RemoveModifierObject(BeatmapObject _beatmapObject)
-        {
-            if (modifierObjects.ContainsKey(_beatmapObject.id))
-            {
-                _beatmapObject.RemoveModifierObject();
-            }
-        }
-
-        public static void ClearModifierObjects()
-        {
-            if (modifierObjects == null)
-                modifierObjects = new Dictionary<string, ModifierObject>();
-            else
-                modifierObjects.Clear();
-        }
-
-        public static ModifierObject GetModifierObject(BeatmapObject _beatmapObject)
-        {
-            if (modifierObjects.ContainsKey(_beatmapObject.id))
-                return modifierObjects[_beatmapObject.id];
-            return null;
-        }
-
-        public static ModifierObject.Modifier GetModifierIndex(BeatmapObject _beatmapObject, int index)
-        {
-            if (GetModifierObject(_beatmapObject) != null)
-                return GetModifierObject(_beatmapObject).modifiers[index];
-            return null;
-        }
-
-        public static int GetModifierCount(BeatmapObject _beatmapObject)
-        {
-            if (GetModifierObject(_beatmapObject) != null)
-                return GetModifierObject(_beatmapObject).modifiers.Count;
-            return 0;
-        }
-
-        public static void RemoveModifierIndex(BeatmapObject _beatmapObject, int index)
-        {
-            if (GetModifierObject(_beatmapObject) != null)
-                GetModifierObject(_beatmapObject).modifiers.RemoveAt(index);
-        }
-
-        public static void AddModifierObjectWithValues(BeatmapObject _beatmapObject, Dictionary<string, object> dictionary)
-        {
-            var modifierObject = GetModifierObject(_beatmapObject);
-            if (modifierObject != null)
-            {
-                var list = (List<Dictionary<string, object>>)dictionary["modifiers"];
-
-                modifierObject.modifiers.Clear();
-
-                for (int i = 0; i < list.Count; i++)
-                {
-                    var modifier = new ModifierObject.Modifier(_beatmapObject);
-
-                    var list2 = list[i];
-
-                    if (!string.IsNullOrEmpty((string)list2["value"]))
-                    {
-                        var value = (string)list2["value"];
-
-                        var constant = (bool)list2["constant"];
-
-                        var type = (int)list2["type"];
-
-                        var commands = (List<string>)list2["commands"];
-
-                        var notGate = (bool)list2["not"];
-
-                        modifier.type = (ModifierObject.Modifier.Type)type;
-                        modifier.constant = constant;
-                        modifier.value = value;
-                        modifier.command = commands;
-                        modifier.not = notGate;
-                    }
-
-                    modifier.refModifier = modifierObject;
-                    modifier.modifierObject = _beatmapObject;
-                    modifierObject.modifiers.Add(modifier);
-                }
-            }
-        }
-
-        public static void AddModifierToObject(BeatmapObject _beatmapObject, int index)
-        {
-            var copy = ModifierObject.Modifier.DeepCopy(modifierTypes[index]);
-            if (GetModifierObject(_beatmapObject) != null)
-            {
-                var modifierObject = GetModifierObject(_beatmapObject);
-
-                copy.modifierObject = _beatmapObject;
-                copy.refModifier = modifierObject;
-
-                modifierObject.modifiers.Add(copy);
-            }
-        }
-
-        public static int GetModifierVariable(BeatmapObject _beatmapObject)
-        {
-            if (GetModifierObject(_beatmapObject) != null)
-            {
-                var modifier = GetModifierObject(_beatmapObject);
-
-                return modifier.variable;
-            }
-            return 0;
-        }
-
-        #endregion
-
-        public static void SetModifierTypes()
-        {
-            modifierTypesDictionary.Clear();
-            foreach (var modifierType in modifierTypes)
-            {
-                modifierTypesDictionary.Add(modifierType.command[0], modifierType);
-            }
-
-            var list = new List<string>();
-
-            foreach (var modifierType in modifierTypes)
-            {
-                list.Add(modifierType.command[0] + " (" + modifierType.type.ToString() + ")");
-            }
-
-            ModCompatibility.sharedFunctions.Add("ObjectModifiersModifierList", list);
-        }
-
-        public static Dictionary<string, ModifierObject.Modifier> modifierTypesDictionary = new Dictionary<string, ModifierObject.Modifier>();
-
-        public static List<ModifierObject.Modifier> modifierTypes = new List<ModifierObject.Modifier>
-        {
-            new ModifierObject.Modifier
-            {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "setPitch"
                 },
                 value = "1"
             }, //setPitch
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "addPitch"
                 },
                 value = "0.1"
             }, //addPitch
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "setMusicTime"
                 },
                 value = "0"
             }, //setMusicTime
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playSound",
                     "False",
@@ -615,11 +490,11 @@ namespace ObjectModifiers
                 },
                 value = "sounds/audio.wav"
             }, //playSound
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playSoundOnline",
                     "False",
@@ -629,32 +504,32 @@ namespace ObjectModifiers
                 },
                 value = "sounds/audio.wav"
             }, //playSoundOnline
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "loadLevel"
                 },
                 value = "level name"
             }, //loadLevel
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "blur",
                     "False"
                 },
                 value = "0.5"
             }, //blur
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "particleSystem",
                     "0", //S - 1
@@ -674,11 +549,11 @@ namespace ObjectModifiers
                 },
                 value = "5"
             }, //particleSystem
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "trailRenderer",
                     "1", //StartWidth
@@ -690,11 +565,11 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //trailRenderer
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "spawnPrefab",
                     "0",
@@ -705,71 +580,71 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //spawnPrefab
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHeal"
                 },
                 value = "1"
             }, //playerHeal
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHealAll"
                 },
                 value = "1"
             }, //playerHealAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHit"
                 },
                 value = "1"
             }, //playerHit
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHitAll"
                 },
                 value = "1"
             }, //playerHitAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerKill"
                 },
                 value = ""
             }, //playerKill
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerKillAll"
                 },
                 value = ""
             }, //playerKillAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMove",
                     "1",
@@ -777,11 +652,11 @@ namespace ObjectModifiers
                 },
                 value = "0.0"
             }, //playerMove
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMoveAll",
                     "1",
@@ -789,11 +664,11 @@ namespace ObjectModifiers
                 },
                 value = "0.0"
             }, //playerMoveAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMoveX",
                     "1",
@@ -801,11 +676,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerMoveX
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMoveXAll",
                     "1",
@@ -813,11 +688,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerMoveXAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMoveY",
                     "1",
@@ -825,11 +700,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerMoveY
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMoveYAll",
                     "1",
@@ -837,11 +712,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerMoveYAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerRotate",
                     "1",
@@ -849,11 +724,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerRotate
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerRotateAll",
                     "1",
@@ -861,134 +736,134 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerRotateAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerBoost"
                 },
                 value = "0"
             }, //playerBoost
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerBoostAll"
                 },
                 value = "0"
             }, //playerBoostAll
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDisableBoost"
                 },
                 value = "0"
             }, //playerDisableBoost
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "showMouse"
                 },
                 value = "0"
             }, //showMouse
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "hideMouse"
                 },
                 value = "0"
             }, //hideMouse
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "addVariable",
                     "Object Name"
                 },
                 value = "1"
             }, //addVariable
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "subVariable",
                     "Object Name"
                 },
                 value = "1"
             }, //subVariable
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "setVariable",
                     "Object Name"
                 },
                 value = "1"
             }, //setVariable
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "quitToMenu"
                 },
                 value = "0"
             }, //quitToMenu
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "quitToArcade"
                 },
                 value = "0"
             }, //quitToArcade
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "disableObject"
                 },
                 value = "0"
             }, //disableObject
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "disableObjectTree"
                 },
                 value = "0"
             }, //disableObjectTree
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "save",
                     "save_file",
@@ -997,11 +872,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //save
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "saveVariable",
                     "save_file",
@@ -1010,11 +885,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //saveVariable
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "reactivePos",
                     "0",
@@ -1024,11 +899,11 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //reactivePos
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "reactiveSca",
                     "0",
@@ -1038,22 +913,22 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //reactiveSca
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "reactiveRot",
                     "0"
                 },
                 value = "1"
             }, //reactiveRot
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "reactiveCol",
                     "0",
@@ -1061,22 +936,22 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //reactiveCol
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "setPlayerModel",
                     "0"
                 },
                 value = "0"
             }, //setPlayerModel
-            //new ModifierObject.Modifier
+            //new BeatmapObject.Modifier
             //{
-            //    type = ModifierObject.Modifier.Type.Action,
+            //    type = BeatmapObject.Modifier.Type.Action,
             //    constant = false,
-            //    command = new List<string>
+            //    commands = new List<string>
             //    {
             //        "legacyTail",
             //        "3",
@@ -1085,21 +960,21 @@ namespace ObjectModifiers
             //    },
             //    value = "2"
             //}, //legacyTail
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "blackHole",
                 },
                 value = "0.01"
             }, //blackHole
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "eventOffset",
                     "0",
@@ -1107,43 +982,43 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //blackHole
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "setAlpha"
                 },
                 value = "0"
             }, //setAlpha
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "setAlphaOther",
                     "Objects Name"
                 },
                 value = "0"
             }, //setAlphaOther
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "addColor",
                     "0"
                 },
                 value = "0"
             }, //addColor
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "addColorOther",
                     "Objects Name",
@@ -1151,313 +1026,313 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //addColorOther
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "addColorPlayerDistance",
                     "0"
                 },
                 value = "0"
             }, //addColorPlayerDistance
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "copyColor",
                     "0"
                 },
                 value = "Object Name"
             }, //copyColor
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "updateObjects"
                 },
                 value = "0"
             }, //updateObjects
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "updateObject"
                 },
                 value = "Object Name"
             }, //updateObject
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Action,
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "code"
                 },
                 value = "float x = 1f; float y = 5f; x / y;"
             }, //code
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerCollide"
                 },
                 value = ""
             }, //playerCollide
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHealthEquals"
                 },
                 value = "3"
             }, //playerHealthEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHealthLesserEquals"
                 },
                 value = "3"
             }, //playerHealthLesserEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHealthGreaterEquals"
                 },
                 value = "3"
             }, //playerHealthGreaterEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHealthLesser"
                 },
                 value = "3"
             }, //playerHealthLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerHealthGreater"
                 },
                 value = "3"
             }, //playerHealthGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDeathsEquals"
                 },
                 value = "1"
             }, //playerDeathsEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDeathsLesserEquals"
                 },
                 value = "1"
             }, //playerDeathsLesserEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDeathsGreaterEquals"
                 },
                 value = "1"
             }, //playerDeathsGreaterEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDeathsLesser"
                 },
                 value = "1"
             }, //playerDeathsLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDeathsGreater"
                 },
                 value = "1"
             }, //playerDeathsGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerMoving"
                 },
                 value = "0"
             }, //playerMoving
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerBoosting"
                 },
                 value = "0"
             }, //playerBoosting
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerAlive"
                 },
                 value = "0"
             }, //playerAlive
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDistanceLesser"
                 },
                 value = "5"
             }, //playerDistanceLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "playerDistanceGreater"
                 },
                 value = "5"
             }, //playerDistanceGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "onPlayerHit"
                 },
                 value = ""
             }, //onPlayerHit
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "bulletCollide"
                 },
                 value = ""
             }, //bulletCollide
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "keyPressDown"
                 },
                 value = "0"
             }, //keyPressDown
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "keyPress"
                 },
                 value = "0"
             }, //keyPress
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "keyPressUp"
                 },
                 value = "0"
             }, //keyPressUp
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "mouseButtonDown"
                 },
                 value = "0"
             }, //mouseButtonDown
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "mouseButton"
                 },
                 value = "0"
             }, //mouseButton
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "mouseButtonUp"
                 },
                 value = "0"
             }, //mouseButtonUp
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "mouseOver"
                 },
                 value = "0"
             }, //mouseOver
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "loadEquals",
                     "save_file",
@@ -1466,11 +1341,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //loadEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "loadLesserEquals",
                     "save_file",
@@ -1479,11 +1354,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //loadLesserEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "loadGreaterEquals",
                     "save_file",
@@ -1492,11 +1367,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //loadGreaterEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "loadLesser",
                     "save_file",
@@ -1505,11 +1380,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //loadLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "loadGreater",
                     "save_file",
@@ -1518,216 +1393,216 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //loadGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableEquals"
                 },
                 value = "1"
             }, //variableEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableLesserEquals"
                 },
                 value = "1"
             }, //variableLesserEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableGreaterEquals"
                 },
                 value = "1"
             }, //variableGreaterEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableLesser"
                 },
                 value = "1"
             }, //variableLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableGreater"
                 },
                 value = "1"
             }, //variableGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableOtherEquals",
                     "Object Name"
                 },
                 value = "1"
             }, //variableOtherEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableOtherLesserEquals",
                     "Object Name"
                 },
                 value = "1"
             }, //variableOtherLesserEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableOtherGreaterEquals",
                     "Object Name"
                 },
                 value = "1"
             }, //variableOtherGreaterEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableOtherLesser",
                     "Object Name"
                 },
                 value = "1"
             }, //variableOtherLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "variableOtherGreater",
                     "Object Name"
                 },
                 value = "1"
             }, //variableOtherGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "pitchEquals"
                 },
                 value = "1"
             }, //pitchEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "pitchLesserEquals"
                 },
                 value = "1"
             }, //pitchLesserEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "pitchGreaterEquals"
                 },
                 value = "1"
             }, //pitchGreaterEquals
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "pitchLesser"
                 },
                 value = "1"
             }, //pitchLesser
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "pitchGreater"
                 },
                 value = "1"
             }, //pitchGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "inZenMode"
                 },
                 value = "0"
             }, //inZenMode
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "inNormal"
                 },
                 value = "0"
             }, //inNormal
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "in1Life"
                 },
                 value = "0"
             }, //in1Life
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "inNoHit"
                 },
                 value = "0"
             }, //inNoHit
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "inEditor"
                 },
                 value = "0"
             }, //inEditor
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "randomGreater",
                     "0",
@@ -1735,11 +1610,11 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //randomGreater
-            new ModifierObject.Modifier
+            new BeatmapObject.Modifier
             {
-                type = ModifierObject.Modifier.Type.Trigger,
+                type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
-                command = new List<string>
+                commands = new List<string>
                 {
                     "randomLesser",
                     "0",
@@ -1748,54 +1623,5 @@ namespace ObjectModifiers
                 value = "0"
             }, //randomLesser
         };
-
-        // I plan on making an animation library at some point. This will allow creators to reuse animations or play them with a Modifier as an Animation Object.
-        public static List<AnimationPreset> animationLibrary = new List<AnimationPreset>();
-
-        public class AnimationPreset
-        {
-            public AnimationPreset(string name)
-            {
-                this.name = name;
-            }
-
-            public string id;
-            public string name;
-            public List<List<DataManager.GameData.EventKeyframe>> eventKeyframes = new List<List<DataManager.GameData.EventKeyframe>>
-            {
-                new List<DataManager.GameData.EventKeyframe>
-                {
-                    new DataManager.GameData.EventKeyframe
-                    {
-                        eventTime = 0f,
-                        eventValues = new float[3]
-                    }
-                },
-                new List<DataManager.GameData.EventKeyframe>
-                {
-                    new DataManager.GameData.EventKeyframe
-                    {
-                        eventTime = 0f,
-                        eventValues = new float[2]
-                    }
-                },
-                new List<DataManager.GameData.EventKeyframe>
-                {
-                    new DataManager.GameData.EventKeyframe
-                    {
-                        eventTime = 0f,
-                        eventValues = new float[1]
-                    }
-                },
-                new List<DataManager.GameData.EventKeyframe>
-                {
-                    new DataManager.GameData.EventKeyframe
-                    {
-                        eventTime = 0f,
-                        eventValues = new float[5]
-                    }
-                },
-            };
-        }
     }
 }
