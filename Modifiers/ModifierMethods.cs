@@ -593,7 +593,7 @@ namespace ObjectModifiers.Modifiers
                         }
                         else if (!EditorManager.inst)
                         {
-                            ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ParseStoryLevel(modifier.value));
+                            LevelManager.Load($"{RTFile.ApplicationDirectory}beatmaps/story/{modifier.value}/level.lsb");
                         }
                         break;
                     }
