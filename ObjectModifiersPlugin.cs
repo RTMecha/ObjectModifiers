@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.3.0")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.3.1")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -44,7 +44,7 @@ namespace ObjectModifiers
         public static Material blur;
         public static Material GetBlur()
         {
-            var assetBundle = GetAssetBundle(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets", "objectmaterials");
+            var assetBundle = GetAssetBundle(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets", "objectmaterials.asset");
             var assetToLoad = assetBundle.LoadAsset<Material>("blur.mat");
             var blurMat = Instantiate(assetToLoad);
             assetBundle.Unload(false);
@@ -135,7 +135,7 @@ namespace ObjectModifiers
         [HarmonyPostfix]
         static void UpdatePatch(GameManager __instance)
         {
-            foreach (var b in DataManager.inst.gameData.beatmapObjects)
+            foreach (var b in DataManager.inst.gameData.beatmapObjects.OrderBy(x => x.StartTime))
             {
                 var beatmapObject = (BeatmapObject)b;
 
