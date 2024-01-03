@@ -177,7 +177,10 @@ namespace ObjectModifiers
                             else
                             {
                                 foreach (var act in actions)
+                                {
                                     act.active = false;
+                                    act.Inactive?.Invoke(act);
+                                }
                             }
                         }
                         else
@@ -433,6 +436,16 @@ namespace ObjectModifiers
             }
         }
 
+        public static IEnumerator ActivateModifier(BeatmapObject beatmapObject, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+
+            if (beatmapObject.modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier modifier))
+            {
+                modifier.Result = "death hd";
+            }
+        }
+
         #endregion
 
         public static void AddModifierToObject(BeatmapObject beatmapObject, int index)
@@ -565,21 +578,21 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //trailRenderer
-            new BeatmapObject.Modifier
-            {
-                type = BeatmapObject.Modifier.Type.Action,
-                constant = false,
-                commands = new List<string>
-                {
-                    "spawnPrefab",
-                    "0",
-                    "0",
-                    "1",
-                    "1",
-                    "0"
-                },
-                value = "0"
-            }, //spawnPrefab
+            //new BeatmapObject.Modifier
+            //{
+            //    type = BeatmapObject.Modifier.Type.Action,
+            //    constant = false,
+            //    commands = new List<string>
+            //    {
+            //        "spawnPrefab",
+            //        "0",
+            //        "0",
+            //        "1",
+            //        "1",
+            //        "0"
+            //    },
+            //    value = "0"
+            //}, //spawnPrefab
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -648,9 +661,10 @@ namespace ObjectModifiers
                 {
                     "playerMove",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
-                value = "0.0"
+                value = "0,0"
             }, //playerMove
             new BeatmapObject.Modifier
             {
@@ -660,9 +674,10 @@ namespace ObjectModifiers
                 {
                     "playerMoveAll",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
-                value = "0.0"
+                value = "0,0"
             }, //playerMoveAll
             new BeatmapObject.Modifier
             {
@@ -672,7 +687,8 @@ namespace ObjectModifiers
                 {
                     "playerMoveX",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
                 value = "0"
             }, //playerMoveX
@@ -684,7 +700,8 @@ namespace ObjectModifiers
                 {
                     "playerMoveXAll",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
                 value = "0"
             }, //playerMoveXAll
@@ -696,7 +713,8 @@ namespace ObjectModifiers
                 {
                     "playerMoveY",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
                 value = "0"
             }, //playerMoveY
@@ -708,7 +726,8 @@ namespace ObjectModifiers
                 {
                     "playerMoveYAll",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
                 value = "0"
             }, //playerMoveYAll
@@ -720,7 +739,8 @@ namespace ObjectModifiers
                 {
                     "playerRotate",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
                 value = "0"
             }, //playerRotate
@@ -732,7 +752,8 @@ namespace ObjectModifiers
                 {
                     "playerRotateAll",
                     "1",
-                    "0"
+                    "0",
+                    "False"
                 },
                 value = "0"
             }, //playerRotateAll
@@ -763,6 +784,16 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "playerDisableBoost"
+                },
+                value = "0"
+            }, //playerDisableBoost
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "playerDisableBoostAll"
                 },
                 value = "0"
             }, //playerDisableBoost
@@ -939,6 +970,18 @@ namespace ObjectModifiers
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "reactiveColLerp",
+                    "0",
+                    "0"
+                },
+                value = "1"
+            }, //reactiveColLerp
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
                 commands = new List<string>
                 {
@@ -1043,6 +1086,29 @@ namespace ObjectModifiers
                 constant = true,
                 commands = new List<string>
                 {
+                    "lerpColor",
+                    "0"
+                },
+                value = "0"
+            }, //addColor
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "lerpColorOther",
+                    "Objects Name",
+                    "0"
+                },
+                value = "0"
+            }, //addColorOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
                     "copyColor",
                     "0"
                 },
@@ -1078,6 +1144,29 @@ namespace ObjectModifiers
                 },
                 value = "float x = 1f; float y = 5f; x / y;"
             }, //code
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "signalModifier",
+                    "Objects Name"
+                },
+                value = "0.5"
+            }, //signalModifier
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "editorNotify",
+                    "2",
+                    "1"
+                },
+                value = "Modifier triggered!"
+            }, //editorNotify
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
@@ -1622,6 +1711,48 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //randomLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "randomEquals",
+                    "0",
+                    "1"
+                },
+                value = "0"
+            }, //randomEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "requireSignal"
+                },
+                value = "0"
+            }, //requireSignal
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "musicTimeGreater"
+                },
+                value = "0"
+            }, //musicTimeGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "musicTimeLesser"
+                },
+                value = "0"
+            }, //musicTimeLesser
         };
     }
 }

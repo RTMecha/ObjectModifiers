@@ -483,11 +483,27 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "randomGreater":
                     {
-                        return float.TryParse(modifier.commands[1], out float x) && float.TryParse(modifier.commands[2], out float y) && float.TryParse(modifier.value, out float z) && UnityEngine.Random.Range(x, y) > z;
+                        return int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) > z;
                     }
                 case "randomLesser":
                     {
-                        return float.TryParse(modifier.commands[1], out float x) && float.TryParse(modifier.commands[2], out float y) && float.TryParse(modifier.value, out float z) && UnityEngine.Random.Range(x, y) > z;
+                        return int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) < z;
+                    }
+                case "randomEquals":
+                    {
+                        return int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) == z;
+                    }
+                case "requireSignal":
+                    {
+                        return modifier.Result != null;
+                    }
+                case "musicTimeGreater":
+                    {
+                        return float.TryParse(modifier.value, out float x) && AudioManager.inst.CurrentAudioSource.time > x;
+                    }
+                case "musicTimeLesser":
+                    {
+                        return float.TryParse(modifier.value, out float x) && AudioManager.inst.CurrentAudioSource.time < x;
                     }
             }
             return false;
@@ -495,6 +511,7 @@ namespace ObjectModifiers.Modifiers
 
         public static void Action(BeatmapObject.Modifier modifier)
         {
+            modifier.hasChanged = false;
             switch (modifier.commands[0])
             {
                 case "setPitch":
@@ -692,10 +709,103 @@ namespace ObjectModifiers.Modifiers
                         {
                             var mod = levelObject.visualObject.GameObject;
 
-                            if (!modifier.modifierObject.components.Has(x => x is ParticleSystem) && !mod.GetComponent<ParticleSystem>())
+                            if (!modifier.modifierObject.particleSystem && !mod.GetComponent<ParticleSystem>())
                             {
-                                var ps = mod.AddComponent<ParticleSystem>();
-                                modifier.modifierObject.components.Add(ps);
+                                modifier.modifierObject.particleSystem = mod.AddComponent<ParticleSystem>();
+                                var ps = modifier.modifierObject.particleSystem;
+
+                                var mat = mod.GetComponent<ParticleSystemRenderer>();
+                                mat.material = GameManager.inst.PlayerPrefabs[0].transform.GetChild(0).GetChild(0).GetComponent<TrailRenderer>().material;
+                                mat.material.color = Color.white;
+                                mat.trailMaterial = mat.material;
+                                mat.renderMode = ParticleSystemRenderMode.Mesh;
+
+                                var s = int.Parse(modifier.commands[1]);
+                                var so = int.Parse(modifier.commands[2]);
+
+                                s = Mathf.Clamp(s, 0, ObjectManager.inst.objectPrefabs.Count - 1);
+                                so = Mathf.Clamp(so, 0, ObjectManager.inst.objectPrefabs[s].options.Count - 1);
+
+                                mat.mesh = ObjectManager.inst.objectPrefabs[s == 4 ? 0 : s == 6 ? 0 : s].options[so].GetComponentInChildren<MeshFilter>().mesh;
+
+                                var psMain = ps.main;
+                                var psEmission = ps.emission;
+
+                                psMain.simulationSpace = ParticleSystemSimulationSpace.World;
+
+                                psMain.startSpeed = float.Parse(modifier.commands[9]);
+
+                                if (modifier.constant)
+                                    ps.emissionRate = float.Parse(modifier.commands[10]);
+                                else
+                                {
+                                    ps.emissionRate = 0f;
+                                    psMain.loop = false;
+                                    psEmission.burstCount = int.Parse(modifier.commands[10]);
+                                    psMain.duration = float.Parse(modifier.commands[11]);
+                                }
+
+                                var rotationOverLifetime = ps.rotationOverLifetime;
+                                rotationOverLifetime.enabled = true;
+                                rotationOverLifetime.separateAxes = true;
+                                rotationOverLifetime.xMultiplier = 0f;
+                                rotationOverLifetime.yMultiplier = 0f;
+                                rotationOverLifetime.zMultiplier = float.Parse(modifier.commands[8]);
+
+                                var forceOverLifetime = ps.forceOverLifetime;
+                                forceOverLifetime.enabled = true;
+                                forceOverLifetime.space = ParticleSystemSimulationSpace.World;
+                                forceOverLifetime.xMultiplier = float.Parse(modifier.commands[12]);
+                                forceOverLifetime.yMultiplier = float.Parse(modifier.commands[13]);
+
+                                var particlesTrail = ps.trails;
+                                particlesTrail.enabled = bool.Parse(modifier.commands[14]);
+
+                                var colorOverLifetime = ps.colorOverLifetime;
+                                colorOverLifetime.enabled = true;
+                                var psCol = colorOverLifetime.color;
+
+                                float alphaStart = float.Parse(modifier.commands[4]);
+                                float alphaEnd = float.Parse(modifier.commands[5]);
+
+                                var gradient = new Gradient();
+                                gradient.alphaKeys = new GradientAlphaKey[2]
+                                {
+                                        new GradientAlphaKey(alphaStart, 0f),
+                                        new GradientAlphaKey(alphaEnd, 1f)
+                                };
+                                gradient.colorKeys = new GradientColorKey[2]
+                                {
+                                        new GradientColorKey(Color.white, 0f),
+                                        new GradientColorKey(Color.white, 1f)
+                                };
+
+                                psCol.gradient = gradient;
+
+                                colorOverLifetime.color = psCol;
+
+                                var sizeOverLifetime = ps.sizeOverLifetime;
+                                sizeOverLifetime.enabled = true;
+
+                                var ssss = sizeOverLifetime.size;
+
+                                var sizeStart = float.Parse(modifier.commands[6]);
+                                var sizeEnd = float.Parse(modifier.commands[7]);
+
+                                var curve = new AnimationCurve(new Keyframe[2]
+                                {
+                                            new Keyframe(0f, sizeStart),
+                                            new Keyframe(1f, sizeEnd)
+                                });
+
+                                ssss.curve = curve;
+
+                                sizeOverLifetime.size = ssss;
+                            }
+                            else if (!modifier.modifierObject.particleSystem)
+                            {
+                                modifier.modifierObject.particleSystem = mod.GetComponent<ParticleSystem>();
+                                var ps = modifier.modifierObject.particleSystem;
 
                                 var mat = mod.GetComponent<ParticleSystemRenderer>();
                                 mat.material = GameManager.inst.PlayerPrefabs[0].transform.GetChild(0).GetChild(0).GetComponent<TrailRenderer>().material;
@@ -786,9 +896,9 @@ namespace ObjectModifiers.Modifiers
                                 sizeOverLifetime.size = ssss;
                             }
 
-                            if (modifier.modifierObject.components.Find(x => x is ParticleSystem))
+                            if (modifier.modifierObject.particleSystem)
                             {
-                                var ps = modifier.modifierObject.components.Find(x => x is ParticleSystem) as ParticleSystem;
+                                var ps = modifier.modifierObject.particleSystem;
                                 var psMain = ps.main;
                                 var psEmission = ps.emission;
 
@@ -814,17 +924,23 @@ namespace ObjectModifiers.Modifiers
                         {
                             var mod = levelObject.visualObject.GameObject;
 
-                            if (!modifier.modifierObject.components.Find(x => x is TrailRenderer))
+                            if (!modifier.modifierObject.trailRenderer && !mod.GetComponent<TrailRenderer>())
                             {
-                                var tr = mod.AddComponent<TrailRenderer>();
-                                modifier.modifierObject.components.Add(tr);
+                                modifier.modifierObject.trailRenderer = mod.AddComponent<TrailRenderer>();
 
-                                tr.material = GameManager.inst.PlayerPrefabs[0].transform.GetChild(0).GetChild(0).GetComponent<TrailRenderer>().material;
-                                tr.material.color = Color.white;
+                                modifier.modifierObject.trailRenderer.material = GameManager.inst.PlayerPrefabs[0].transform.GetChild(0).GetChild(0).GetComponent<TrailRenderer>().material;
+                                modifier.modifierObject.trailRenderer.material.color = Color.white;
+                            }
+                            else if (!modifier.modifierObject.trailRenderer)
+                            {
+                                modifier.modifierObject.trailRenderer = mod.GetComponent<TrailRenderer>();
+
+                                modifier.modifierObject.trailRenderer.material = GameManager.inst.PlayerPrefabs[0].transform.GetChild(0).GetChild(0).GetComponent<TrailRenderer>().material;
+                                modifier.modifierObject.trailRenderer.material.color = Color.white;
                             }
                             else
                             {
-                                var tr = modifier.modifierObject.components.Find(x => x is TrailRenderer) as TrailRenderer;
+                                var tr = modifier.modifierObject.trailRenderer;
 
                                 if (float.TryParse(modifier.value, out float time))
                                 {
@@ -867,119 +983,129 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerHit":
                     {
+                        //if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant)
+                        //    if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
+                        //    {
+                        //        var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+
+                        //        if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
+                        //        {
+                        //            var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+
+                        //            if (rt != null)
+                        //            {
+                        //                rt.GetType().GetMethod("PlayerHit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
+                        //            }
+                        //            else
+                        //            {
+                        //                if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                        //                {
+                        //                    var p = InputDataManager.inst.players[i].player;
+
+                        //                    p.GetType().GetMethod("PlayerHit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
+                        //                }
+                        //            }
+
+                        //            if (hit > 1)
+                        //            {
+                        //                InputDataManager.inst.players[i].health -= hit + 1;
+                        //            }
+                        //        }
+                        //    }
+
                         if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant)
-                            if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
+                        {
+                            if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject && int.TryParse(modifier.value, out int hit))
                             {
-                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                                var closest = PlayerManager.Players
+                                    .Where(x => x.Player)
+                                    .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
 
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
-                                {
-                                    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+                                closest?.Player?.PlayerHit();
 
-                                    if (rt != null)
-                                    {
-                                        rt.GetType().GetMethod("PlayerHit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
-                                    }
-                                    else
-                                    {
-                                        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                        {
-                                            var p = InputDataManager.inst.players[i].player;
-
-                                            p.GetType().GetMethod("PlayerHit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
-                                        }
-                                    }
-
-                                    if (hit > 1)
-                                    {
-                                        InputDataManager.inst.players[i].health -= hit + 1;
-                                    }
-                                }
+                                if (hit > 1 && closest)
+                                    closest.Health -= hit;
                             }
+                        }
 
                         break;
                     }
                 case "playerHitAll":
                     {
-                        if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant)
-                            for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant && int.TryParse(modifier.value, out int hit))
+                            foreach (var player in PlayerManager.Players.Where(x => x.Player))
                             {
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
-                                {
-                                    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+                                player.Player.PlayerHit();
 
-                                    if (rt != null)
-                                        rt.GetType().GetMethod("PlayerHit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
-                                    else
-                                    {
-                                        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                        {
-                                            var p = InputDataManager.inst.players[i].player;
-
-                                            p.GetType().GetMethod("PlayerHit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
-                                        }
-                                    }
-
-                                    if (hit > 1)
-                                    {
-                                        InputDataManager.inst.players[i].health -= hit + 1;
-                                    }
-                                }
+                                if (hit > 1)
+                                    player.Health -= hit;
                             }
+
                         break;
                     }
                 case "playerHeal":
                     {
                         if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant)
-                            if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
+                            if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && int.TryParse(modifier.value, out int hit))
                             {
-                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                                //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
-                                {
-                                    InputDataManager.inst.players[i].health += hit;
+                                //if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
+                                //{
+                                //    InputDataManager.inst.players[i].health += hit;
 
-                                    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+                                //    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
 
-                                    if (rt != null)
-                                        rt.GetType().GetMethod("UpdateTail", BindingFlags.Public | BindingFlags.Instance).Invoke(rt, new object[] { InputDataManager.inst.players[i].health, Vector3.zero });
-                                    else
-                                    {
-                                        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                        {
-                                            var p = InputDataManager.inst.players[i].player;
+                                //    if (rt != null)
+                                //        rt.GetType().GetMethod("UpdateTail", BindingFlags.Public | BindingFlags.Instance).Invoke(rt, new object[] { InputDataManager.inst.players[i].health, Vector3.zero });
+                                //    else
+                                //    {
+                                //        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                                //        {
+                                //            var p = InputDataManager.inst.players[i].player;
 
-                                            p.trail.UpdateTail(InputDataManager.inst.players[i].health, Vector3.zero);
-                                        }
-                                    }
-                                }
+                                //            p.trail.UpdateTail(InputDataManager.inst.players[i].health, Vector3.zero);
+                                //        }
+                                //    }
+                                //}
+
+                                var closest = PlayerManager.Players
+                                    .Where(x => x.Player)
+                                    .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                                if (closest)
+                                    closest.Health += hit;
                             }
                         break;
                     }
                 case "playerHealAll":
                     {
-                        if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant)
-                            for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        if ((EditorManager.inst == null && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 || !EditorManager.inst.isEditing) && !modifier.constant && int.TryParse(modifier.value, out int hit))
+                            foreach (var player in PlayerManager.Players.Where(x => x.Player))
                             {
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
-                                {
-                                    InputDataManager.inst.players[i].health += hit;
-
-                                    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                                    if (rt != null)
-                                        rt.GetType().GetMethod("UpdateTail", BindingFlags.Public | BindingFlags.Instance).Invoke(rt, new object[] { InputDataManager.inst.players[i].health, Vector3.zero });
-                                    else
-                                    {
-                                        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                        {
-                                            var p = InputDataManager.inst.players[i].player;
-
-                                            p.trail.UpdateTail(InputDataManager.inst.players[i].health, Vector3.zero);
-                                        }
-                                    }
-                                }
+                                player.Health += hit;
                             }
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
+                        //    {
+                        //        InputDataManager.inst.players[i].health += hit;
+
+                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+
+                        //        if (rt != null)
+                        //            rt.GetType().GetMethod("UpdateTail", BindingFlags.Public | BindingFlags.Instance).Invoke(rt, new object[] { InputDataManager.inst.players[i].health, Vector3.zero });
+                        //        else
+                        //        {
+                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                        //            {
+                        //                var p = InputDataManager.inst.players[i].player;
+
+                        //                p.trail.UpdateTail(InputDataManager.inst.players[i].health, Vector3.zero);
+                        //            }
+                        //        }
+                        //    }
+                        //}
                         break;
                     }
                 case "playerKill":
@@ -987,9 +1113,16 @@ namespace ObjectModifiers.Modifiers
                         if ((EditorManager.inst == null || !EditorManager.inst.isEditing) && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 && !modifier.constant)
                             if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                             {
-                                var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                                //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
-                                InputDataManager.inst.players[i].health = 0;
+                                //InputDataManager.inst.players[i].health = 0;
+
+                                var closest = PlayerManager.Players
+                                    .Where(x => x.Player)
+                                    .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                                if (closest)
+                                    closest.Health = 0;
                             }
 
                         break;
@@ -998,10 +1131,14 @@ namespace ObjectModifiers.Modifiers
                     {
                         if ((EditorManager.inst == null || !EditorManager.inst.isEditing) && DataManager.inst.GetSettingEnum("ArcadeDifficulty", 1) != 0 && !modifier.constant)
                         {
-                            for (int i = 0; i < InputDataManager.inst.players.Count; i++)
+                            foreach (var player in PlayerManager.Players.Where(x => x.Player))
                             {
-                                InputDataManager.inst.players[i].health = 0;
+                                player.Health = 0;
                             }
+                            //for (int i = 0; i < InputDataManager.inst.players.Count; i++)
+                            //{
+                            //    InputDataManager.inst.players[i].health = 0;
+                            //}
                         }
                         break;
                     }
@@ -1009,20 +1146,39 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                         {
-                            var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                            var vector = modifier.value.Split(new char[] { ',' });
 
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+
+                            //if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //{
+                            //    var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                            //    if (modifier.constant)
+                            //        player.transform.localPosition = new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f);
+                            //    else
+                            //    {
+                            //        player.transform.DOLocalMove(new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                            //    }
+                            //}
+
+                            if (modifier.commands.Count < 4)
+                                modifier.commands.Add("False");
+
+                            var closest = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                            bool relative = Parser.TryParse(modifier.commands[3], false);
+                            if (closest)
                             {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                                var vector = modifier.value.Split(new char[] { '.' });
-
+                                var tf = closest.Player.playerObjects["RB Parent"].gameObject.transform;
                                 if (modifier.constant)
-                                    player.transform.localPosition = new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f);
+                                    tf.localPosition = new Vector3(Parser.TryParse(vector[0], 0f), Parser.TryParse(vector[1], 0f), 0f);
                                 else
-                                {
-                                    player.transform.DOLocalMove(new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
-                                }
+                                    tf
+                                        .DOLocalMove(new Vector3(Parser.TryParse(vector[0], 0f) + (relative ? tf.position.x : 0f), Parser.TryParse(vector[1], 0f) + (relative ? tf.position.y : 0f), 0f), Parser.TryParse(modifier.commands[1], 1f))
+                                        .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                             }
                         }
 
@@ -1030,19 +1186,34 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerMoveAll":
                     {
-                        for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        var vector = modifier.value.Split(new char[] { ',' });
+
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                        //    {
+                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                        //        if (modifier.constant)
+                        //            player.transform.localPosition = new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f);
+                        //        else
+                        //            player.transform.DOLocalMove(new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                        //    }
+                        //}
+
+                        if (modifier.commands.Count < 4)
+                            modifier.commands.Add("False");
+
+                        bool relative = Parser.TryParse(modifier.commands[3], false);
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                            {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                                var vector = modifier.value.Split(new char[] { '.' });
-
-                                if (modifier.constant)
-                                    player.transform.localPosition = new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f);
-                                else
-                                    player.transform.DOLocalMove(new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
-                            }
+                            var tf = player.Player.playerObjects["RB Parent"].gameObject.transform;
+                            if (modifier.constant)
+                                tf.localPosition = new Vector3(Parser.TryParse(vector[0], 0f), Parser.TryParse(vector[1], 0f), 0f);
+                            else
+                                tf
+                                    .DOLocalMove(new Vector3(Parser.TryParse(vector[0], 0f) + (relative ? tf.position.x : 0f), Parser.TryParse(vector[1], 0f) + (relative ? tf.position.y : 0f), 0f), Parser.TryParse(modifier.commands[1], 1f))
+                                    .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                         }
 
                         break;
@@ -1051,20 +1222,43 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                         {
-                            var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                            //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //{
+                            //    var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                            //    if (modifier.constant)
+                            //    {
+                            //        var v = player.transform.localPosition;
+                            //        v.x += float.Parse(modifier.value);
+                            //        player.transform.localPosition = v;
+                            //    }
+                            //    else
+                            //        player.transform.DOLocalMoveX(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                            //}
+
+                            if (modifier.commands.Count < 4)
+                                modifier.commands.Add("False");
+
+                            var closest = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                            bool relative = Parser.TryParse(modifier.commands[3], false);
+                            if (closest)
                             {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
+                                var tf = closest.Player.playerObjects["RB Parent"].gameObject.transform;
                                 if (modifier.constant)
                                 {
-                                    var v = player.transform.localPosition;
-                                    v.x += float.Parse(modifier.value);
-                                    player.transform.localPosition = v;
+                                    var v = tf.localPosition;
+                                    v.x += Parser.TryParse(modifier.value, 1f);
+                                    tf.localPosition = v;
                                 }
                                 else
-                                    player.transform.DOLocalMoveX(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                                    tf
+                                        .DOLocalMoveX(Parser.TryParse(modifier.value, 0f) + (relative ? tf.position.x : 0f), Parser.TryParse(modifier.commands[1], 1f))
+                                        .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                             }
                         }
 
@@ -1072,21 +1266,40 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerMoveXAll":
                     {
-                        for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        {
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                            {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                        //    {
+                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
 
-                                if (modifier.constant)
-                                {
-                                    var v = player.transform.localPosition;
-                                    v.x += float.Parse(modifier.value);
-                                    player.transform.localPosition = v;
-                                }
-                                else
-                                    player.transform.DOLocalMoveX(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                        //        if (modifier.constant)
+                        //        {
+                        //            var v = player.transform.localPosition;
+                        //            v.x += float.Parse(modifier.value);
+                        //            player.transform.localPosition = v;
+                        //        }
+                        //        else
+                        //            player.transform.DOLocalMoveX(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                        //    }
+                        //}
+
+                        if (modifier.commands.Count < 4)
+                            modifier.commands.Add("False");
+
+                        bool relative = Parser.TryParse(modifier.commands[3], false);
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
+                        {
+                            var tf = player.Player.playerObjects["RB Parent"].gameObject.transform;
+                            if (modifier.constant)
+                            {
+                                var v = tf.localPosition;
+                                v.x += Parser.TryParse(modifier.value, 1f);
+                                tf.localPosition = v;
                             }
+                            else
+                                tf
+                                    .DOLocalMoveX(Parser.TryParse(modifier.value, 0f) + (relative ? tf.position.x : 0f), Parser.TryParse(modifier.commands[1], 1f))
+                                    .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                         }
 
                         break;
@@ -1095,20 +1308,45 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                         {
-                            var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                            //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //{
+                            //    var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                            //    if (modifier.constant)
+                            //    {
+                            //        var v = player.transform.localPosition;
+                            //        v.y += float.Parse(modifier.value);
+                            //        player.transform.localPosition = v;
+                            //    }
+                            //    else
+                            //        player.transform.DOLocalMoveY(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                            //}
+
+                            if (modifier.commands.Count < 4)
                             {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+                                modifier.commands.Add("False");
+                            }
 
+                            var closest = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                            bool relative = Parser.TryParse(modifier.commands[3], false);
+                            if (closest)
+                            {
+                                var tf = closest.Player.playerObjects["RB Parent"].gameObject.transform;
                                 if (modifier.constant)
                                 {
-                                    var v = player.transform.localPosition;
-                                    v.y += float.Parse(modifier.value);
-                                    player.transform.localPosition = v;
+                                    var v = tf.localPosition;
+                                    v.y += Parser.TryParse(modifier.value, 1f);
+                                    tf.localPosition = v;
                                 }
                                 else
-                                    player.transform.DOLocalMoveY(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                                    tf
+                                        .DOLocalMoveY(Parser.TryParse(modifier.value, 0f) + (relative ? tf.position.y : 0f), Parser.TryParse(modifier.commands[1], 1f))
+                                        .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                             }
                         }
 
@@ -1116,21 +1354,40 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerMoveYAll":
                     {
-                        for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        {
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                            {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                        //    {
+                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
 
-                                if (modifier.constant)
-                                {
-                                    var v = player.transform.localPosition;
-                                    v.y += float.Parse(modifier.value);
-                                    player.transform.localPosition = v;
-                                }
-                                else
-                                    player.transform.DOLocalMoveY(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                        //        if (modifier.constant)
+                        //        {
+                        //            var v = player.transform.localPosition;
+                        //            v.y += float.Parse(modifier.value);
+                        //            player.transform.localPosition = v;
+                        //        }
+                        //        else
+                        //            player.transform.DOLocalMoveY(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                        //    }
+                        //}
+
+                        if (modifier.commands.Count < 4)
+                            modifier.commands.Add("False");
+
+                        bool relative = Parser.TryParse(modifier.commands[3], false);
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
+                        {
+                            var tf = player.Player.playerObjects["RB Parent"].gameObject.transform;
+                            if (modifier.constant)
+                            {
+                                var v = tf.localPosition;
+                                v.y += Parser.TryParse(modifier.value, 1f);
+                                tf.localPosition = v;
                             }
+                            else
+                                tf
+                                    .DOLocalMoveY(Parser.TryParse(modifier.value, 0f) + (relative ? tf.position.y : 0f), Parser.TryParse(modifier.commands[1], 1f))
+                                    .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                         }
 
                         break;
@@ -1139,18 +1396,40 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                         {
-                            var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                            //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //{
+                            //    var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                            //    if (modifier.constant)
+                            //    {
+
+                            //    }
+                            //    else
+                            //        player.transform.DORotate(new Vector3(0f, 0f, float.Parse(modifier.value)), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                            //}
+
+                            if (modifier.commands.Count < 4)
+                                modifier.commands.Add("False");
+
+                            var closest = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                            bool relative = Parser.TryParse(modifier.commands[3], false);
+                            if (closest)
                             {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
                                 if (modifier.constant)
                                 {
-
+                                    var v = closest.Player.playerObjects["RB Parent"].gameObject.transform.localRotation.eulerAngles;
+                                    v.z += Parser.TryParse(modifier.value, 1f);
+                                    closest.Player.playerObjects["RB Parent"].gameObject.transform.localRotation = Quaternion.Euler(v);
                                 }
                                 else
-                                    player.transform.DORotate(new Vector3(0f, 0f, float.Parse(modifier.value)), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                                    closest.Player.playerObjects["RB Parent"].gameObject.transform
+                                        .DORotate(new Vector3(0f, 0f, Parser.TryParse(modifier.value, 0f)), Parser.TryParse(modifier.commands[1], 1f))
+                                        .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                             }
                         }
 
@@ -1158,19 +1437,37 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerRotateAll":
                     {
-                        for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                        //    {
+                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
+
+                        //        if (modifier.constant)
+                        //        {
+
+                        //        }
+                        //        else
+                        //            player.transform.DORotate(new Vector3(0f, 0f, float.Parse(modifier.value)), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                        //    }
+                        //}
+
+                        if (modifier.commands.Count < 4)
+                            modifier.commands.Add("False");
+
+                        bool relative = Parser.TryParse(modifier.commands[3], false);
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            if (modifier.constant)
                             {
-                                var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                                if (modifier.constant)
-                                {
-
-                                }
-                                else
-                                    player.transform.DORotate(new Vector3(0f, 0f, float.Parse(modifier.value)), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
+                                var v = player.Player.playerObjects["RB Parent"].gameObject.transform.localRotation.eulerAngles;
+                                v.z += Parser.TryParse(modifier.value, 1f);
+                                player.Player.playerObjects["RB Parent"].gameObject.transform.localRotation = Quaternion.Euler(v);
                             }
+                            else
+                                player.Player.playerObjects["RB Parent"].gameObject.transform
+                                    .DORotate(new Vector3(0f, 0f, Parser.TryParse(modifier.value, 0f)), Parser.TryParse(modifier.commands[1], 1f))
+                                    .SetEase(DataManager.inst.AnimationList[Parser.TryParse(modifier.commands[2], 0)].Animation);
                         }
 
                         break;
@@ -1179,79 +1476,132 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !modifier.constant)
                         {
-                            var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
+                            //var i = ObjectExtensions.ClosestPlayer(levelObject.visualObject.GameObject);
 
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                            {
-                                var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+                            //if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //{
+                            //    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
 
-                                if (rt != null)
-                                {
-                                    rt.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
-                                }
-                                else
-                                {
-                                    if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                    {
-                                        var p = InputDataManager.inst.players[i].player;
+                            //    if (rt != null)
+                            //    {
+                            //        rt.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
+                            //    }
+                            //    else
+                            //    {
+                            //        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                            //        {
+                            //            var p = InputDataManager.inst.players[i].player;
 
-                                        p.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
-                                    }
-                                }
-                            }
+                            //            p.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
+                            //        }
+                            //    }
+                            //}
+
+                            var closest = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
+
+                            closest?.Player?.StartBoost();
                         }
 
                         break;
                     }
                 case "playerBoostAll":
                     {
-                        for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && !modifier.constant)
+                        //    {
+                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+
+                        //        if (rt != null)
+                        //        {
+                        //            rt.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
+                        //        }
+                        //        else
+                        //        {
+                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                        //            {
+                        //                var p = InputDataManager.inst.players[i].player;
+
+                        //                p.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
+                        //            }
+                        //        }
+                        //    }
+                        //}
+
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && !modifier.constant)
-                            {
-                                var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                                if (rt != null)
-                                {
-                                    rt.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
-                                }
-                                else
-                                {
-                                    if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                    {
-                                        var p = InputDataManager.inst.players[i].player;
-
-                                        p.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
-                                    }
-                                }
-                            }
+                            player.Player.StartBoost();
                         }
 
                         break;
                     }
                 case "playerDisableBoost":
                     {
-                        for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                        //    {
+                        //        modifier.Result = false;
+                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+
+                        //        if (rt != null)
+                        //        {
+                        //            rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, false);
+                        //        }
+                        //        else
+                        //        {
+                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                        //            {
+                        //                var p = InputDataManager.inst.players[i].player;
+
+                        //                p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, false);
+                        //            }
+                        //        }
+                        //    }
+                        //}
+
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !modifier.constant)
                         {
-                            if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                            {
-                                modifier.Result = false;
-                                var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+                            var closest = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
 
-                                if (rt != null)
-                                {
-                                    rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, false);
-                                }
-                                else
-                                {
-                                    if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                    {
-                                        var p = InputDataManager.inst.players[i].player;
+                            if (closest)
+                                closest.Player.canBoost = false;
+                        }
 
-                                        p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, false);
-                                    }
-                                }
-                            }
+                        break;
+                    }
+                case "playerDisableBoostAll":
+                    {
+                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                        //{
+                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                        //    {
+                        //        modifier.Result = false;
+                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+
+                        //        if (rt != null)
+                        //        {
+                        //            rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, false);
+                        //        }
+                        //        else
+                        //        {
+                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                        //            {
+                        //                var p = InputDataManager.inst.players[i].player;
+
+                        //                p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, false);
+                        //            }
+                        //        }
+                        //    }
+                        //}
+
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
+                        {
+                            player.Player.canBoost = false;
                         }
 
                         break;
@@ -1426,6 +1776,26 @@ namespace ObjectModifiers.Modifiers
 
                             if (levelObject.visualObject.Renderer != null && int.TryParse(modifier.commands[2], out int col))
                                 levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[col] * reactiveColor;
+
+                            samples = null;
+                        }
+                        break;
+                    }
+                case "reactiveColLerp":
+                    {
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer
+                            && int.TryParse(modifier.commands[1], out int sample) && float.TryParse(modifier.value, out float val))
+                        {
+                            float[] samples = new float[256];
+
+                            AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+
+                            sample = Mathf.Clamp(sample, 0, 255);
+
+                            float reactiveColor = samples[sample] * val;
+                            
+                            if (levelObject.visualObject.Renderer != null && int.TryParse(modifier.commands[2], out int col))
+                                levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[col], reactiveColor);
 
                             samples = null;
                         }
@@ -1705,6 +2075,33 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "lerpColor":
+                    {
+                        if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(modifier.commands[1], out int index) && float.TryParse(modifier.value, out float num))
+                        {
+                            index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+
+                            if (levelObject.visualObject.Renderer != null)
+                                levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
+                        }
+
+                        break;
+                    }
+                case "lerpColorOther":
+                    {
+                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                        {
+                            if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
+                            {
+                                index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+
+                                levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
+                            }
+                        }
+
+
+                        break;
+                    }
                 case "addColorPlayerDistance":
                     {
                         if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && levelObject.visualObject.Renderer && int.TryParse(modifier.commands[1], out int index) && float.TryParse(modifier.value, out float num))
@@ -1821,6 +2218,23 @@ namespace ObjectModifiers.Modifiers
                         RTCode.Evaluate($"{codeToInclude}{code}");
                         break;
                     }
+                case "signalModifier":
+                    {
+                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                        {
+                            if (bm != null)
+                            {
+                                ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ActivateModifier((BeatmapObject)bm, Parser.TryParse(modifier.value, 0f)));
+                            }
+                        }
+
+                        break;
+                    }
+                case "editorNotify":
+                    {
+                        EditorManager.inst?.DisplayNotification(modifier.value, Parser.TryParse(modifier.commands[1], 0.5f), (EditorManager.NotificationType)Parser.TryParse(modifier.commands[2], 0));
+                        break;
+                    }
             }
         }
 
@@ -1849,26 +2263,36 @@ namespace ObjectModifiers.Modifiers
                         if (!modifier.hasChanged)
                         {
                             modifier.hasChanged = true;
-                            for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                            //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
+                            //{
+                            //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
+                            //    {
+                            //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+
+                            //        if (rt != null)
+                            //        {
+                            //            rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, true);
+                            //        }
+                            //        else
+                            //        {
+                            //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
+                            //            {
+                            //                var p = InputDataManager.inst.players[i].player;
+
+                            //                p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, true);
+                            //            }
+                            //        }
+                            //    }
+                            //}
+
+                            if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !modifier.constant)
                             {
-                                if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                                {
-                                    var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
+                                var closest = PlayerManager.Players
+                                    .Where(x => x.Player)
+                                    .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
 
-                                    if (rt != null)
-                                    {
-                                        rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, true);
-                                    }
-                                    else
-                                    {
-                                        if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                                        {
-                                            var p = InputDataManager.inst.players[i].player;
-
-                                            p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, true);
-                                        }
-                                    }
-                                }
+                                if (closest)
+                                    closest.Player.canBoost = true;
                             }
                         }
 
@@ -1911,6 +2335,18 @@ namespace ObjectModifiers.Modifiers
                 //        }
                 //        break;
                 //    }
+                case "signalModifier":
+                    {
+                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                        {
+                            if (bm != null && (bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                            {
+                                m.Result = null;
+                            }
+                        }
+
+                        break;
+                    }
             }
         }
     }
