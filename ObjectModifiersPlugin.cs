@@ -1169,6 +1169,26 @@ namespace ObjectModifiers
             }, //editorNotify
             new BeatmapObject.Modifier
             {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "setText"
+                },
+                value = "Text"
+            }, //setText
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "setTextOther"
+                },
+                value = "Text"
+            }, //setTextOther
+            new BeatmapObject.Modifier
+            {
                 type = BeatmapObject.Modifier.Type.Trigger,
                 constant = true,
                 commands = new List<string>

@@ -483,15 +483,24 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "randomGreater":
                     {
-                        return int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) > z;
+                        if (modifier.Result == null)
+                            modifier.Result = int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) > z;
+
+                        return modifier.Result != null && (bool)modifier.Result;
                     }
                 case "randomLesser":
                     {
-                        return int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) < z;
+                        if (modifier.Result == null)
+                            modifier.Result = int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) < z;
+
+                        return modifier.Result != null && (bool)modifier.Result;
                     }
                 case "randomEquals":
                     {
-                        return int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) == z;
+                        if (modifier.Result == null)
+                            modifier.Result = int.TryParse(modifier.commands[1], out int x) && int.TryParse(modifier.commands[2], out int y) && int.TryParse(modifier.value, out int z) && UnityEngine.Random.Range(x, y) == z;
+
+                        return modifier.Result != null && (bool)modifier.Result;
                     }
                 case "requireSignal":
                     {
@@ -610,7 +619,7 @@ namespace ObjectModifiers.Modifiers
                         }
                         else if (!EditorManager.inst)
                         {
-                            LevelManager.Load($"{RTFile.ApplicationDirectory}beatmaps/story/{modifier.value}/level.lsb");
+                            LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.lsb");
                         }
                         break;
                     }
@@ -2235,6 +2244,31 @@ namespace ObjectModifiers.Modifiers
                         EditorManager.inst?.DisplayNotification(modifier.value, Parser.TryParse(modifier.commands[1], 0.5f), (EditorManager.NotificationType)Parser.TryParse(modifier.commands[2], 0));
                         break;
                     }
+                case "setText":
+                    {
+                        if (modifier.modifierObject.shape == 4 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                            modifier.modifierObject.levelObject.visualObject is TextObject)
+                        {
+                            ((TextObject)modifier.modifierObject.levelObject.visualObject).SetText(modifier.value);
+                        }
+                        break;
+                    }
+                case "setTextOther":
+                    {
+                        if (DataManager.inst.gameData.beatmapObjects.Find(x => x.name == modifier.value) != null)
+                        {
+                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.Where(x => x.name == modifier.value).Select(x => x as BeatmapObject))
+                            {
+                                if (bm.shape == 4 && bm.levelObject && bm.levelObject.visualObject != null &&
+                                    bm.levelObject.visualObject is TextObject)
+                                {
+                                    ((TextObject)bm.levelObject.visualObject).SetText(modifier.value);
+                                }
+                            }
+                        }
+
+                        break;
+                    }
             }
         }
 
@@ -2327,14 +2361,6 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-                //case "playSound":
-                //    {
-                //        if (modifier.commands.Count > 4 && bool.TryParse(modifier.commands[4], out bool loop) && loop)
-                //        {
-                //            ObjectModifiersPlugin.DeleteKey(modifier.modifierObject.id, ObjectModifiersPlugin.audioSources[modifier.modifierObject.id]);
-                //        }
-                //        break;
-                //    }
                 case "signalModifier":
                     {
                         foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
@@ -2345,6 +2371,13 @@ namespace ObjectModifiers.Modifiers
                             }
                         }
 
+                        break;
+                    }
+                case "randomGreater":
+                case "randomLesser":
+                case "randomEquals":
+                    {
+                        modifier.Result = null;
                         break;
                     }
             }
