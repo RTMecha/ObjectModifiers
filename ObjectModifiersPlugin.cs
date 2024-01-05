@@ -94,7 +94,7 @@ namespace ObjectModifiers
             inst = this;
 
             EditorLoadLevel = Config.Bind("Editor", "Modifier Loads Level", false, "Any modifiers with the \"loadLevel\" function will load the level whilst in the editor. This is only to prevent the loss of progress.");
-            EditorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", true, "The level will be saved before a level is loaded using a loadLevel modifier.");
+            EditorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", false, "The level will be saved before a level is loaded using a loadLevel modifier.");
 
             ResetVariables = Config.Bind("Editor", "Reset Variable", false, "Resets the variables of every object when not in preview mode.");
 
