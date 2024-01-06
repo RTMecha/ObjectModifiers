@@ -11,6 +11,7 @@ using UnityEngine;
 using SimpleJSON;
 
 using RTFunctions.Functions;
+using RTFunctions.Functions.Components;
 using RTFunctions.Functions.Data;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
@@ -217,26 +218,18 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "mouseOver":
                     {
-                        if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
+                        if (modifier.modifierObject != null && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null && modifier.modifierObject.levelObject.visualObject.GameObject)
                         {
-                            if (modifier.modifierObject.components.Find(x => x is Detector) == null)
+                            if (!modifier.modifierObject.detector)
                             {
-                                if (!levelObject.visualObject.GameObject.GetComponent<Detector>())
-                                {
-                                    var op = levelObject.visualObject.GameObject.AddComponent<Detector>();
-                                    op.beatmapObject = modifier.modifierObject;
-                                    modifier.modifierObject.components.Add(op);
-                                }
-                                else
-                                {
-                                    var op = levelObject.visualObject.GameObject.GetComponent<Detector>();
-                                    op.beatmapObject = modifier.modifierObject;
-                                    modifier.modifierObject.components.Add(op);
-                                }
+                                var gameObject = modifier.modifierObject.levelObject.visualObject.GameObject;
+                                var op = gameObject.GetComponent<Detector>() ?? gameObject.AddComponent<Detector>();
+                                op.beatmapObject = modifier.modifierObject;
+                                modifier.modifierObject.detector = op;
                             }
 
-                            if (modifier.modifierObject.components.Find(x => x is Detector))
-                                return ((Detector)modifier.modifierObject.components.Find(x => x is Detector)).hovered;
+                            if (modifier.modifierObject.detector)
+                                return modifier.modifierObject.detector.hovered;
                         }
                         break;
                     }
@@ -244,24 +237,15 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                         {
-                            if (modifier.modifierObject.components.Find(x => x is Detector) == null)
+                            if (!modifier.modifierObject.detector)
                             {
-                                if (!levelObject.visualObject.GameObject.GetComponent<Detector>())
-                                {
-                                    var op = levelObject.visualObject.GameObject.AddComponent<Detector>();
-                                    op.beatmapObject = modifier.modifierObject;
-                                    modifier.modifierObject.components.Add(op);
-                                }
-                                else
-                                {
-                                    var op = levelObject.visualObject.GameObject.GetComponent<Detector>();
-                                    op.beatmapObject = modifier.modifierObject;
-                                    modifier.modifierObject.components.Add(op);
-                                }
+                                var op = levelObject.visualObject.GameObject.GetComponent<Detector>() ?? levelObject.visualObject.GameObject.AddComponent<Detector>();
+                                op.beatmapObject = modifier.modifierObject;
+                                modifier.modifierObject.detector = op;
                             }
 
-                            if (modifier.modifierObject.components.Find(x => x is Detector))
-                                return ((Detector)modifier.modifierObject.components.Find(x => x is Detector)).bulletOver;
+                            if (modifier.modifierObject.detector)
+                                return modifier.modifierObject.detector.bulletOver;
                         }
                         break;
                     }
@@ -2090,7 +2074,7 @@ namespace ObjectModifiers.Modifiers
                         {
                             index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
 
-                            if (levelObject.visualObject.Renderer != null)
+                            if (levelObject.visualObject != null && levelObject.visualObject.Renderer)
                                 levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
                         }
 
@@ -2100,11 +2084,12 @@ namespace ObjectModifiers.Modifiers
                     {
                         foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
                         {
-                            if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
+                            if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
                             {
                                 index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
 
-                                levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
+                                if (levelObject.visualObject != null && levelObject.visualObject.Renderer)
+                                    levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
                             }
                         }
 
