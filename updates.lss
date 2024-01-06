@@ -1,15 +1,18 @@
+1.3.4 > [Jan 6, 2024]
+- Fixed some player modifier errors and bugs.
 1.3.3 > [Jan 6, 2024]
 - Added setText and setTextOther.
 - Fixed bulletCollide and mouseOver when updating the object.
-1.3.2 > Added signalModifier and requireSignal modifiers. signalModifier, when activated, sends a signal to all objects with a specific name to activate any triggers that are requireSignal modifiers.
-1.3.2 > Player modifiers now use new Player system.
-1.3.2 > Added editorNotify, for debugging modifiers.
-1.3.2 > Added music time triggers.
-1.3.2 > Modifiers now do the Inactive function if the triggers are inactive.
-1.3.2 > Fixed some issues with particles and trails.
--
-1.3.1 > Use LevelManager instead of own system.
-1.3.1 > Objects internally are ordered by time when activating now.
--
-1.3.0 > Code cleanup
-1.3.0 > Moved some values to RTFunctions (ObjectType Solid and ReactiveType Custom)
+1.3.2 > [Jan 3, 2024]
+- Added signalModifier and requireSignal modifiers. signalModifier, when activated, sends a signal to all objects with a specific name to activate any triggers that are requireSignal modifiers.
+- Player modifiers now use new Player system.
+- Added editorNotify, for debugging modifiers.
+- Added music time triggers.
+- Modifiers now do the Inactive function if the triggers are inactive.
+- Fixed some issues with particles and trails.
+1.3.1 > [Dec 26, 2023]
+- Use LevelManager instead of own system.
+- Objects internally are ordered by time when activating now.
+1.3.0 > [Oct 28, 2023]
+- Code cleanup
+- Moved some values to RTFunctions (ObjectType Solid and ReactiveType Custom)
