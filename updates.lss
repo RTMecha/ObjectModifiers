@@ -1,3 +1,8 @@
+1.3.5 > [Jan 13, 2024]
+- Fixed spawnPrefab, so it's accessible again.
+- Added loadLevelInternal, so the level will load from a set level within the specific level folder.
+- Added loadExists trigger, if the file exists and the specific JSON exists and isn't empty, it will trigger.
+- Added clampVariable and clampVariableOther, so an object's variable will always be clamped.
 1.3.4 > [Jan 6, 2024]
 - Fixed some player modifier errors and bugs.
 1.3.3 > [Jan 6, 2024]
@@ -14,5 +19,126 @@
 - Use LevelManager instead of own system.
 - Objects internally are ordered by time when activating now.
 1.3.0 > [Oct 28, 2023]
+- Moved modifiers storage to RTFunctions. You still need ObjectModifiers to use the features in-game, this just makes it easier to access and store.
+1.2.2 > [Oct, 26, 2023]
 - Code cleanup
 - Moved some values to RTFunctions (ObjectType Solid and ReactiveType Custom)
+1.2.1 > [Oct 12, 2023]
+- Moved Camera parenting to RTFunctions since that mod now handles object creation.
+1.2.0 > [Oct 9, 2023]
+- RTFunctions Catalyst update.
+1.1.5 > [Sep 20, 2023]
+- Added refID and refModifierIndex for the code modifier to use. This can be used to reference the object's ID and modifier's index.
+1.1.4 > [Sep 19, 2023]
+- Added a "code" modifier. A guide on how to use it will be explained later.
+1.1.3 > [Sep 10, 2023]
+- Added some color and alpha modifiers (just like old times).
+- Fixed some issues with loading levels.
+1.1.2 > [Aug 28, 2023]
+- Added eventOffset modifier.
+1.1.1 > [Aug 21, 2023]
+- Added blackHole modifier, this forces all players towards the center of the object.
+- Fixed an issue with variableOther modifiers trying to check if every object has the set name, instead of just those objects.
+- Fixed bulletCollide trigger not working.
+1.1.0 > [Aug 12, 2023]
+- Added Volume and Loop values to playSound.
+- Fixed up playerMoving trigger so now it properly detects if the player is moving.
+- Added variableOther triggers so you can check other objects' variables.
+- Added bulletCollide trigger that detects if a players' bullet collides with the object.
+- Added setPlayerModel action that changes a specific player's model to anything and updates it without respawning the player.
+- Misc changes
+1.0.3 > [July 23, 2023]
+- Optimized camera parenting and modifiers.
+1.0.2 > [July 19, 2023]
+- Fixed a bug with trailRenderer.
+- Optimized reactive modifiers but at the cost of removing parent chain reactivity.
+1.0.1 > [July 13, 2023]
+- Made a few optimizations, game should run a lot better now but still not at the amount of performance I'm looking for.
+1.0.0 > [July 9, 2023]
+- New and Improved Modifier system based on the ObjectTags mod.
+- Integrated camera parent.
+- Moved pos Z axis to here and added opacity value to color keyframes.
+- Added Solid object type, players will not be able to pass through the object but should not take damage.
+[BELOW IS OBJECTTAGS, BEFORE THE SYSTEM WAS REWORKED TO WHAT I HAD PLANNED INITIALLY]
+1.6.3 > [Mar 31, 2023]
+-Added camera position shake and camera rotation shake as act.cameraShakePos(float duration, float strength) and act.cameraShakeRot(float duration, float strength)
+-Added an action for modders.
+-Removed the need for having EventsCore installed. You can now have this mod on its own. (I hope)
+-Started working on homing objects.
+1.6.2 > [Mar 24, 2023]
+- Did some optimization with checking if the current audio time is within the lifespan of an object, allowing me to add song time support.
+- Made it so if you have PlayerEditor installed, it will use the custom player variables from there rather than the default.
+- Started trying to find a way to get the mod to work with Catalyst. And also potentially might end up making a new mod similar to this one in the future that would hopefully work with Catalyst and not lag.
+1.6.1 > [Feb 22, 2023]
+- Fixed the same issue as the most recent EditorManagement update (1.5.7) where expanding and applying a prefab would break a lot of stuff.
+1.6.0 > [Feb 22, 2023]
+- Made a whole new UI popup that allows you to see all Object Tags commands.
+- Removed act.collisionDynamic and act.collisionStatic, now it's object.collision. Same with act.reactive commands for the object name. Dw the game will automatically replace the names when you enter the level in the editor. (Does not update in arcade).
+1.5.2 > [Feb 16, 2023]
+- Fixed an issue where the mod would break if some editor specific features weren't able to be used in the arcade. Now it checks if the game is in the editor or not to run those features.
+1.5.1 > [Jan 20, 2023]
+- Minor fix for if an object is a sprite instead of a text object. If it is a sprite, it would usually cause a bunch of errors so now the commands won't run if the object is a custom shape.
+1.5.0 > [Jan 19, 2023]
+- Adds a story saving / loading system that allows you to set and read local variables in files within Project Arrhythmia/profiles!
+- Adds prefab spawning as a command, but it's not recommended for levels that loop
+- Adds updating objects, allowing you to refresh an object mid-level. Can be good for making objects invisible as it destroys the game objects while the command is active and it can be good for refreshing the random values of an object.
+- Adds a THIRD set for triggers as I feel you might need three triggers in total in order to perform some actions. Idk if I'll end up doing a fourth set.
+1.4.6 > [Jan 18, 2023]
+- Adds secondary "modifier" triggers you can use if you want to check if 2 actions are happening at once. For example: trigger.playerCollide trigger2.keyPress(return) act.playSound(some sound.wav) will only play "some sound.wav" if the player is in the object's collision AND has pressed enter (return).
+- Adds act.quitToMenu, useful for hub-worlds I think.
+1.4.5 > [Jan 18, 2023]
+- Fixes act.playSound so now it can play again if it's already played once. So now it can be used with triggers!
+- Started implementing object pos / sca / rot manipulation to use with triggers. Atm it doesn't work too well so it's not recommended to use it until it's ready
+1.4.4 > [Jan 18, 2023]
+- Adds some more effects to the game that can be used via Object Tags, PLUS direct modification of effects that already exist (like bloom, vignette, etc) so they can work with trigger objects now! :D
+1.4.3 > [Jan 18, 2023]
+- Adds the Camera Follow Player mod code as an action to Object Tags. This mod is now incompatible with Camera Follow Player mod.
+- Fixes the issue where loading another level wouldn't reset specific values.
+- Starting to add the version number to the file name of the mod, which'll mean you'll need to actively remove older versions without just replacing the file.
+1.4.2 > [Jan 17, 2023]
+- Adds dynamic collision which allows you to push the player around.
+1.4.1 > [Jan 16, 2023]
+- Changes the soundlibrary directory to instead just be in the beatmaps folder. It makes more sense to do it this way since you're probably gonna be using the same sounds for different levels.
+1.4.0 > [Jan 16, 2023]
+- Adds the trigger system that now allows for a ton of interactivity.
+- Adds the custom sound system that allows you to play sounds from the beatmaps/editor/level name/SoundLibrary path.
+1.3.6 > [Jan 15, 2023]
+- Adds camera parenting (position, scale and rotation parenting). Keep in mind it only affects the group of objects and doesn't affect the game's parenting system.
+- Hopefully adds pitch multiplication so if you enter a level in the arcade with an act.setPitch() trigger, it should mutliply by the pitch settings you set while in the arcade. For example, let's say you set it to 0.5x speed, if you trigger an object that's act.setPitch(0.5), it'll set the pitch to 0.25. I'm not sure if this actually works, but if anyone can confirm, that'd be amazing.
+- Started working on integrating a custom sound system. Doesn't quite work yet so it's not accessible but should be by the next update.
+1.3.5 > [Jan 13, 2023]
+- Adds position, rotation and color to reactive type. That means reactiveAmount is now reactiveScale.
+1.3.4 > [Jan 13, 2023]
+- Adds separate X and Y values for the reactive intensity.
+1.3.3 > [Jan 12, 2023]
+- Fixes a minor issue with the Player GUI becoming active when the act.timelineHide command is currently not active but has been used.
+- Adds act.reactive command to object names. Additional info will be found in the commands list.
+- Adds some hex color support to commands, but not all of them have it yet.
+1.3.2 > [Jan 12, 2023]
+- Fixes a mistake I made where it patched the game twice :RTKrystalLaugh:
+like bruh
+1.3.1 > [Jan 12, 2023]
+- Makes it so the trail and particle effects scale with the base object.
+- Adds Set Depth command that allows you to set the pos z axis of a group of objects.
+- Adds "act.cmdDestroy" command that replaces the text object once the command has been initiated. This replaces "act.pitchDestroy" and "act.musicDestroy".
+- Adds gradient effects as a command.
+1.3.0 > [Jan 11, 2023]
+- Adds a level loading system for when you're in-game. This hasn't been tested in arcade, but it's best not to use the arcade for this.
+- Adds static collision objects (objects that don't allow the player in the object).
+- Adds player boost count to the text format.
+- Adds act.addPitch to the commands.
+- Adds colorGrading Gamma
+- Adds ripple mode setting to act.ripples
+- Adds act.text that can set the text of other objects. Will be good for when I add the Trigger system.
+- Fixes some bugs
+1.2.0 > [Jan 7, 2023]
+- Fixes a bunch of issues with the previous version of the mod.
+- Adds a TON more commands, including ones related to Events Core. That means you'll need Events Core in order to have the mod work. (I might make a version without the Events Core integration if you guys want me to)
+- Adds a whole new Text system that basically acts like <b>, <br>, <color> and so on.
+- Changes the way some of the commands work.
+1.1.0 > [Jan 5, 2023]
+- Fixes act.trailStartColor() and act.trailEndColor() I think.
+- Adds Target Object Group system for specific commands.
+- Adds a bunch more commands.
+1.0.0 > [Jan 4, 2023]
+- This mod adds some commands that can be inserted into an object and when the audio source time is in the time the object is alive, it triggers the action. Yes, these are basically PA's eversion of GD's trigger objects. Also, luckily if you haven't got this mod installed, the text objects that has the tags in them just won't do anything lol so don't worry about incompatibility with that
