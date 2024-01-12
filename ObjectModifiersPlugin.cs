@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.3.4")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.3.5")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -382,7 +382,7 @@ namespace ObjectModifiers
             yield break;
         }
 
-        public static PrefabObject AddPrefabObjectToLevel(BasePrefab prefab, float startTime, Vector2 pos, Vector2 sca, float rot)
+        public static PrefabObject AddPrefabObjectToLevel(BasePrefab prefab, float startTime, Vector2 pos, Vector2 sca, float rot, int repeatCount, float repeatOffsetTime, float speed)
         {
             var prefabObject = new PrefabObject();
             prefabObject.ID = LSText.randomString(16);
@@ -396,15 +396,11 @@ namespace ObjectModifiers
             prefabObject.events[1].eventValues[1] = sca.y;
             prefabObject.events[2].eventValues[0] = rot;
 
-            if (EditorManager.inst != null)
-                prefabObject.editorData.Layer = EditorManager.inst.layer;
+            prefabObject.RepeatCount = repeatCount;
+            prefabObject.RepeatOffsetTime = repeatOffsetTime;
+            prefabObject.speed = speed;
 
-            DataManager.inst.gameData.prefabObjects.Add(prefabObject);
-            Updater.UpdatePrefab(prefabObject);
-            if (EditorManager.inst != null && !EditorManager.inst.isEditing && prefabObject.editorData.Layer != EditorManager.inst.layer)
-            {
-                EditorManager.inst.SetLayer(prefabObject.editorData.Layer);
-            }
+            prefabObject.fromModifier = true;
 
             return prefabObject;
         }
@@ -533,6 +529,16 @@ namespace ObjectModifiers
                 constant = true,
                 commands = new List<string>
                 {
+                    "loadLevelInternal"
+                },
+                value = "level name"
+            }, //loadLevelInternal
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
                     "blur",
                     "False"
                 },
@@ -578,21 +584,24 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //trailRenderer
-            //new BeatmapObject.Modifier
-            //{
-            //    type = BeatmapObject.Modifier.Type.Action,
-            //    constant = false,
-            //    commands = new List<string>
-            //    {
-            //        "spawnPrefab",
-            //        "0",
-            //        "0",
-            //        "1",
-            //        "1",
-            //        "0"
-            //    },
-            //    value = "0"
-            //}, //spawnPrefab
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "spawnPrefab",
+                    "0", // Pos X
+                    "0", // Pos Y
+                    "1", // Sca X
+                    "1", // Sca Y
+                    "0", // Rot
+                    "0", // Repeat Count
+                    "0", // Repeat Offset Time
+                    "1", // Speed
+                },
+                value = "0" // Index
+            }, //spawnPrefab
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1443,6 +1452,17 @@ namespace ObjectModifiers
                 constant = true,
                 commands = new List<string>
                 {
+                    "mouseOverSignalModifier",
+                    "Objects Name"
+                },
+                value = "0"
+            }, //mouseOverSignalModifier
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
                     "loadEquals",
                     "save_file",
                     "chapter",
@@ -1502,6 +1522,19 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //loadGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "loadExists",
+                    "save_file",
+                    "chapter",
+                    "data"
+                },
+                value = "0"
+            }, //loadExists
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
