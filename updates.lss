@@ -1,4 +1,7 @@
+1.3.6 > [Jan 13, 2024]
+- Fixed mouseOverSignalModifier not being reset.
 1.3.5 > [Jan 13, 2024]
+- Added mouseOverSignalModifier. This is technically both a Trigger and an Action. It does what mouseOver does but also what signalModifier does.
 - Fixed spawnPrefab, so it's accessible again.
 - Added loadLevelInternal, so the level will load from a set level within the specific level folder.
 - Added loadExists trigger, if the file exists and the specific JSON exists and isn't empty, it will trigger.
