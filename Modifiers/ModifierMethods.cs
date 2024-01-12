@@ -240,7 +240,8 @@ namespace ObjectModifiers.Modifiers
                                     }
                                 }
 
-                                return modifier.modifierObject.detector.hovered;
+                                if (modifier.modifierObject.detector.hovered)
+                                    return true;
                             }
                         }
                         break;
@@ -539,6 +540,8 @@ namespace ObjectModifiers.Modifiers
                         return float.TryParse(modifier.value, out float x) && AudioManager.inst.CurrentAudioSource.time < x;
                     }
             }
+
+            modifier.Inactive?.Invoke(modifier);
             return false;
         }
 
@@ -2330,6 +2333,7 @@ namespace ObjectModifiers.Modifiers
                         break;
                     }
                 case "signalModifier":
+                case "mouseOverSignalModifier":
                     {
                         foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
                         {
