@@ -174,7 +174,6 @@ namespace ObjectModifiers.Modifiers
                     {
                         return int.TryParse(modifier.value, out int num) && InputDataManager.inst.players.Count > num;
                     }
-
                 case "keyPressDown":
                     {
                         return int.TryParse(modifier.value, out int num) && Input.GetKeyDown((KeyCode)num);
@@ -213,6 +212,36 @@ namespace ObjectModifiers.Modifiers
 
                             if (modifier.modifierObject.detector)
                                 return modifier.modifierObject.detector.hovered;
+                        }
+                        break;
+                    }
+                case "mouseOverSignalModifier":
+                    {
+                        if (modifier.modifierObject != null && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null && modifier.modifierObject.levelObject.visualObject.GameObject)
+                        {
+                            if (!modifier.modifierObject.detector)
+                            {
+                                var gameObject = modifier.modifierObject.levelObject.visualObject.GameObject;
+                                var op = gameObject.GetComponent<Detector>() ?? gameObject.AddComponent<Detector>();
+                                op.beatmapObject = modifier.modifierObject;
+                                modifier.modifierObject.detector = op;
+                            }
+
+                            if (modifier.modifierObject.detector)
+                            {
+                                if (modifier.modifierObject.detector.hovered)
+                                {
+                                    foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                                    {
+                                        if (bm != null)
+                                        {
+                                            ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ActivateModifier((BeatmapObject)bm, Parser.TryParse(modifier.value, 0f)));
+                                        }
+                                    }
+                                }
+
+                                return modifier.modifierObject.detector.hovered;
+                            }
                         }
                         break;
                     }
@@ -322,6 +351,21 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
+                case "loadExists":
+                    {
+                        if (RTFile.FileExists(RTFile.ApplicationDirectory + "profile/" + modifier.commands[1] + ".ses"))
+                        {
+                            string json = FileManager.inst.LoadJSONFile("profile/" + modifier.commands[1] + ".ses");
+
+                            if (!string.IsNullOrEmpty(json))
+                            {
+                                var jn = JSON.Parse(json);
+
+                                return !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]);
+                            }
+                        }
+                        break;
+                    }
                 case "variableEquals":
                     {
                         return int.TryParse(modifier.value, out int num) && modifier.modifierObject && modifier.modifierObject.integerVariable == num;
@@ -407,7 +451,6 @@ namespace ObjectModifiers.Modifiers
                     {
                         return float.TryParse(modifier.value, out float num) && AudioManager.inst.pitch > num;
                     }
-
                 case "onPlayerHit":
                     {
                         if (modifier.Result == null)
@@ -442,7 +485,6 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-
                 case "inZenMode":
                     {
                         return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 0;
@@ -602,6 +644,37 @@ namespace ObjectModifiers.Modifiers
                         else if (!EditorManager.inst)
                         {
                             LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.lsb");
+                        }
+                        break;
+                    }
+                case "loadLevelInternal":
+                    {
+                        if (EditorManager.inst && EditorManager.inst.isEditing)
+                        {
+                            if (ObjectModifiersPlugin.EditorLoadLevel.Value)
+                            {
+                                if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                {
+                                    EditorManager.inst.SaveBeatmap();
+                                }
+
+                                string str = RTFile.BasePath;
+                                string modBackup = str + "level-modifier-backup.lsb";
+                                if (RTFile.FileExists(modBackup))
+                                {
+                                    System.IO.File.Delete(modBackup);
+                                }
+
+                                string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
+                                if (RTFile.FileExists(lvl))
+                                    System.IO.File.Copy(lvl, modBackup);
+
+                                EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel($"{EditorManager.inst.currentLoadedLevel}/{modifier.value}"));
+                            }
+                        }
+                        else if (!EditorManager.inst)
+                        {
+                            LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{System.IO.Path.GetFileName(GameManager.inst.basePath.Substring(0, GameManager.inst.basePath.Length - 1))}/{modifier.value}/level.lsb");
                         }
                         break;
                     }
@@ -959,15 +1032,27 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "spawnPrefab":
                     {
+                        if (modifier.commands.Count < 8)
+                        {
+                            modifier.commands.Add("0");
+                            modifier.commands.Add("0");
+                            modifier.commands.Add("1");
+                        }
+
                         if (!modifier.constant && int.TryParse(modifier.value, out int num) && DataManager.inst.gameData.prefabs.Count > num
                             && float.TryParse(modifier.commands[1], out float posX) && float.TryParse(modifier.commands[2], out float posY)
-                            && float.TryParse(modifier.commands[3], out float scaX) && float.TryParse(modifier.commands[4], out float scaY) && float.TryParse(modifier.commands[5], out float rot))
+                            && float.TryParse(modifier.commands[3], out float scaX) && float.TryParse(modifier.commands[4], out float scaY) && float.TryParse(modifier.commands[5], out float rot)
+                            && int.TryParse(modifier.commands[6], out int repeatCount) && float.TryParse(modifier.commands[7], out float repeatOffsetTime) && float.TryParse(modifier.commands[8], out float speed))
                         {
                             modifier.Result = ObjectModifiersPlugin.AddPrefabObjectToLevel(DataManager.inst.gameData.prefabs[num],
                                 AudioManager.inst.CurrentAudioSource.time,
                                 new Vector2(posX, posY),
                                 new Vector2(scaX, scaY),
-                                rot);
+                                rot, repeatCount, repeatOffsetTime, speed);
+
+                            DataManager.inst.gameData.prefabObjects.Add((PrefabObject)modifier.Result);
+
+                            Updater.AddPrefabToLevel((PrefabObject)modifier.Result);
                         }
 
                         break;
@@ -2139,6 +2224,23 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "clampVariable":
+                    {
+                        modifier.modifierObject.integerVariable = Mathf.Clamp(modifier.modifierObject.integerVariable, Parser.TryParse(modifier.commands.Count > 1 ? modifier.commands[1] : "1", 0), Parser.TryParse(modifier.commands.Count > 2 ? modifier.commands[2] : "1", 1));
+                        break;
+                    }
+                case "clampVariableOther":
+                    {
+                        if (DataManager.inst.gameData.beatmapObjects.Find(x => x.name == modifier.value) != null)
+                        {
+                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.Where(x => x.name == modifier.value).Select(x => x as BeatmapObject))
+                            {
+                                bm.integerVariable = Mathf.Clamp(bm.integerVariable, Parser.TryParse(modifier.commands.Count > 1 ? modifier.commands[1] : "1", 0), Parser.TryParse(modifier.commands.Count > 2 ? modifier.commands[2] : "1", 1));
+                            }
+                        }
+
+                        break;
+                    }
             }
         }
 
@@ -2148,15 +2250,11 @@ namespace ObjectModifiers.Modifiers
             {
                 case "spawnPrefab":
                     {
-                        if (!modifier.constant && modifier.Result != null && modifier.Result.GetType() == typeof(PrefabObject) && modifier.type == BeatmapObject.Modifier.Type.Action)
+                        if (!modifier.constant && modifier.Result != null && modifier.Result is PrefabObject)
                         {
-                            var id = ((PrefabObject)modifier.Result).ID;
-
-                            DataManager.inst.gameData.prefabObjects.Remove((PrefabObject)modifier.Result);
-
                             Updater.UpdatePrefab((PrefabObject)modifier.Result, false);
 
-                            ObjEditor.inst.RenderTimelineObjects();
+                            DataManager.inst.gameData.prefabObjects.RemoveAll(x => ((PrefabObject)x).fromModifier && x.ID == ((PrefabObject)modifier.Result).ID);
 
                             modifier.Result = null;
                         }
