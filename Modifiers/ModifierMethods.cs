@@ -2089,17 +2089,30 @@ namespace ObjectModifiers.Modifiers
                 case "setAlpha":
                     {
                         if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.Renderer && float.TryParse(modifier.value, out float num))
-                            levelObject.visualObject.Renderer.material.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
+                        {
+                            if (levelObject.visualObject is not TextObject)
+                                levelObject.visualObject.Renderer.material.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
+                            else
+                                ((TextObject)levelObject.visualObject).TextMeshPro.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
+                        }
 
                         break;
                     }
                 case "setAlphaOther":
                     {
-                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
-                        {
-                            if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && float.TryParse(modifier.value, out float num))
-                                levelObject.visualObject.Renderer.material.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
-                        }
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => x.name == modifier.commands[1]);
+
+                        if (list.Count() > 0)
+                            foreach (var bm in list)
+                            {
+                                if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && float.TryParse(modifier.value, out float num))
+                                {
+                                    if (levelObject.visualObject is not TextObject)
+                                        levelObject.visualObject.Renderer.material.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
+                                    else
+                                        ((TextObject)levelObject.visualObject).TextMeshPro.color = LSFunctions.LSColors.fadeColor(levelObject.visualObject.Renderer.material.color, num);
+                                }
+                            }
 
                         break;
                     }
