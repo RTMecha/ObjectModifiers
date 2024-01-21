@@ -1678,7 +1678,7 @@ namespace ObjectModifiers.Modifiers
                             var x = modifier.modifierObject.origin.x;
                             var y = modifier.modifierObject.origin.y;
 
-                            levelObject.visualObject.GameObject.transform.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, 1f);
+                            levelObject.visualObject.GameObject.transform.localPosition = new Vector3(x + reactivePositionX, y + reactivePositionY, modifier.modifierObject.depth * 0.1f);
 
                             samples = null;
                         }
@@ -1768,6 +1768,25 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "reactivePosChain":
                     {
+                        if (modifier.modifierObject
+                            && int.TryParse(modifier.commands[1], out int sampleX) && float.TryParse(modifier.commands[3], out float intensityX)
+                            && int.TryParse(modifier.commands[2], out int sampleY) && float.TryParse(modifier.commands[4], out float intensityY)
+                            && float.TryParse(modifier.value, out float val))
+                        {
+                            float[] samples = new float[256];
+
+                            AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+
+                            sampleX = Mathf.Clamp(sampleX, 0, 255);
+                            sampleY = Mathf.Clamp(sampleY, 0, 255);
+
+                            float reactivePositionX = samples[sampleX] * intensityX * val;
+                            float reactivePositionY = samples[sampleY] * intensityY * val;
+
+                            modifier.modifierObject.reactivePositionOffset = new Vector3(reactivePositionX, reactivePositionY);
+
+                            samples = null;
+                        }
                         //if (refModifier != null)
                         //{
                         //    var ch = refModifier.beatmapObject.GetChildChain();
@@ -1804,6 +1823,25 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "reactiveScaChain":
                     {
+                        if (modifier.modifierObject
+                            && int.TryParse(modifier.commands[1], out int sampleX) && float.TryParse(modifier.commands[3], out float intensityX)
+                            && int.TryParse(modifier.commands[2], out int sampleY) && float.TryParse(modifier.commands[4], out float intensityY)
+                            && float.TryParse(modifier.value, out float val))
+                        {
+                            float[] samples = new float[256];
+
+                            AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+
+                            sampleX = Mathf.Clamp(sampleX, 0, 255);
+                            sampleY = Mathf.Clamp(sampleY, 0, 255);
+
+                            float reactiveScaleX = samples[sampleX] * intensityX * val;
+                            float reactiveScaleY = samples[sampleY] * intensityY * val;
+
+                            modifier.modifierObject.reactiveScaleOffset = new Vector3(reactiveScaleX, reactiveScaleY, 1f);
+
+                            samples = null;
+                        }
                         //if (refModifier != null)
                         //{
                         //    var ch = refModifier.beatmapObject.GetChildChain();
@@ -1840,6 +1878,21 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "reactiveRotChain":
                     {
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject
+                            && int.TryParse(modifier.commands[1], out int sample) && float.TryParse(modifier.value, out float val))
+                        {
+                            float[] samples = new float[256];
+
+                            AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
+
+                            sample = Mathf.Clamp(sample, 0, 255);
+
+                            float reactiveRotation = samples[sample] * val;
+
+                            modifier.modifierObject.reactiveRotationOffset = reactiveRotation;
+
+                            samples = null;
+                        }
                         //if (refModifier != null)
                         //{
                         //    var ch = refModifier.beatmapObject.GetChildChain();
@@ -2342,6 +2395,24 @@ namespace ObjectModifiers.Modifiers
                             }
                             modifier.hasChanged = true;
                         }
+
+                        break;
+                    }
+                case "reactivePosChain":
+                    {
+                        modifier.modifierObject.reactivePositionOffset = Vector3.zero;
+
+                        break;
+                    }
+                case "reactiveScaChain":
+                    {
+                        modifier.modifierObject.reactiveScaleOffset = Vector3.zero;
+
+                        break;
+                    }
+                case "reactiveRotChain":
+                    {
+                        modifier.modifierObject.reactiveRotationOffset = 0f;
 
                         break;
                     }

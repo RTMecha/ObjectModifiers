@@ -991,6 +991,45 @@ namespace ObjectModifiers
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "reactivePosChain",
+                    "0",
+                    "0",
+                    "0",
+                    "0"
+                },
+                value = "1"
+            }, //reactivePosChain
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "reactiveScaChain",
+                    "0",
+                    "0",
+                    "1",
+                    "1"
+                },
+                value = "1"
+            }, //reactiveScaChain
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "reactiveRotChain",
+                    "0"
+                },
+                value = "1"
+            }, //reactiveRotChain
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
                 commands = new List<string>
                 {
