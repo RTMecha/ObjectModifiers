@@ -2236,21 +2236,21 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-                case "code":
-                    {
-                        string id = "a";
-                        if (modifier.modifierObject)
-                            id = modifier.modifierObject.id;
+                //case "code":
+                //    {
+                //        string id = "a";
+                //        if (modifier.modifierObject)
+                //            id = modifier.modifierObject.id;
 
-                        string codeToInclude = $"var refID = \"{id}\";";
+                //        string codeToInclude = $"var refID = \"{id}\";";
 
-                        string code = "";
-                        if (!code.Contains("System.IO.File.") && !code.Contains("File."))
-                            code = modifier.value;
+                //        string code = "";
+                //        if (!code.Contains("System.IO.File.") && !code.Contains("File."))
+                //            code = modifier.value;
 
-                        RTCode.Evaluate($"{codeToInclude}{code}");
-                        break;
-                    }
+                //        RTCode.Evaluate($"{codeToInclude}{code}");
+                //        break;
+                //    }
                 case "signalModifier":
                     {
                         foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))

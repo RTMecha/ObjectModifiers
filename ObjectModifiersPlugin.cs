@@ -1182,16 +1182,16 @@ namespace ObjectModifiers
                 },
                 value = "Object Name"
             }, //updateObject
-            new BeatmapObject.Modifier
-            {
-                type = BeatmapObject.Modifier.Type.Action,
-                constant = false,
-                commands = new List<string>
-                {
-                    "code"
-                },
-                value = "float x = 1f; float y = 5f; x / y;"
-            }, //code
+            //new BeatmapObject.Modifier
+            //{
+            //    type = BeatmapObject.Modifier.Type.Action,
+            //    constant = false,
+            //    commands = new List<string>
+            //    {
+            //        "code"
+            //    },
+            //    value = "float x = 1f; float y = 5f; x / y;"
+            //}, //code
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
