@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.3.6")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.4.0")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -1038,19 +1038,6 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //setPlayerModel
-            //new BeatmapObject.Modifier
-            //{
-            //    type = BeatmapObject.Modifier.Type.Action,
-            //    constant = false,
-            //    commands = new List<string>
-            //    {
-            //        "legacyTail",
-            //        "3",
-            //        "200",
-            //        "12"
-            //    },
-            //    value = "2"
-            //}, //legacyTail
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1068,11 +1055,25 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "eventOffset",
-                    "0",
-                    "0",
+                    "0", // Type (Move, Zoom, Rotate, etc)
+                    "0", // Value Index (X, Y, etc)
                 },
                 value = "1"
-            }, //blackHole
+            }, //eventOffset
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "eventOffsetAnimate",
+                    "0", // Type (Move, Zoom, Rotate, etc)
+                    "0", // Value Index (X, Y, etc)
+                    "1", // Time
+                    "Linear", // Ease
+                },
+                value = "1" // Value
+            }, //eventOffsetAnimate
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1090,7 +1091,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "setAlphaOther",
-                    "Objects Name"
+                    "Object Group",
                 },
                 value = "0"
             }, //setAlphaOther
@@ -1112,8 +1113,8 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "addColorOther",
-                    "Objects Name",
-                    "0"
+                    "Object Group",
+                    "0", // Lerp
                 },
                 value = "0"
             }, //addColorOther
@@ -1138,7 +1139,7 @@ namespace ObjectModifiers
                     "0"
                 },
                 value = "0"
-            }, //addColor
+            }, //lerpColor
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1146,11 +1147,11 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "lerpColorOther",
-                    "Objects Name",
-                    "0"
+                    "Object Group",
+                    "0", // Lerp
                 },
                 value = "0"
-            }, //addColorOther
+            }, //lerpColorOther
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1158,10 +1159,19 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "copyColor",
-                    "0"
                 },
-                value = "Object Name"
+                value = "Object Group"
             }, //copyColor
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "copyColorOther",
+                },
+                value = "Object Group"
+            }, //copyColorOther
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1178,20 +1188,10 @@ namespace ObjectModifiers
                 constant = false,
                 commands = new List<string>
                 {
-                    "updateObject"
+                    "updateObject",
                 },
-                value = "Object Name"
+                value = "Object Group"
             }, //updateObject
-            //new BeatmapObject.Modifier
-            //{
-            //    type = BeatmapObject.Modifier.Type.Action,
-            //    constant = false,
-            //    commands = new List<string>
-            //    {
-            //        "code"
-            //    },
-            //    value = "float x = 1f; float y = 5f; x / y;"
-            //}, //code
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1199,7 +1199,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "signalModifier",
-                    "Objects Name"
+                    "Object Group", // Objects with tag
                 },
                 value = "0.5"
             }, //signalModifier
@@ -1231,10 +1231,44 @@ namespace ObjectModifiers
                 constant = false,
                 commands = new List<string>
                 {
-                    "setTextOther"
+                    "setTextOther",
+                    "Objects Name", // Objects with tag
                 },
                 value = "Text"
             }, //setTextOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "animateObject",
+                    "0", // Pos / Sca / Rot
+                    "0", // X
+                    "0", // Y
+                    "0", // Z
+                    "True", // Relative
+                    "Linear", // Easing
+                },
+                value = "1"
+            }, //animateObject
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "animateObjectOther",
+                    "0", // Pos / Sca / Rot
+                    "0", // X
+                    "0", // Y
+                    "0", // Z
+                    "True", // Relative
+                    "Linear", // Easing
+                    "Object Group", // Objects with tag
+                },
+                value = "1"
+            }, //animateObjectOther
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
