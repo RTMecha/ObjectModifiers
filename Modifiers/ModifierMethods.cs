@@ -11,6 +11,8 @@ using UnityEngine;
 using SimpleJSON;
 
 using RTFunctions.Functions;
+using RTFunctions.Functions.Animation;
+using RTFunctions.Functions.Animation.Keyframe;
 using RTFunctions.Functions.Components;
 using RTFunctions.Functions.Data;
 using RTFunctions.Functions.IO;
@@ -217,6 +219,7 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "mouseOverSignalModifier":
                     {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
                         if (modifier.modifierObject != null && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null && modifier.modifierObject.levelObject.visualObject.GameObject)
                         {
                             if (!modifier.modifierObject.detector)
@@ -229,9 +232,9 @@ namespace ObjectModifiers.Modifiers
 
                             if (modifier.modifierObject.detector)
                             {
-                                if (modifier.modifierObject.detector.hovered)
+                                if (modifier.modifierObject.detector.hovered && list.Count() > 0)
                                 {
-                                    foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                                    foreach (var bm in list)
                                     {
                                         if (bm != null)
                                         {
@@ -393,8 +396,7 @@ namespace ObjectModifiers.Modifiers
                             int.TryParse(modifier.value, out int num) &&
                             modifier.modifierObject &&
                             !string.IsNullOrEmpty(modifier.commands[1]) &&
-                            DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null &&
-                            DataManager.inst.gameData.beatmapObjects.Any(x => x.name == modifier.commands[1] && x is BeatmapObject && ((BeatmapObject)x).integerVariable == num);
+                            DataManager.inst.gameData.beatmapObjects.Any(x => ((BeatmapObject)x).tags.Contains(modifier.commands[1]) && ((BeatmapObject)x).integerVariable == num);
                     }
                 case "variableOtherLesserEquals":
                     {
@@ -402,8 +404,7 @@ namespace ObjectModifiers.Modifiers
                             int.TryParse(modifier.value, out int num) &&
                             modifier.modifierObject &&
                             !string.IsNullOrEmpty(modifier.commands[1]) &&
-                            DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null &&
-                            DataManager.inst.gameData.beatmapObjects.Any(x => x.name == modifier.commands[1] && x is BeatmapObject && ((BeatmapObject)x).integerVariable <= num);
+                            DataManager.inst.gameData.beatmapObjects.Any(x => ((BeatmapObject)x).tags.Contains(modifier.commands[1]) && ((BeatmapObject)x).integerVariable <= num);
                     }
                 case "variableOtherGreaterEquals":
                     {
@@ -411,8 +412,7 @@ namespace ObjectModifiers.Modifiers
                             int.TryParse(modifier.value, out int num) &&
                             modifier.modifierObject &&
                             !string.IsNullOrEmpty(modifier.commands[1]) &&
-                            DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null &&
-                            DataManager.inst.gameData.beatmapObjects.Any(x => x.name == modifier.commands[1] && x is BeatmapObject && ((BeatmapObject)x).integerVariable >= num);
+                            DataManager.inst.gameData.beatmapObjects.Any(x => ((BeatmapObject)x).tags.Contains(modifier.commands[1]) && ((BeatmapObject)x).integerVariable >= num);
                     }
                 case "variableOtherLesser":
                     {
@@ -420,8 +420,7 @@ namespace ObjectModifiers.Modifiers
                             int.TryParse(modifier.value, out int num) &&
                             modifier.modifierObject &&
                             !string.IsNullOrEmpty(modifier.commands[1]) &&
-                            DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null &&
-                            DataManager.inst.gameData.beatmapObjects.Any(x => x.name == modifier.commands[1] && x is BeatmapObject && ((BeatmapObject)x).integerVariable < num);
+                            DataManager.inst.gameData.beatmapObjects.Any(x => ((BeatmapObject)x).tags.Contains(modifier.commands[1]) && ((BeatmapObject)x).integerVariable < num);
                     }
                 case "variableOtherGreater":
                     {
@@ -429,8 +428,7 @@ namespace ObjectModifiers.Modifiers
                             int.TryParse(modifier.value, out int num) &&
                             modifier.modifierObject &&
                             !string.IsNullOrEmpty(modifier.commands[1]) &&
-                            DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null &&
-                            DataManager.inst.gameData.beatmapObjects.Any(x => x.name == modifier.commands[1] && x is BeatmapObject && ((BeatmapObject)x).integerVariable > num);
+                            DataManager.inst.gameData.beatmapObjects.Any(x => ((BeatmapObject)x).tags.Contains(modifier.commands[1]) && ((BeatmapObject)x).integerVariable > num);
                     }
                 case "pitchEquals":
                     {
@@ -808,7 +806,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     ps.emissionRate = 0f;
                                     psMain.loop = false;
-                                    psEmission.burstCount = int.Parse(modifier.commands[10]);
+                                    psEmission.burstCount = (int)float.Parse(modifier.commands[10]);
                                     psMain.duration = float.Parse(modifier.commands[11]);
                                 }
 
@@ -1123,27 +1121,6 @@ namespace ObjectModifiers.Modifiers
                             {
                                 player.Health += hit;
                             }
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && int.TryParse(modifier.value, out int hit))
-                        //    {
-                        //        InputDataManager.inst.players[i].health += hit;
-
-                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                        //        if (rt != null)
-                        //            rt.GetType().GetMethod("UpdateTail", BindingFlags.Public | BindingFlags.Instance).Invoke(rt, new object[] { InputDataManager.inst.players[i].health, Vector3.zero });
-                        //        else
-                        //        {
-                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                        //            {
-                        //                var p = InputDataManager.inst.players[i].player;
-
-                        //                p.trail.UpdateTail(InputDataManager.inst.players[i].health, Vector3.zero);
-                        //            }
-                        //        }
-                        //    }
-                        //}
                         break;
                     }
                 case "playerKill":
@@ -1174,10 +1151,6 @@ namespace ObjectModifiers.Modifiers
                             {
                                 player.Health = 0;
                             }
-                            //for (int i = 0; i < InputDataManager.inst.players.Count; i++)
-                            //{
-                            //    InputDataManager.inst.players[i].health = 0;
-                            //}
                         }
                         break;
                     }
@@ -1217,19 +1190,6 @@ namespace ObjectModifiers.Modifiers
                 case "playerMoveAll":
                     {
                         var vector = modifier.value.Split(new char[] { ',' });
-
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                        //    {
-                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                        //        if (modifier.constant)
-                        //            player.transform.localPosition = new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f);
-                        //        else
-                        //            player.transform.DOLocalMove(new Vector3(float.Parse(vector[0]), float.Parse(vector[1]), 0f), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
-                        //    }
-                        //}
 
                         if (modifier.commands.Count < 4)
                             modifier.commands.Add("False");
@@ -1285,23 +1245,6 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerMoveXAll":
                     {
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                        //    {
-                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                        //        if (modifier.constant)
-                        //        {
-                        //            var v = player.transform.localPosition;
-                        //            v.x += float.Parse(modifier.value);
-                        //            player.transform.localPosition = v;
-                        //        }
-                        //        else
-                        //            player.transform.DOLocalMoveX(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
-                        //    }
-                        //}
-
                         if (modifier.commands.Count < 4)
                             modifier.commands.Add("False");
 
@@ -1362,23 +1305,6 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerMoveYAll":
                     {
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                        //    {
-                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                        //        if (modifier.constant)
-                        //        {
-                        //            var v = player.transform.localPosition;
-                        //            v.y += float.Parse(modifier.value);
-                        //            player.transform.localPosition = v;
-                        //        }
-                        //        else
-                        //            player.transform.DOLocalMoveY(float.Parse(modifier.value), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
-                        //    }
-                        //}
-
                         if (modifier.commands.Count < 4)
                             modifier.commands.Add("False");
 
@@ -1436,21 +1362,6 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerRotateAll":
                     {
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                        //    {
-                        //        var player = GameManager.inst.players.transform.Find(string.Format("Player {0}/Player", i + 1));
-
-                        //        if (modifier.constant)
-                        //        {
-
-                        //        }
-                        //        else
-                        //            player.transform.DORotate(new Vector3(0f, 0f, float.Parse(modifier.value)), float.Parse(modifier.commands[1])).SetEase(DataManager.inst.AnimationList[int.Parse(modifier.commands[2])].Animation);
-                        //    }
-                        //}
-
                         if (modifier.commands.Count < 4)
                             modifier.commands.Add("False");
 
@@ -1491,28 +1402,6 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerBoostAll":
                     {
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)) && !modifier.constant)
-                        //    {
-                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                        //        if (rt != null)
-                        //        {
-                        //            rt.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(rt, new object[] { });
-                        //        }
-                        //        else
-                        //        {
-                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                        //            {
-                        //                var p = InputDataManager.inst.players[i].player;
-
-                        //                p.GetType().GetMethod("StartBoost", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(p, new object[] { });
-                        //            }
-                        //        }
-                        //    }
-                        //}
-
                         foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
                             player.Player.StartBoost();
@@ -1541,29 +1430,6 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerDisableBoostAll":
                     {
-                        //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                        //{
-                        //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                        //    {
-                        //        modifier.Result = false;
-                        //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                        //        if (rt != null)
-                        //        {
-                        //            rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, false);
-                        //        }
-                        //        else
-                        //        {
-                        //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                        //            {
-                        //                var p = InputDataManager.inst.players[i].player;
-
-                        //                p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, false);
-                        //            }
-                        //        }
-                        //    }
-                        //}
-
                         foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
                             player.Player.canBoost = false;
@@ -1584,7 +1450,9 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "addVariable":
                     {
-                        if (!string.IsNullOrEmpty(modifier.commands[1]) && DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null && int.TryParse(modifier.value, out int num))
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.value, out int num))
                         {
                             foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
                             {
@@ -1596,7 +1464,9 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "subVariable":
                     {
-                        if (!string.IsNullOrEmpty(modifier.commands[1]) && DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null && int.TryParse(modifier.value, out int num))
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.value, out int num))
                         {
                             foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
                             {
@@ -1608,9 +1478,11 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "setVariable":
                     {
-                        if (!string.IsNullOrEmpty(modifier.commands[1]) && DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]) != null && int.TryParse(modifier.value, out int num))
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.value, out int num))
                         {
-                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                            foreach (var bm in list)
                             {
                                 var beatmapObject = (BeatmapObject)bm;
                                 beatmapObject.integerVariable = num;
@@ -1787,38 +1659,7 @@ namespace ObjectModifiers.Modifiers
 
                             samples = null;
                         }
-                        //if (refModifier != null)
-                        //{
-                        //    var ch = refModifier.beatmapObject.GetChildChain();
 
-                        //    float[] samples = new float[256];
-
-                        //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
-
-                        //    float reactivePositionX = samples[int.Parse(modifier.commands[1])] * float.Parse(modifier.commands[3]) * float.Parse(value);
-                        //    float reactivePositionY = samples[int.Parse(modifier.commands[2])] * float.Parse(modifier.commands[4]) * float.Parse(value);
-
-                        //    foreach (var cc in ch)
-                        //    {
-                        //        for (int i = 0; i < cc.Count; i++)
-                        //        {
-                        //            if (Objects.beatmapObjects.ContainsKey(cc[i].id))
-                        //            {
-                        //                var modifier = Objects.beatmapObjects[cc[i].id];
-
-                        //                var tf = modifier.transformChain;
-
-                        //                if (tf != null && tf.Count > 2)
-                        //                {
-                        //                    var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
-
-                        //                    if (tf[tf.Count - 2 - index].name != "top")
-                        //                        tf[tf.Count - 2 - index].localPosition += new Vector3(reactivePositionX, reactivePositionY, 0f);
-                        //                }
-                        //            }
-                        //        }
-                        //    }
-                        //}
                         break;
                     }
                 case "reactiveScaChain":
@@ -1842,44 +1683,12 @@ namespace ObjectModifiers.Modifiers
 
                             samples = null;
                         }
-                        //if (refModifier != null)
-                        //{
-                        //    var ch = refModifier.beatmapObject.GetChildChain();
 
-                        //    float[] samples = new float[256];
-
-                        //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
-
-                        //    float reactiveScaleX = samples[int.Parse(modifier.commands[1])] * float.Parse(modifier.commands[3]) * float.Parse(value);
-                        //    float reactiveScaleY = samples[int.Parse(modifier.commands[2])] * float.Parse(modifier.commands[4]) * float.Parse(value);
-
-                        //    foreach (var cc in ch)
-                        //    {
-                        //        for (int i = 0; i < cc.Count; i++)
-                        //        {
-                        //            if (Objects.beatmapObjects.ContainsKey(cc[i].id))
-                        //            {
-                        //                var modifier = Objects.beatmapObjects[cc[i].id];
-
-                        //                var tf = modifier.transformChain;
-
-                        //                if (tf != null && tf.Count > 2)
-                        //                {
-                        //                    var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
-
-                        //                    if (tf[tf.Count - 2 - index].name != "top")
-                        //                        tf[tf.Count - 2 - index].localScale += new Vector3(reactiveScaleX, reactiveScaleY, 0f);
-                        //                }
-                        //            }
-                        //        }
-                        //    }
-                        //}
                         break;
                     }
                 case "reactiveRotChain":
                     {
-                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject
-                            && int.TryParse(modifier.commands[1], out int sample) && float.TryParse(modifier.value, out float val))
+                        if (modifier.modifierObject && int.TryParse(modifier.commands[1], out int sample) && float.TryParse(modifier.value, out float val))
                         {
                             float[] samples = new float[256];
 
@@ -1893,43 +1702,6 @@ namespace ObjectModifiers.Modifiers
 
                             samples = null;
                         }
-                        //if (refModifier != null)
-                        //{
-                        //    var ch = refModifier.beatmapObject.GetChildChain();
-
-                        //    float[] samples = new float[256];
-
-                        //    AudioManager.inst.CurrentAudioSource.GetSpectrumData(samples, 0, FFTWindow.Rectangular);
-
-                        //    float reactiveRotation = samples[int.Parse(modifier.commands[1])] * float.Parse(value);
-
-                        //    foreach (var cc in ch)
-                        //    {
-                        //        for (int i = 0; i < cc.Count; i++)
-                        //        {
-                        //            if (Objects.beatmapObjects.ContainsKey(cc[i].id))
-                        //            {
-                        //                var modifier = Objects.beatmapObjects[cc[i].id];
-
-                        //                var tf = modifier.transformChain;
-
-                        //                if (tf != null && tf.Count > 2)
-                        //                {
-                        //                    var index = cc[i].GetParentChain().FindIndex(x => x.id == refModifier.beatmapObject.id);
-
-                        //                    if (tf[tf.Count - 2 - index].name != "top")
-                        //                    {
-                        //                        var parent = tf[tf.Count - 2 - index];
-
-                        //                        var e = parent.localRotation;
-                        //                        e.eulerAngles += new Vector3(0f, 0f, reactiveRotation);
-                        //                        parent.localRotation = e;
-                        //                    }
-                        //                }
-                        //            }
-                        //        }
-                        //    }
-                        //}
                         break;
                     }
                 case "reactiveColChain":
@@ -1960,10 +1732,16 @@ namespace ObjectModifiers.Modifiers
                 case "setPlayerModel":
                     {
                         if (!modifier.constant && ModCompatibility.mods.ContainsKey("CreativePlayers") &&
-                            int.TryParse(modifier.commands[1], out int result))
+                            int.TryParse(modifier.commands[1], out int result) && PlayerManager.PlayerModels.ContainsKey(modifier.value))
                         {
-                            EditorManager.inst?.DisplayNotification("Cannot use for now.", 2f, EditorManager.NotificationType.Warning);
-                            //ModCompatibility.mods["CreativePlayers"].Methods["SetPlayerModel"].DynamicInvoke(result, modifier.value);
+                            PlayerManager.SetPlayerModel?.Invoke(result, modifier.value);
+                            PlayerManager.AssignPlayerModels();
+
+                            if (PlayerManager.Players.Count > result && PlayerManager.Players[result].Player)
+                            {
+                                PlayerManager.Players[result].Player.playerNeedsUpdating = true;
+                                PlayerManager.Players[result].Player.UpdatePlayer();
+                            }
                         }
                         break;
                     }
@@ -1973,13 +1751,48 @@ namespace ObjectModifiers.Modifiers
                         {
                             var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
 
-                            var indexArray = int.Parse(modifier.commands[1]);
-                            var indexValue = int.Parse(modifier.commands[2]);
+                            var indexArray = Parser.TryParse(modifier.commands[1], 0);
+                            var indexValue = Parser.TryParse(modifier.commands[2], 0);
 
                             if (indexArray < list.Count && indexValue < list[indexArray].Count)
-                                list[indexArray][indexValue] = float.Parse(modifier.value);
+                                list[indexArray][indexValue] = Parser.TryParse(modifier.value, 0f);
 
                             ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                        }
+                        break;
+                    }
+                case "eventOffsetAnimate":
+                    {
+                        if (!modifier.constant && ModCompatibility.sharedFunctions.ContainsKey("EventsCoreEventOffsets"))
+                        {
+                            var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
+
+                            var indexArray = Parser.TryParse(modifier.commands[1], 0);
+                            var indexValue = Parser.TryParse(modifier.commands[2], 0);
+
+                            if (indexArray < list.Count && indexValue < list[indexArray].Count)
+                            {
+                                var animation = new AnimationManager.Animation("Event Offset Animation");
+                                animation.floatAnimations = new List<AnimationManager.Animation.AnimationObject<float>>
+                                {
+                                    new AnimationManager.Animation.AnimationObject<float>(new List<IKeyframe<float>>
+                                    {
+                                        new FloatKeyframe(0f, list[indexArray][indexValue], Ease.Linear),
+                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f), Parser.TryParse(modifier.value, 0f), Ease.HasEaseFunction(modifier.commands[4]) ? Ease.GetEaseFunction(modifier.commands[4]) : Ease.Linear),
+                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f) + 0.1f, Parser.TryParse(modifier.value, 0f), Ease.Linear),
+                                    }, delegate (float x)
+                                    {
+                                        list[indexArray][indexValue] = x;
+                                        ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                    })
+                                };
+                                animation.onComplete = delegate ()
+                                {
+                                    AnimationManager.inst.RemoveID(animation.id);
+                                };
+
+                                AnimationManager.inst.Play(animation);
+                            }
                         }
                         break;
                     }
@@ -2081,16 +1894,18 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "addColorOther":
                     {
-                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
-                        {
-                            if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0)
+                            foreach (var bm in list)
                             {
-                                index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+                                if (Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject.Renderer && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
+                                {
+                                    index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
 
-                                levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
+                                    levelObject.visualObject.Renderer.material.color += GameManager.inst.LiveTheme.objectColors[index] * num;
+                                }
                             }
-                        }
-
 
                         break;
                     }
@@ -2108,16 +1923,19 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "lerpColorOther":
                     {
-                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
-                        {
-                            if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
-                            {
-                                index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
 
-                                if (levelObject.visualObject != null && levelObject.visualObject.Renderer)
-                                    levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
+                        if (list.Count() > 0)
+                            foreach (var bm in list)
+                            {
+                                if (bm != null && Updater.TryGetObject(bm, out LevelObject levelObject) && int.TryParse(modifier.commands[2], out int index) && float.TryParse(modifier.value, out float num))
+                                {
+                                    index = Mathf.Clamp(index, 0, GameManager.inst.LiveTheme.objectColors.Count - 1);
+
+                                    if (levelObject.visualObject != null && levelObject.visualObject.Renderer)
+                                        levelObject.visualObject.Renderer.material.color = RTMath.Lerp(levelObject.visualObject.Renderer.material.color, GameManager.inst.LiveTheme.objectColors[index], num);
+                                }
                             }
-                        }
 
 
                         break;
@@ -2153,7 +1971,7 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "setAlphaOther":
                     {
-                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => x.name == modifier.commands[1]);
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
 
                         if (list.Count() > 0)
                             foreach (var bm in list)
@@ -2171,46 +1989,32 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "copyColor":
                     {
-                        if (DataManager.inst.gameData.beatmapObjects.TryFind(x => x.name == modifier.value, out DataManager.GameData.BeatmapObject beatmapObject) &&
+                        if (DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject) &&
                             Updater.TryGetObject(beatmapObject, out LevelObject otherLevelObject) &&
                             otherLevelObject.visualObject.Renderer &&
                             Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
                             levelObject.visualObject.Renderer)
                         {
                             levelObject.visualObject.Renderer.material.color = otherLevelObject.visualObject.Renderer.material.color;
-
-                            //var time = AudioManager.inst.CurrentAudioSource.time;
-
-                            //var nextKFIndex = beatmapObject.events[3].FindIndex(x => x.eventTime > time);
-
-                            //if (nextKFIndex >= 0)
-                            //{
-                            //    var prevKFIndex = nextKFIndex - 1;
-                            //    if (prevKFIndex < 0)
-                            //        prevKFIndex = 0;
-
-                            //    var nextKF = beatmapObject.events[3][nextKFIndex];
-                            //    var prevKF = beatmapObject.events[3][prevKFIndex];
-
-                            //    var themeKFList = DataManager.inst.gameData.eventObjects.allEvents[4];
-                            //    var nextThemeKFIndex = themeKFList.FindIndex(x => x.eventTime > time);
-
-                            //    if (nextThemeKFIndex >= 0)
-                            //    {
-                            //        var prevThemeKFIndex = nextThemeKFIndex - 1;
-                            //        if (prevThemeKFIndex < 0)
-                            //            prevThemeKFIndex = 0;
-
-                            //        var nextThemeKF = themeKFList[nextThemeKFIndex];
-                            //        var prevThemeKF = themeKFList[prevThemeKFIndex];
-
-                            //        var nextTheme = DataManager.inst.AllThemes.Find(x => int.TryParse(x.id, out int n) && n == (int)nextThemeKF.eventValues[0]);
-                            //        var prevTheme = DataManager.inst.AllThemes.Find(x => int.TryParse(x.id, out int n) && n == (int)prevThemeKF.eventValues[0]);
-
-
-                            //    }
-                            //}
                         }
+
+                        break;
+                    }
+                case "copyColorOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
+
+                        if (list.Count() > 0)
+                            foreach (var bm in list)
+                            {
+                                if (Updater.TryGetObject(bm, out LevelObject otherLevelObject) &&
+                                    otherLevelObject.visualObject.Renderer &&
+                                    Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                                    levelObject.visualObject.Renderer)
+                                {
+                                    otherLevelObject.visualObject.Renderer.material.color = levelObject.visualObject.Renderer.material.color;
+                                }
+                            }
 
                         break;
                     }
@@ -2222,9 +2026,11 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "updateObject":
                     {
-                        if (!modifier.constant && DataManager.inst.gameData.beatmapObjects.Find(x => x.name == modifier.value) != null)
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
+
+                        if (!modifier.constant && list.Count() > 0)
                         {
-                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.value))
+                            foreach (var bm in list)
                             {
                                 Updater.UpdateProcessor(bm);
                             }
@@ -2236,29 +2042,13 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-                //case "code":
-                //    {
-                //        string id = "a";
-                //        if (modifier.modifierObject)
-                //            id = modifier.modifierObject.id;
-
-                //        string codeToInclude = $"var refID = \"{id}\";";
-
-                //        string code = "";
-                //        if (!code.Contains("System.IO.File.") && !code.Contains("File."))
-                //            code = modifier.value;
-
-                //        RTCode.Evaluate($"{codeToInclude}{code}");
-                //        break;
-                //    }
                 case "signalModifier":
                     {
-                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        foreach (var bm in list)
                         {
-                            if (bm != null)
-                            {
-                                ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ActivateModifier((BeatmapObject)bm, Parser.TryParse(modifier.value, 0f)));
-                            }
+                            ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ActivateModifier((BeatmapObject)bm, Parser.TryParse(modifier.value, 0f)));
                         }
 
                         break;
@@ -2273,20 +2063,28 @@ namespace ObjectModifiers.Modifiers
                         if (modifier.modifierObject.shape == 4 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
                             modifier.modifierObject.levelObject.visualObject is TextObject)
                         {
-                            ((TextObject)modifier.modifierObject.levelObject.visualObject).SetText(modifier.value);
+                            if (modifier.constant)
+                                ((TextObject)modifier.modifierObject.levelObject.visualObject).SetText(modifier.value);
+                            else
+                                ((TextObject)modifier.modifierObject.levelObject.visualObject).Text = modifier.value;
                         }
                         break;
                     }
                 case "setTextOther":
                     {
-                        if (DataManager.inst.gameData.beatmapObjects.Find(x => x.name == modifier.value) != null)
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0)
                         {
-                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.Where(x => x.name == modifier.value).Select(x => x as BeatmapObject))
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
                             {
                                 if (bm.shape == 4 && bm.levelObject && bm.levelObject.visualObject != null &&
-                                    bm.levelObject.visualObject is TextObject)
+                                    bm.levelObject.visualObject is TextObject textObject)
                                 {
-                                    ((TextObject)bm.levelObject.visualObject).SetText(modifier.value);
+                                    if (modifier.constant)
+                                        textObject.SetText(modifier.value);
+                                    else
+                                        textObject.Text = modifier.value;
                                 }
                             }
                         }
@@ -2300,11 +2098,132 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "clampVariableOther":
                     {
-                        if (DataManager.inst.gameData.beatmapObjects.Find(x => x.name == modifier.value) != null)
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0)
                         {
-                            foreach (var bm in DataManager.inst.gameData.beatmapObjects.Where(x => x.name == modifier.value).Select(x => x as BeatmapObject))
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
                             {
                                 bm.integerVariable = Mathf.Clamp(bm.integerVariable, Parser.TryParse(modifier.commands.Count > 1 ? modifier.commands[1] : "1", 0), Parser.TryParse(modifier.commands.Count > 2 ? modifier.commands[2] : "1", 1));
+                            }
+                        }
+
+                        break;
+                    }
+                case "animateObject":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int type)
+                            && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
+                            && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
+                        {
+                            Vector3 vector;
+                            if (type == 0)
+                                vector = modifier.modifierObject.positionOffset;
+                            else if (type == 1)
+                                vector = modifier.modifierObject.scaleOffset;
+                            else
+                                vector = modifier.modifierObject.rotationOffset;
+
+                            var setVector = new Vector3(x, y, z) + (relative ? vector : Vector3.zero);
+
+                            if (!modifier.constant)
+                            {
+                                var animation = new AnimationManager.Animation("Animate Object Offset");
+
+                                animation.vector3Animations = new List<AnimationManager.Animation.AnimationObject<Vector3>>
+                                {
+                                    new AnimationManager.Animation.AnimationObject<Vector3>(new List<IKeyframe<Vector3>>
+                                    {
+                                        new Vector3Keyframe(0f, vector, Ease.Linear),
+                                        new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
+                                        Ease.HasEaseFunction(modifier.commands[6]) ? Ease.GetEaseFunction(modifier.commands[6]) : Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
+                                    }, delegate (Vector3 vector3)
+                                    {
+                                        if (type == 0)
+                                            modifier.modifierObject.positionOffset = vector3;
+                                        else if (type == 1)
+                                            modifier.modifierObject.scaleOffset = vector3;
+                                        else
+                                            modifier.modifierObject.rotationOffset = vector3;
+                                    }),
+                                };
+                                animation.onComplete = delegate ()
+                                {
+                                    AnimationManager.inst.RemoveID(animation.id);
+                                };
+                                AnimationManager.inst.Play(animation);
+                            }
+                            else
+                            {
+                                if (type == 0)
+                                    modifier.modifierObject.positionOffset = setVector;
+                                else if (type == 1)
+                                    modifier.modifierObject.scaleOffset = setVector;
+                                else
+                                    modifier.modifierObject.rotationOffset = setVector;
+                            }
+                        }
+
+                        break;
+                    }
+                case "animateObjectOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[7]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.commands[1], out int type)
+                            && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
+                            && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                Vector3 vector;
+                                if (type == 0)
+                                    vector = bm.positionOffset;
+                                else if (type == 1)
+                                    vector = bm.scaleOffset;
+                                else
+                                    vector = bm.rotationOffset;
+
+                                var setVector = new Vector3(x, y, z) + (relative ? vector : Vector3.zero);
+
+                                if (!modifier.constant)
+                                {
+                                    var animation = new AnimationManager.Animation("Animate Other Object Offset");
+
+                                    animation.vector3Animations = new List<AnimationManager.Animation.AnimationObject<Vector3>>
+                                    {
+                                        new AnimationManager.Animation.AnimationObject<Vector3>(new List<IKeyframe<Vector3>>
+                                        {
+                                            new Vector3Keyframe(0f, vector, Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
+                                            Ease.HasEaseFunction(modifier.commands[6]) ? Ease.GetEaseFunction(modifier.commands[6]) : Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
+                                        }, delegate (Vector3 vector3)
+                                        {
+                                            if (type == 0)
+                                                bm.positionOffset = vector3;
+                                            else if (type == 1)
+                                                bm.scaleOffset = vector3;
+                                            else
+                                                bm.rotationOffset = vector3;
+                                        }),
+                                    };
+                                    animation.onComplete = delegate ()
+                                    {
+                                        AnimationManager.inst.RemoveID(animation.id);
+                                    };
+                                    AnimationManager.inst.Play(animation);
+                                }
+                                else
+                                {
+                                    if (type == 0)
+                                        bm.positionOffset = setVector;
+                                    else if (type == 1)
+                                        bm.scaleOffset = setVector;
+                                    else
+                                        bm.rotationOffset = setVector;
+                                }
                             }
                         }
 
@@ -2334,27 +2253,6 @@ namespace ObjectModifiers.Modifiers
                         if (!modifier.hasChanged)
                         {
                             modifier.hasChanged = true;
-                            //for (int i = 0; i < GameManager.inst.players.transform.childCount; i++)
-                            //{
-                            //    if (GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)))
-                            //    {
-                            //        var rt = GameManager.inst.players.transform.Find(string.Format("Player {0}", i + 1)).gameObject.GetComponentByName("RTPlayer");
-
-                            //        if (rt != null)
-                            //        {
-                            //            rt.GetType().GetField("canBoost", BindingFlags.Public | BindingFlags.Instance).SetValue(rt, true);
-                            //        }
-                            //        else
-                            //        {
-                            //            if (InputDataManager.inst.players.Count > 0 && InputDataManager.inst.players.Count > i)
-                            //            {
-                            //                var p = InputDataManager.inst.players[i].player;
-
-                            //                p.GetType().GetField("canBoost", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(p, true);
-                            //            }
-                            //        }
-                            //    }
-                            //}
 
                             if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !modifier.constant)
                             {
@@ -2419,13 +2317,16 @@ namespace ObjectModifiers.Modifiers
                 case "signalModifier":
                 case "mouseOverSignalModifier":
                     {
-                        foreach (var bm in DataManager.inst.gameData.beatmapObjects.FindAll(x => x.name == modifier.commands[1]))
-                        {
-                            if (bm != null && (bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0)
+                            foreach (var bm in list)
                             {
-                                m.Result = null;
+                                if ((bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                                {
+                                    m.Result = null;
+                                }
                             }
-                        }
 
                         break;
                     }
@@ -2434,6 +2335,28 @@ namespace ObjectModifiers.Modifiers
                 case "randomEquals":
                     {
                         modifier.Result = null;
+                        break;
+                    }
+                case "setText":
+                    {
+                        if (modifier.constant && modifier.modifierObject.shape == 4 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                            modifier.modifierObject.levelObject.visualObject is TextObject textObject)
+                            textObject.Text = modifier.modifierObject.text;
+                        break;
+                    }
+                case "setTextOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (modifier.constant && list.Count() > 0)
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                if (bm.shape == 4 && bm.levelObject && bm.levelObject.visualObject != null &&
+                                    bm.levelObject.visualObject is TextObject textObject)
+                                    textObject.Text = bm.text;
+                            }
+                        }
                         break;
                     }
             }
