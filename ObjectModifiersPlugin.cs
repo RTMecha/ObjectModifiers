@@ -1071,6 +1071,7 @@ namespace ObjectModifiers
                     "0", // Value Index (X, Y, etc)
                     "1", // Time
                     "Linear", // Ease
+                    "False", // Relative
                 },
                 value = "1" // Value
             }, //eventOffsetAnimate
@@ -1449,6 +1450,16 @@ namespace ObjectModifiers
                 },
                 value = ""
             }, //bulletCollide
+            //new BeatmapObject.Modifier
+            //{
+            //    type = BeatmapObject.Modifier.Type.Trigger,
+            //    constant = true,
+            //    commands = new List<string>
+            //    {
+            //        "objectCollide"
+            //    },
+            //    value = "Object Group"
+            //}, //bulletCollide
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
@@ -1879,6 +1890,16 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //musicTimeLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "musicPlaying"
+                },
+                value = "0"
+            }, //musicPlaying
         };
     }
 }

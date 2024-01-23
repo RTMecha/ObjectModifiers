@@ -251,7 +251,7 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "bulletCollide":
                     {
-                        if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
+                        if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
                         {
                             if (!modifier.modifierObject.detector)
                             {
@@ -263,6 +263,16 @@ namespace ObjectModifiers.Modifiers
                             if (modifier.modifierObject.detector)
                                 return modifier.modifierObject.detector.bulletOver;
                         }
+                        break;
+                    }
+                case "objectCollide":
+                    {
+                        if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.Collider)
+                        {
+                            var list = DataManager.inst.gameData.beatmapObjects.Where(x => ((BeatmapObject)x).tags.Contains(modifier.value) && ((BeatmapObject)x).levelObject && ((BeatmapObject)x).levelObject.visualObject != null && ((BeatmapObject)x).levelObject.visualObject.Collider);
+                            return list.Count() > 0 && list.Any(x => ((BeatmapObject)x).levelObject.visualObject.Collider.IsTouching(levelObject.visualObject.Collider));
+                        }
+
                         break;
                     }
                 case "loadEquals":
@@ -536,6 +546,10 @@ namespace ObjectModifiers.Modifiers
                 case "musicTimeLesser":
                     {
                         return float.TryParse(modifier.value, out float x) && AudioManager.inst.CurrentAudioSource.time < x;
+                    }
+                case "musicPlaying":
+                    {
+                        return AudioManager.inst.CurrentAudioSource.isPlaying;
                     }
             }
 
@@ -1770,16 +1784,21 @@ namespace ObjectModifiers.Modifiers
                             var indexArray = Parser.TryParse(modifier.commands[1], 0);
                             var indexValue = Parser.TryParse(modifier.commands[2], 0);
 
+                            if (modifier.commands.Count < 6)
+                                modifier.commands.Add("False");
+
                             if (indexArray < list.Count && indexValue < list[indexArray].Count)
                             {
+                                var value = Parser.TryParse(modifier.commands[5], false) ? list[indexArray][indexValue] + Parser.TryParse(modifier.value, 0f) : Parser.TryParse(modifier.value, 0f);
+
                                 var animation = new AnimationManager.Animation("Event Offset Animation");
                                 animation.floatAnimations = new List<AnimationManager.Animation.AnimationObject<float>>
                                 {
                                     new AnimationManager.Animation.AnimationObject<float>(new List<IKeyframe<float>>
                                     {
                                         new FloatKeyframe(0f, list[indexArray][indexValue], Ease.Linear),
-                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f), Parser.TryParse(modifier.value, 0f), Ease.HasEaseFunction(modifier.commands[4]) ? Ease.GetEaseFunction(modifier.commands[4]) : Ease.Linear),
-                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f) + 0.1f, Parser.TryParse(modifier.value, 0f), Ease.Linear),
+                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f), value, Ease.HasEaseFunction(modifier.commands[4]) ? Ease.GetEaseFunction(modifier.commands[4]) : Ease.Linear),
+                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f) + 0.1f, value, Ease.Linear),
                                     }, delegate (float x)
                                     {
                                         list[indexArray][indexValue] = x;
@@ -2229,6 +2248,12 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "rigidBody":
+                    {
+
+
+                        break;
+                    }
             }
         }
 
@@ -2319,10 +2344,11 @@ namespace ObjectModifiers.Modifiers
                     {
                         var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
 
-                        if (list.Count() > 0)
+                        if (list.Count() > 0 && !modifier.constant)
                             foreach (var bm in list)
                             {
-                                if ((bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                                if ((bm as BeatmapObject).modifiers.Count > 0 && (bm as BeatmapObject).modifiers.Where(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger).Count() > 0 &&
+                                    (bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
                                 {
                                     m.Result = null;
                                 }
