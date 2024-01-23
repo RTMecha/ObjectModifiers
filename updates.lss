@@ -1,3 +1,8 @@
+1.4.0 > [Jan 23, 2024]
+- Fixed setPlayerModel, now players properly update their model when triggered.
+- Added reactivePosChain, reactiveScaChain and reactiveRotChain, allowing reactive audio to affect parented objects too.
+- Fixed setText and setTextOther modifiers. Now they can work with the extra text stuff added in RTFunctions and be permanent until the modifier is inactive.
+- Added animateObject and animateObjectOther, allowing you to animate an object's offsets. Includes all 3 axis, so you can literally make a cube now.
 1.3.6 > [Jan 13, 2024]
 - Fixed mouseOverSignalModifier not being reset.
 1.3.5 > [Jan 13, 2024]
