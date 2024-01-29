@@ -2110,6 +2110,111 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "addText":
+                    {
+                        if (modifier.modifierObject.shape == 4 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                            modifier.modifierObject.levelObject.visualObject is TextObject)
+                        {
+                            ((TextObject)modifier.modifierObject.levelObject.visualObject).Text += modifier.value;
+                        }
+                        break;
+                    }
+                case "addTextOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0)
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                if (bm.shape == 4 && bm.levelObject && bm.levelObject.visualObject != null &&
+                                    bm.levelObject.visualObject is TextObject textObject)
+                                {
+                                    textObject.Text += modifier.value;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case "removeText":
+                    {
+                        if (modifier.modifierObject.shape == 4 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                            modifier.modifierObject.levelObject.visualObject is TextObject && int.TryParse(modifier.value, out int remove))
+                        {
+                            var visualObject = (TextObject)modifier.modifierObject.levelObject.visualObject;
+                            string text = string.IsNullOrEmpty(visualObject.TextMeshPro.text) ? "" :
+                                visualObject.TextMeshPro.text.Substring(0, visualObject.TextMeshPro.text.Length - Mathf.Clamp(remove, 0, visualObject.TextMeshPro.text.Length - 1));
+
+                            if (modifier.constant)
+                                visualObject.SetText(text);
+                            else
+                                visualObject.Text = text;
+                        }
+                        break;
+                    }
+                case "removeTextOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.value, out int remove))
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                if (bm.shape == 4 && bm.levelObject && bm.levelObject.visualObject != null &&
+                                    bm.levelObject.visualObject is TextObject textObject)
+                                {
+                                    string text = string.IsNullOrEmpty(textObject.TextMeshPro.text) ? "" :
+                                        textObject.TextMeshPro.text.Substring(0, textObject.TextMeshPro.text.Length - Mathf.Clamp(remove, 0, textObject.TextMeshPro.text.Length - 1));
+
+                                    if (modifier.constant)
+                                        textObject.SetText(text);
+                                    else
+                                        textObject.Text = text;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                case "removeTextAt":
+                    {
+                        if (modifier.modifierObject.shape == 4 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                            modifier.modifierObject.levelObject.visualObject is TextObject && int.TryParse(modifier.value, out int remove))
+                        {
+                            var visualObject = (TextObject)modifier.modifierObject.levelObject.visualObject;
+                            string text = string.IsNullOrEmpty(visualObject.TextMeshPro.text) ? "" : visualObject.TextMeshPro.text.Length > remove ?
+                                visualObject.TextMeshPro.text.Remove(remove, 1) : "";
+
+                            if (modifier.constant)
+                                visualObject.SetText(text);
+                            else
+                                visualObject.Text = text;
+                        }
+                        break;
+                    }
+                case "removeTextOtherAt":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.value, out int remove))
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                if (bm.shape == 4 && bm.levelObject && bm.levelObject.visualObject != null &&
+                                    bm.levelObject.visualObject is TextObject textObject)
+                                {
+                                    string text = string.IsNullOrEmpty(textObject.TextMeshPro.text) ? "" : textObject.TextMeshPro.text.Length > remove ?
+                                        textObject.TextMeshPro.text.Remove(remove, 1) : "";
+
+                                    if (modifier.constant)
+                                        textObject.SetText(text);
+                                    else
+                                        textObject.Text = text;
+                                }
+                            }
+                        }
+                        break;
+                    }
                 case "clampVariable":
                     {
                         modifier.modifierObject.integerVariable = Mathf.Clamp(modifier.modifierObject.integerVariable, Parser.TryParse(modifier.commands.Count > 1 ? modifier.commands[1] : "1", 0), Parser.TryParse(modifier.commands.Count > 2 ? modifier.commands[2] : "1", 1));

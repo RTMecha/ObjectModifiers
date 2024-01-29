@@ -1243,6 +1243,69 @@ namespace ObjectModifiers
                 constant = false,
                 commands = new List<string>
                 {
+                    "addText"
+                },
+                value = "Text"
+            }, //addText
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "addTextOther",
+                    "Objects Name", // Objects with tag
+                },
+                value = "Text"
+            }, //addTextOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "removeText"
+                },
+                value = "1"
+            }, //removeText
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "removeTextOther",
+                    "Objects Name", // Objects with tag
+                },
+                value = "1"
+            }, //removeTextOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "removeTextAt"
+                },
+                value = "1"
+            }, //removeTextAt
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "removeTextOtherAt",
+                    "Objects Name", // Objects with tag
+                },
+                value = "1"
+            }, //removeTextOtherAt
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
                     "animateObject",
                     "0", // Pos / Sca / Rot
                     "0", // X
