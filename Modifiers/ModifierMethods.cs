@@ -769,13 +769,7 @@ namespace ObjectModifiers.Modifiers
                             rend.material = ObjectModifiersPlugin.blur;
                             if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool r) && r)
                             {
-                                //float a = ObjectModifiersPlugin.customSequences[modifierObject.id].opacity - 1f;
-                                //a = -a;
-
-                                //RTMath.Interpolate(modifierObject, 3, 1);
-
                                 rend.material.SetFloat("_blurSizeXY", -(modifier.modifierObject.Interpolate(3, 1) - 1f) * num);
-                                //rend.material.SetFloat("_blurSizeXY", -(RTMath.Interpolate(modifierObject, 3, 1) - 1f) * float.Parse(value));
                             }
                             else
                                 rend.material.SetFloat("_blurSizeXY", num);
@@ -1500,6 +1494,20 @@ namespace ObjectModifiers.Modifiers
                             {
                                 var beatmapObject = (BeatmapObject)bm;
                                 beatmapObject.integerVariable = num;
+                            }
+                        }
+                        break;
+                    }
+                case "setVariableRandom":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.commands[1], out int min) && int.TryParse(modifier.commands[2], out int max))
+                        {
+                            foreach (var bm in list)
+                            {
+                                var beatmapObject = (BeatmapObject)bm;
+                                beatmapObject.integerVariable = UnityEngine.Random.Range(min, max < 0 ? max - 1 : max + 1);
                             }
                         }
                         break;
@@ -2356,6 +2364,57 @@ namespace ObjectModifiers.Modifiers
                 case "rigidBody":
                     {
 
+
+                        break;
+                    }
+                case "copyAxis":
+                    {
+                        /*
+                        From Type: (Pos / Sca / Rot)
+                        From Axis: (X / Y / Z)
+                        Object Group
+                        To Type: (Pos / Sca / Rot)
+                        To Axis: (X / Y / Z)
+                        */
+
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && int.TryParse(modifier.commands[3], out int toType) && int.TryParse(modifier.commands[4], out int toAxis)
+                            && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
+                            && beatmapObject != null)
+                        {
+                            var bm = beatmapObject as BeatmapObject;
+
+                            fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
+
+                            if (toType == 0 && toAxis == 0)
+                                modifier.modifierObject.positionOffset.x = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 0 && toAxis == 1)
+                                modifier.modifierObject.positionOffset.y = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 0 && toAxis == 2)
+                                modifier.modifierObject.positionOffset.z = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 1 && toAxis == 0)
+                                modifier.modifierObject.scaleOffset.x = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 1 && toAxis == 1)
+                                modifier.modifierObject.scaleOffset.y = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 1 && toAxis == 2)
+                                modifier.modifierObject.scaleOffset.z = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 2 && toAxis == 0)
+                                modifier.modifierObject.rotationOffset.x = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 2 && toAxis == 1)
+                                modifier.modifierObject.rotationOffset.y = bm.Interpolate(fromType, fromAxis);
+                            
+                            if (toType == 2 && toAxis == 2)
+                                modifier.modifierObject.rotationOffset.z = bm.Interpolate(fromType, fromAxis);
+
+                        }
 
                         break;
                     }

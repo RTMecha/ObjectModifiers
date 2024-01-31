@@ -833,7 +833,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "addVariable",
-                    "Object Name"
+                    "Object Group"
                 },
                 value = "1"
             }, //addVariable
@@ -844,7 +844,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "subVariable",
-                    "Object Name"
+                    "Object Group"
                 },
                 value = "1"
             }, //subVariable
@@ -855,10 +855,22 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "setVariable",
-                    "Object Name"
+                    "Object Group"
                 },
                 value = "1"
             }, //setVariable
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "setVariableRandom",
+                    "0",
+                    "2",
+                },
+                value = "Object Group"
+            }, //setVariableRandom
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1333,6 +1345,20 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //animateObjectOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "copyAxis",
+                    "0", // From Type
+                    "0", // From Axis
+                    "0", // To Type
+                    "0", // To Axis
+                },
+                value = "Object Group"
+            }, //copyAxis
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
