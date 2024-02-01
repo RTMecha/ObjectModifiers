@@ -2387,6 +2387,16 @@ namespace ObjectModifiers.Modifiers
                             fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
                             fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
 
+                            //if (modifier.Result == null)
+                            //{
+                            //    if (fromType == 0)
+                            //        modifier.Result = Updater.levelProcessor.converter.GetVector3Sequence(bm.events[0], new Vector3Keyframe(0f, Vector3.zero, Ease.Linear));
+                            //    else if (fromType == 1)
+                            //        modifier.Result = Updater.levelProcessor.converter.GetVector2Sequence(bm.events[1], new Vector2Keyframe(0f, Vector2.zero, Ease.Linear));
+                            //    else if (fromType == 2)
+                            //        modifier.Result = Updater.levelProcessor.converter.GetFloatSequence(bm.events[2], fromAxis, new Vector2Keyframe(0f, Vector2.zero, Ease.Linear));
+                            //}
+
                             if (toType == 0 && toAxis == 0)
                                 modifier.modifierObject.positionOffset.x = bm.Interpolate(fromType, fromAxis);
                             
