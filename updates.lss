@@ -1,3 +1,10 @@
+1.4.1 > [Feb 1, 2024]
+- eventOffsetAnimate now has a Relative value, similar to animateObject.
+- Added musicPlaying trigger.
+- Trying to figure out how to implement objectCollide trigger, apparently requires a rigidbody to work.
+- Added addText, addTextOther, removeText, removeTextOther, removeText and removeTextOther modifiers.
+- Added copyAxis modifier. It takes the axis of an animation of another object and applies it to a specific axis of the modifiers' object. Currently it doesn't work with relative keyframes nor random.
+- Added setVariableRandom.
 1.4.0 > [Jan 23, 2024]
 - Fixed setPlayerModel, now players properly update their model when triggered.
 - Added reactivePosChain, reactiveScaChain and reactiveRotChain, allowing reactive audio to affect parented objects too.
