@@ -1356,6 +1356,8 @@ namespace ObjectModifiers
                     "0", // From Axis
                     "0", // To Type
                     "0", // To Axis
+                    "0", // Delay
+                    "1", // Multiply
                 },
                 value = "Object Group"
             }, //copyAxis
