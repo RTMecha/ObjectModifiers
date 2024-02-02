@@ -1,3 +1,5 @@
+1.4.2 > [Feb 2, 2024]
+- Added delay & multiply and got non-regular keyframes to work with copyAxis modifier.
 1.4.1 > [Feb 1, 2024]
 - eventOffsetAnimate now has a Relative value, similar to animateObject.
 - Added musicPlaying trigger.
