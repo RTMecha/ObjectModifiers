@@ -34,50 +34,22 @@ namespace ObjectModifiers
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
     {
-        //TODO
-        //Modifiers:
-        //Animation Action (Makes an object play a preset animation depending on if it's been activated.
-        //Chain Object Action (With chain following and more)
+        readonly Harmony harmony = new Harmony("ObjectModifiers");
+        public static ObjectModifiersPlugin inst;
+        public static string className = "[<color=#F5501B>ObjectModifiers</color>]\n";
 
         #region Variables
 
         public static Material blur;
         public static Material GetBlur()
         {
-            var assetBundle = GetAssetBundle(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets", "objectmaterials.asset");
+            var assetBundle = AssetBundle.LoadFromFile(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets/objectmaterials.asset");
             var assetToLoad = assetBundle.LoadAsset<Material>("blur.mat");
             var blurMat = Instantiate(assetToLoad);
             assetBundle.Unload(false);
 
             return blurMat;
         }
-
-        public static Shader GetShader(string _shader)
-        {
-            var assetBundle = GetAssetBundle(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets", "objectmaterials");
-            var shaderToLoad = assetBundle.LoadAsset<Shader>(_shader);
-            var shader = Instantiate(shaderToLoad);
-            assetBundle.Unload(false);
-            return shader;
-        }
-
-        public static Material GetMaterial(string _shader)
-        {
-            var assetBundle = GetAssetBundle(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets", "objectmaterials");
-            var materialToLoad = assetBundle.LoadAsset<Material>(_shader);
-            var material = Instantiate(materialToLoad);
-            assetBundle.Unload(false);
-            return material;
-        }
-
-        public static AssetBundle GetAssetBundle(string _filepath, string _bundle)
-        {
-            return AssetBundle.LoadFromFile(Path.Combine(_filepath, _bundle));
-        }
-
-        readonly Harmony harmony = new Harmony("ObjectModifiers");
-        public static ObjectModifiersPlugin inst;
-        public static string className = "[<color=#F5501B>ObjectModifiers</color>]\n";
 
         #endregion
 
@@ -94,8 +66,7 @@ namespace ObjectModifiers
             inst = this;
 
             EditorLoadLevel = Config.Bind("Editor", "Modifier Loads Level", false, "Any modifiers with the \"loadLevel\" function will load the level whilst in the editor. This is only to prevent the loss of progress.");
-            EditorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", false, "The level will be saved before a level is loaded using a loadLevel modifier.");
-
+            EditorSavesBeforeLoad = Config.Bind("Editor", "Saves Before Load", false, "The current level will have a backup saved before a level is loaded using a loadLevel modifier or before the game has been quit.");
             ResetVariables = Config.Bind("Editor", "Reset Variable", false, "Resets the variables of every object when not in preview mode.");
 
             harmony.PatchAll(typeof(ObjectModifiersPlugin));
@@ -113,22 +84,6 @@ namespace ObjectModifiers
 
             // Plugin startup logic
             Logger.LogInfo($"Plugin Object Modifiers is loaded!");
-        }
-
-        [HarmonyPatch(typeof(GameManager), "SpawnPlayers")]
-        [HarmonyPostfix]
-        static void PlayerCollisionFix()
-        {
-            foreach (var player in InputDataManager.inst.players)
-            {
-                if (player.player)
-                {
-                    var p = player.player.gameObject.GetComponentInChildren<Collider2D>();
-                    p.isTrigger = false;
-                    p.attachedRigidbody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-                    //player.player.gameObject.GetComponentInChildren<Rigidbody2D>().collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-                }
-            }
         }
 
         [HarmonyPatch(typeof(GameManager), "Update")]
