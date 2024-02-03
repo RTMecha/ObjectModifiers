@@ -133,68 +133,55 @@ namespace ObjectModifiers
 
         [HarmonyPatch(typeof(GameManager), "Update")]
         [HarmonyPostfix]
-        static void UpdatePatch(GameManager __instance)
+        static void UpdatePatch()
         {
-            foreach (var b in DataManager.inst.gameData.beatmapObjects.OrderBy(x => x.StartTime))
-            {
-                var beatmapObject = (BeatmapObject)b;
-
-                if (beatmapObject.modifiers.Count > 0)
+            if (EditorManager.inst && EditorManager.inst.isEditing && ResetVariables.Value)
+                foreach (var b in DataManager.inst.gameData.beatmapObjects.OrderBy(x => x.StartTime))
                 {
-                    beatmapObject.modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
+                    ((BeatmapObject)b).integerVariable = 0;
+                }
+
+            foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
+            {
+                beatmapObject.modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
+                {
+                    modifier.Action = ModifierMethods.Action;
+                    modifier.Trigger = ModifierMethods.Trigger;
+                    modifier.Inactive = ModifierMethods.Inactive;
+                });
+
+                var actions = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
+                var triggers = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
+
+                if (beatmapObject.TimeWithinLifespan())
+                {
+                    if (triggers.Count() > 0)
                     {
-                        modifier.Action = ModifierMethods.Action;
-                        modifier.Trigger = ModifierMethods.Trigger;
-                        modifier.Inactive = ModifierMethods.Inactive;
-                    });
-
-                    var actions = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
-                    var triggers = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
-
-                    if (beatmapObject.TimeWithinLifespan())
-                    {
-                        if (triggers.Count() > 0)
-                        {
-                            if (triggers.All(x => !x.active && (x.Trigger(x) && !x.not || !x.Trigger(x) && x.not)))
-                            {
-                                foreach (var act in actions)
-                                {
-                                    if (!act.active)
-                                    {
-                                        if (!act.constant)
-                                            act.active = true;
-
-                                        act.Action?.Invoke(act);
-                                    }
-                                }
-
-                                foreach (var trig in triggers)
-                                {
-                                    if (!trig.constant)
-                                        trig.active = true;
-                                }
-                            }
-                            else
-                            {
-                                foreach (var act in actions)
-                                {
-                                    act.active = false;
-                                    act.Inactive?.Invoke(act);
-                                }
-                            }
-                        }
-                        else
+                        if (triggers.All(x => !x.active && (x.Trigger(x) && !x.not || !x.Trigger(x) && x.not)))
                         {
                             foreach (var act in actions)
                             {
                                 if (!act.active)
                                 {
                                     if (!act.constant)
-                                    {
                                         act.active = true;
-                                    }
+
                                     act.Action?.Invoke(act);
                                 }
+                            }
+
+                            foreach (var trig in triggers)
+                            {
+                                if (!trig.constant)
+                                    trig.active = true;
+                            }
+                        }
+                        else
+                        {
+                            foreach (var act in actions)
+                            {
+                                act.active = false;
+                                act.Inactive?.Invoke(act);
                             }
                         }
                     }
@@ -202,20 +189,31 @@ namespace ObjectModifiers
                     {
                         foreach (var act in actions)
                         {
-                            act.active = false;
-                            act.Inactive?.Invoke(act);
-                        }
-
-                        foreach (var trig in triggers)
-                        {
-                            trig.active = false;
-                            trig.Inactive?.Invoke(trig);
+                            if (!act.active)
+                            {
+                                if (!act.constant)
+                                {
+                                    act.active = true;
+                                }
+                                act.Action?.Invoke(act);
+                            }
                         }
                     }
                 }
+                else
+                {
+                    foreach (var act in actions)
+                    {
+                        act.active = false;
+                        act.Inactive?.Invoke(act);
+                    }
 
-                if (EditorManager.inst && EditorManager.inst.isEditing && ResetVariables.Value)
-                    beatmapObject.integerVariable = 0;
+                    foreach (var trig in triggers)
+                    {
+                        trig.active = false;
+                        trig.Inactive?.Invoke(trig);
+                    }
+                }
             }
 
             foreach (var audioSource in audioSources)
@@ -243,46 +241,39 @@ namespace ObjectModifiers
 
         #region Modifier Functions
 
-        public static void GetSoundPath(string id, string _sound, bool fromSoundLibrary = false, float _pitch = 1f, float _volume = 1f, bool _loop = false)
+        public static void GetSoundPath(string id, string path, bool fromSoundLibrary = false, float pitch = 1f, float volume = 1f, bool loop = false)
         {
-            string text = RTFile.ApplicationDirectory + "beatmaps/soundlibrary/" + _sound;
+            string text = RTFile.ApplicationDirectory + "beatmaps/soundlibrary/" + path;
 
             if (!fromSoundLibrary)
-                text = RTFile.BasePath + _sound;
+                text = RTFile.BasePath + path;
 
-            if (!_sound.Contains(".ogg") && RTFile.FileExists(text + ".ogg"))
+            if (!path.Contains(".ogg") && RTFile.FileExists(text + ".ogg"))
                 text += ".ogg";
             
-            if (!_sound.Contains(".wav") && RTFile.FileExists(text + ".wav"))
+            if (!path.Contains(".wav") && RTFile.FileExists(text + ".wav"))
                 text += ".wav";
 
-            //Debug.LogFormat("{0}Filepath: {1}", className, text);
             if (RTFile.FileExists(text))
             {
-                //Debug.LogFormat("{0}File exists so play", className);
-                //inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip("file://" + text, RTFile.GetAudioType(text), delegate (AudioClip audioClip)
-                //{
-                //    audioClip.name = _sound;
-                //    PlaySound(id, audioClip, _pitch, _volume, _loop);
-                //}));
                 inst.StartCoroutine(LoadMusicFileRaw(text, delegate (AudioClip _newSound)
                 {
-                    _newSound.name = _sound;
-                    PlaySound(id, _newSound, _pitch, _volume, _loop);
+                    _newSound.name = path;
+                    PlaySound(id, _newSound, pitch, volume, loop);
                 }));
             }
         }
 
-        public static void DownloadSoundAndPlay(string id, string _sound, float _pitch = 1f, float _volume = 1f, bool _loop = false)
+        public static void DownloadSoundAndPlay(string id, string path, float pitch = 1f, float volume = 1f, bool loop = false)
         {
             try
             {
-                var audioType = RTFile.GetAudioType(_sound);
+                var audioType = RTFile.GetAudioType(path);
 
                 if (audioType != AudioType.UNKNOWN)
-                    inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip(_sound, RTFile.GetAudioType(_sound), delegate (AudioClip audioClip)
+                    inst.StartCoroutine(AlephNetworkManager.DownloadAudioClip(path, audioType, delegate (AudioClip audioClip)
                     {
-                        PlaySound(id, audioClip, _pitch, _volume, _loop);
+                        PlaySound(id, audioClip, pitch, volume, loop);
                     }, delegate (string onError)
                     {
                         Debug.Log($"{className}Error! Could not download audioclip.\n{onError}");
@@ -294,50 +285,44 @@ namespace ObjectModifiers
             }
         }
 
-        public static void PlaySound(string id, AudioClip _clip, float _pitch, float _volume, bool _loop)
+        public static void PlaySound(string id, AudioClip clip, float pitch, float volume, bool loop)
         {
-            AudioSource audioSource = Camera.main.gameObject.AddComponent<AudioSource>();
-            audioSource.clip = _clip;
+            var audioSource = Camera.main.gameObject.AddComponent<AudioSource>();
+            audioSource.clip = clip;
             audioSource.playOnAwake = true;
-            audioSource.loop = _loop;
-            audioSource.pitch = _pitch * AudioManager.inst.CurrentAudioSource.pitch;
-            audioSource.volume = Mathf.Clamp(_volume, 0f, 2f) * AudioManager.inst.sfxVol;
+            audioSource.loop = loop;
+            audioSource.pitch = pitch * AudioManager.inst.CurrentAudioSource.pitch;
+            audioSource.volume = Mathf.Clamp(volume, 0f, 2f) * AudioManager.inst.sfxVol;
             audioSource.Play();
 
-            float x = _pitch * AudioManager.inst.CurrentAudioSource.pitch;
+            float x = pitch * AudioManager.inst.CurrentAudioSource.pitch;
             if (x == 0f)
                 x = 1f;
             if (x < 0f)
                 x = -x;
 
-            if (!_loop)
-                inst.StartCoroutine(AudioManager.inst.DestroyWithDelay(audioSource, _clip.length / x));
+            if (!loop)
+                inst.StartCoroutine(AudioManager.inst.DestroyWithDelay(audioSource, clip.length / x));
             else if (!audioSources.ContainsKey(id))
                 audioSources.Add(id, audioSource);
         }
 
-        public static IEnumerator LoadMusicFileRaw(string _filepath, Action<AudioClip> callback)
+        public static IEnumerator LoadMusicFileRaw(string path, Action<AudioClip> callback)
         {
-            if (!File.Exists(_filepath))
+            if (!File.Exists(path))
             {
-                Debug.LogFormat("{0}Could not load Music file [{1}]", new object[]
-                {
-                    FileManager.className,
-                    _filepath
-                });
+                Debug.Log($"{className}Could not load Music file [{path}]");
             }
             else
             {
-                var www = new WWW("file://" + _filepath);
+                var www = new WWW("file://" + path);
                 while (!www.isDone)
                     yield return null;
 
-                AudioClip beatmapAudio = www.GetAudioClip(false, false);
+                var beatmapAudio = www.GetAudioClip(false, false);
                 while (beatmapAudio.loadState != AudioDataLoadState.Loaded)
-                {
                     yield return null;
-                }
-                callback(beatmapAudio);
+                callback?.Invoke(beatmapAudio);
                 beatmapAudio = null;
                 www = null;
             }
@@ -345,42 +330,6 @@ namespace ObjectModifiers
         }
 
         public static Dictionary<string, AudioSource> audioSources = new Dictionary<string, AudioSource>();
-
-        //CA [DLC1] - Hub/CA [DLC1] - Regain Control
-
-        public static IEnumerator ParseStoryLevel(string _level)
-        {
-            Debug.LogFormat("{0}Parsing {1}...", className, _level);
-
-            string audioPath = RTFile.ApplicationDirectory + $"beatmaps/story/{_level}/level.ogg";
-            string beatmapJSON = FileManager.inst.LoadJSONFile($"beatmaps/story/{_level}/level.lsb");
-
-            string rawMetadataJSON = FileManager.inst.LoadJSONFile($"beatmaps/story/{_level}/metadata.lsb");
-
-            var metadata = DataManager.inst.ParseMetadata(rawMetadataJSON);
-
-            var saveQueue = SaveManager.inst.ArcadeQueue;
-
-            saveQueue.AudioFileStr = audioPath;
-            saveQueue.BeatmapJsonStr = beatmapJSON;
-            saveQueue.MetadataJsonStr = rawMetadataJSON;
-            saveQueue.MetaData = metadata;
-
-            if (RTFile.FileExists(audioPath))
-            {
-                Debug.LogFormat("{0}File exists so play", className);
-                inst.StartCoroutine(FileManager.inst.LoadMusicFile(audioPath.Replace(RTFile.ApplicationDirectory, ""), delegate (AudioClip _newSound)
-                {
-                    _newSound.name = _level;
-                    saveQueue.BeatmapSong = _newSound;
-
-                    DataManager.inst.UpdateSettingBool("IsArcade", true);
-
-                    SceneManager.inst.LoadScene("Game");
-                }));
-            }
-            yield break;
-        }
 
         public static PrefabObject AddPrefabObjectToLevel(BasePrefab prefab, float startTime, Vector2 pos, Vector2 sca, float rot, int repeatCount, float repeatOffsetTime, float speed)
         {
@@ -405,31 +354,16 @@ namespace ObjectModifiers
             return prefabObject;
         }
 
-        public static void SaveProgress(string _path, string _chapter, string _level, float _data)
+        public static void SaveProgress(string path, string chapter, string level, float data)
         {
-            if (!RTFile.DirectoryExists(RTFile.ApplicationDirectory + "profile"))
-            {
-                Directory.CreateDirectory(RTFile.ApplicationDirectory + "profile");
-            }
+            if (!RTFile.DirectoryExists(Path.GetDirectoryName(path)))
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
 
-            if (RTFile.FileExists(RTFile.ApplicationDirectory + "profile/" + _path + ".ses"))
-            {
-                string rawProfileJSON = FileManager.inst.LoadJSONFile("profile/" + _path + ".ses");
+            var jn = JSON.Parse(RTFile.FileExists($"{RTFile.ApplicationDirectory}profile/{path}.ses") ? RTFile.ReadFromFile($"{RTFile.ApplicationDirectory}profile/{path}.ses") : "{}");
 
-                var jsonnode = JSON.Parse(rawProfileJSON);
+            jn[chapter][level] = data.ToString();
 
-                jsonnode[_chapter][_level] = _data.ToString();
-
-                RTFile.WriteToFile("profile/" + _path + ".ses", jsonnode.ToString(3));
-            }
-            else
-            {
-                JSONNode jsonnode = JSON.Parse("{}");
-
-                jsonnode[_chapter][_level] = _data.ToString();
-
-                RTFile.WriteToFile("profile/" + _path + ".ses", jsonnode.ToString(3));
-            }
+            RTFile.WriteToFile($"{RTFile.ApplicationDirectory}profile/{path}.ses", jn.ToString(3));
         }
 
         public static IEnumerator ActivateModifier(BeatmapObject beatmapObject, float delay)
@@ -897,6 +831,26 @@ namespace ObjectModifiers
                 constant = false,
                 commands = new List<string>
                 {
+                    "enableObject"
+                },
+                value = "0"
+            }, //enableObject
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "enableObjectTree"
+                },
+                value = "0"
+            }, //enableObjectTree
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
                     "disableObject"
                 },
                 value = "0"
@@ -1318,6 +1272,27 @@ namespace ObjectModifiers
                 constant = false,
                 commands = new List<string>
                 {
+                    "setImage"
+                },
+                value = "Path"
+            }, //setImage
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "setImageOther",
+                    "Objects Name", // Objects with tag
+                },
+                value = "Path"
+            }, //setImageOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
                     "animateObject",
                     "0", // Pos / Sca / Rot
                     "0", // X
@@ -1361,6 +1336,64 @@ namespace ObjectModifiers
                 },
                 value = "Object Group"
             }, //copyAxis
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "rigidbody",
+                    "0", // Gravity
+                    "0", // Collision Mode
+                    "0", // Drag
+                    "0", // Velocity X
+                    "0", // Velocity Y
+                    "0", // Body Type
+                },
+                value = "0"
+            }, //rigidbody
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "rigidbodyOther",
+                    "0", // Gravity
+                    "0", // Collision Mode
+                    "0", // Drag
+                    "0", // Velocity X
+                    "0", // Velocity Y
+                    "0", // Body Type
+                },
+                value = "Object Group"
+            }, //rigidbodyOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "gravity",
+                    "0", // Gravity X
+                    "-1", // Gravity Y
+                    "0.1", // Gravity Time
+                },
+                value = "0"
+            }, //gravity
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "gravityOther",
+                    "0", // Gravity X
+                    "-1", // Gravity Y
+                    "0.1", // Gravity Time
+                },
+                value = "Object Group"
+            }, //gravityOther
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
@@ -1541,16 +1574,16 @@ namespace ObjectModifiers
                 },
                 value = ""
             }, //bulletCollide
-            //new BeatmapObject.Modifier
-            //{
-            //    type = BeatmapObject.Modifier.Type.Trigger,
-            //    constant = true,
-            //    commands = new List<string>
-            //    {
-            //        "objectCollide"
-            //    },
-            //    value = "Object Group"
-            //}, //bulletCollide
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "objectCollide"
+                },
+                value = "Object Group"
+            }, //objectCollide
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
