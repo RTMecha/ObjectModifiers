@@ -17,6 +17,7 @@ using RTFunctions.Functions.Components;
 using RTFunctions.Functions.Data;
 using RTFunctions.Functions.IO;
 using RTFunctions.Functions.Managers;
+using RTFunctions.Functions.Managers.Networking;
 using RTFunctions.Functions.Optimization;
 using RTFunctions.Functions.Optimization.Objects;
 using RTFunctions.Functions.Optimization.Objects.Visual;
@@ -637,21 +638,24 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                             {
+                                string str = RTFile.BasePath;
                                 if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
                                 {
-                                    EditorManager.inst.SaveBeatmap();
+                                    ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
+                                    {
+                                        EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
+                                    }));
                                 }
 
-                                string str = RTFile.BasePath;
-                                string modBackup = str + "level-modifier-backup.lsb";
-                                if (RTFile.FileExists(modBackup))
-                                {
-                                    System.IO.File.Delete(modBackup);
-                                }
+                                //string modBackup = str + "level-modifier-backup.lsb";
+                                //if (RTFile.FileExists(modBackup))
+                                //{
+                                //    System.IO.File.Delete(modBackup);
+                                //}
 
-                                string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
-                                if (RTFile.FileExists(lvl))
-                                    System.IO.File.Copy(lvl, modBackup);
+                                //string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
+                                //if (RTFile.FileExists(lvl))
+                                //    System.IO.File.Copy(lvl, modBackup);
 
                                 EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel(modifier.value));
                             }
@@ -668,21 +672,30 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                             {
+                                string str = RTFile.BasePath;
                                 if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
                                 {
-                                    EditorManager.inst.SaveBeatmap();
+                                    ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
+                                    {
+                                        EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
+                                    }));
                                 }
 
-                                string str = RTFile.BasePath;
-                                string modBackup = str + "level-modifier-backup.lsb";
-                                if (RTFile.FileExists(modBackup))
-                                {
-                                    System.IO.File.Delete(modBackup);
-                                }
+                                //if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                //{
+                                //    EditorManager.inst.SaveBeatmap();
+                                //}
 
-                                string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
-                                if (RTFile.FileExists(lvl))
-                                    System.IO.File.Copy(lvl, modBackup);
+                                //string str = RTFile.BasePath;
+                                //string modBackup = str + "level-modifier-backup.lsb";
+                                //if (RTFile.FileExists(modBackup))
+                                //{
+                                //    System.IO.File.Delete(modBackup);
+                                //}
+
+                                //string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
+                                //if (RTFile.FileExists(lvl))
+                                //    System.IO.File.Copy(lvl, modBackup);
 
                                 EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel($"{EditorManager.inst.currentLoadedLevel}/{modifier.value}"));
                             }
@@ -699,27 +712,37 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                             {
+                                string str = RTFile.BasePath;
                                 if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
                                 {
-                                    EditorManager.inst.SaveBeatmap();
+                                    ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
+                                    {
+                                        EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
+                                    }));
                                 }
 
-                                string str = RTFile.BasePath;
-                                if (RTFile.FileExists(str + "/level-modifier-backup.lsb"))
-                                {
-                                    System.IO.File.Delete(str + "/level-modifier-backup.lsb");
-                                }
 
-                                if (RTFile.FileExists(str + "/level.lsb"))
-                                    System.IO.File.Copy(str + "/level.lsb", str + "/level-modifier-backup.lsb");
+                                //if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                //{
+                                //    EditorManager.inst.SaveBeatmap();
+                                //}
+
+                                //string str = RTFile.BasePath;
+                                //if (RTFile.FileExists(str + "/level-modifier-backup.lsb"))
+                                //{
+                                //    System.IO.File.Delete(str + "/level-modifier-backup.lsb");
+                                //}
+
+                                //if (RTFile.FileExists(str + "/level.lsb"))
+                                //    System.IO.File.Copy(str + "/level.lsb", str + "/level-modifier-backup.lsb");
 
                                 EditorManager.inst.QuitToMenu();
                             }
                         }
                         else if (EditorManager.inst == null)
                         {
-                            DG.Tweening.DOTween.KillAll();
-                            DG.Tweening.DOTween.Clear(true);
+                            DOTween.KillAll();
+                            DOTween.Clear(true);
                             DataManager.inst.gameData = null;
                             DataManager.inst.gameData = new GameData();
                             DiscordController.inst.OnIconChange("");
@@ -1512,6 +1535,30 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
+                case "enableObject":
+                    {
+                        if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                        {
+                            levelObject.transformChain[0].gameObject.SetActive(true);
+                        }
+                        break;
+                    }
+                case "enableObjectTree":
+                    {
+                        var parentChain = modifier.modifierObject.GetParentChain();
+
+                        foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        {
+                            for (int o = 0; o < cc.Count; o++)
+                            {
+                                if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                {
+                                    levelObject.transformChain[0].gameObject.SetActive(true);
+                                }
+                            }
+                        }
+                        break;
+                    }
                 case "disableObject":
                     {
                         if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
@@ -2064,11 +2111,6 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
-                case "animationObject":
-                    {
-
-                        break;
-                    }
                 case "signalModifier":
                     {
                         var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
@@ -2083,6 +2125,66 @@ namespace ObjectModifiers.Modifiers
                 case "editorNotify":
                     {
                         EditorManager.inst?.DisplayNotification(modifier.value, Parser.TryParse(modifier.commands[1], 0.5f), (EditorManager.NotificationType)Parser.TryParse(modifier.commands[2], 0));
+                        break;
+                    }
+                case "setImage":
+                    {
+                        if (modifier.modifierObject.shape == 6 && modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                            modifier.modifierObject.levelObject.visualObject is ImageObject imageObject)
+                        {
+                            if (!modifier.constant)
+                            {
+                                var path = RTFile.BasePath + modifier.value;
+
+                                var local = imageObject.GameObject.transform.localPosition;
+
+                                if (RTFile.FileExists(path))
+                                    ObjectModifiersPlugin.inst.StartCoroutine(AlephNetworkManager.DownloadImageTexture("file://" + path, delegate (Texture2D x)
+                                    {
+                                        ((SpriteRenderer)imageObject.Renderer).sprite = SpriteManager.CreateSprite(x);
+                                        imageObject.GameObject.transform.localPosition = local;
+                                        imageObject.GameObject.transform.localPosition = local;
+                                        imageObject.GameObject.transform.localPosition = local;
+                                    }, delegate (string onError)
+                                    {
+                                        //((SpriteRenderer)imageObject.Renderer).sprite = ArcadeManager.inst.defaultImage;
+                                    }));
+                                //else ((SpriteRenderer)imageObject.Renderer).sprite = ArcadeManager.inst.defaultImage;
+                            }
+                        }
+                        break;
+                    }
+                case "setImageOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && !modifier.constant)
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                if (bm.shape == 6 && bm.levelObject && bm.levelObject.visualObject != null &&
+                                    bm.levelObject.visualObject is ImageObject imageObject)
+                                {
+                                    var path = RTFile.BasePath + modifier.value;
+
+                                    var local = imageObject.GameObject.transform.localPosition;
+
+                                    if (RTFile.FileExists(path))
+                                        ObjectModifiersPlugin.inst.StartCoroutine(AlephNetworkManager.DownloadImageTexture("file://" + path, delegate (Texture2D x)
+                                        {
+                                            ((SpriteRenderer)imageObject.Renderer).sprite = SpriteManager.CreateSprite(x);
+                                            imageObject.GameObject.transform.localPosition = local;
+                                            imageObject.GameObject.transform.localPosition = local;
+                                            imageObject.GameObject.transform.localPosition = local;
+                                        }, delegate (string onError)
+                                        {
+                                            //((SpriteRenderer)imageObject.Renderer).sprite = ArcadeManager.inst.defaultImage;
+                                        }));
+                                    //else ((SpriteRenderer)imageObject.Renderer).sprite = ArcadeManager.inst.defaultImage;
+                                }
+                            }
+                        }
+
                         break;
                     }
                 case "setText":
@@ -2361,9 +2463,125 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-                case "rigidBody":
+                case "rigidbody":
                     {
+                        if (modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null
+                            && float.TryParse(modifier.commands[1], out float gravity)
+                            && int.TryParse(modifier.commands[2], out int collisionMode)
+                            && float.TryParse(modifier.commands[3], out float drag)
+                            && float.TryParse(modifier.commands[4], out float velocityX)
+                            && float.TryParse(modifier.commands[5], out float velocityY))
+                        {
+                            modifier.modifierObject.components.RemoveAll(x => x == null);
 
+                            if (!modifier.modifierObject.components.Has(x => x is Rigidbody2D))
+                            {
+                                var rigidbody = modifier.modifierObject.levelObject.visualObject.GameObject.GetComponent<Rigidbody2D>();
+
+                                if (!rigidbody)
+                                    rigidbody = modifier.modifierObject.levelObject.visualObject.GameObject.AddComponent<Rigidbody2D>();
+
+                                modifier.modifierObject.components.Add(rigidbody);
+
+                                rigidbody.gravityScale = gravity;
+                                rigidbody.collisionDetectionMode = (CollisionDetectionMode2D)Mathf.Clamp(collisionMode, 0, 1);
+                                rigidbody.drag = drag;
+
+                                rigidbody.bodyType = (RigidbodyType2D)Parser.TryParse(modifier.commands[6], 0);
+
+                                var velocity = rigidbody.velocity;
+                                velocity.x += velocityX;
+                                velocity.y += velocityY;
+                                rigidbody.velocity = velocity;
+                            }
+
+                            if (!modifier.constant && modifier.modifierObject.components.Has(x => x is Rigidbody2D))
+                            {
+                                var rigidbody = (Rigidbody2D)modifier.modifierObject.components.Find(x => x is Rigidbody2D);
+
+                                rigidbody.gravityScale = gravity;
+                                rigidbody.collisionDetectionMode = (CollisionDetectionMode2D)Mathf.Clamp(collisionMode, 0, 1);
+                                rigidbody.drag = drag;
+
+                                rigidbody.bodyType = (RigidbodyType2D)Parser.TryParse(modifier.commands[6], 0);
+
+                                rigidbody.velocity += new Vector2(velocityX, velocityY);
+                            }
+                        }
+
+                        break;
+                    }
+                case "rigidbodyOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
+
+                        if (list.Count() > 0
+                                    && float.TryParse(modifier.commands[1], out float gravity)
+                                    && int.TryParse(modifier.commands[2], out int collisionMode)
+                                    && float.TryParse(modifier.commands[3], out float drag)
+                                    && float.TryParse(modifier.commands[4], out float velocityX)
+                                    && float.TryParse(modifier.commands[5], out float velocityY))
+                        {
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                if (bm.levelObject && bm.levelObject.visualObject != null)
+                                {
+                                    if (bm.components.Has(x => x is Rigidbody2D))
+                                    {
+                                        var rigidbody = (Rigidbody2D)bm.components.Find(x => x is Rigidbody2D);
+
+                                        rigidbody.gravityScale = gravity;
+                                        rigidbody.collisionDetectionMode = (CollisionDetectionMode2D)Mathf.Clamp(collisionMode, 0, 1);
+                                        rigidbody.drag = drag;
+
+                                        rigidbody.bodyType = (RigidbodyType2D)Parser.TryParse(modifier.commands[6], 0);
+
+                                        rigidbody.velocity += new Vector2(velocityX, velocityY);
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case "gravity":
+                    {
+                        if (modifier.Result == null)
+                            modifier.Result = 0f;
+
+                        if (modifier.commands.Count < 4)
+                            modifier.commands.Add("0.1");
+
+                        if (float.TryParse(modifier.commands[1], out float gravityX) && float.TryParse(modifier.commands[2], out float gravityY))
+                        {
+                            modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
+
+                            modifier.modifierObject.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
+                            modifier.modifierObject.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+                        }
+
+                        break;
+                    }
+                case "gravityOther":
+                    {
+                        if (modifier.Result == null)
+                            modifier.Result = 0f;
+
+                        if (modifier.commands.Count < 4)
+                            modifier.commands.Add("0.1");
+
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
+
+                        if (list.Count() > 0 && float.TryParse(modifier.commands[1], out float gravityX) && float.TryParse(modifier.commands[2], out float gravityY))
+                        {
+                            modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
+
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                bm.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
+                                bm.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+                            }
+                        }
 
                         break;
                     }
@@ -2667,6 +2885,17 @@ namespace ObjectModifiers.Modifiers
 
                                     modifier.modifierObject.rotationOffset.z = sequence * multiply;
                                 }
+
+                                if (toType == 3 && toAxis == 0 && fromType == 3 && Updater.levelProcessor.converter.cachedSequences[bm.id].ColorSequence != null &&
+                                    modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null &&
+                                    modifier.modifierObject.levelObject.visualObject.Renderer)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ColorSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    var renderer = modifier.modifierObject.levelObject.visualObject.Renderer;
+
+                                    renderer.material.color = RTMath.Lerp(renderer.material.color, sequence, multiply);
+                                }
                             }
 
                             //if (toType == 0 && toAxis == 0)
@@ -2737,6 +2966,30 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "enableObject":
+                    {
+                        if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                        {
+                            levelObject.transformChain[0].gameObject.SetActive(false);
+                        }
+                        break;
+                    }
+                case "enableObjectTree":
+                    {
+                        var parentChain = modifier.modifierObject.GetParentChain();
+
+                        foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        {
+                            for (int o = 0; o < cc.Count; o++)
+                            {
+                                if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                {
+                                    levelObject.transformChain[0].gameObject.SetActive(false);
+                                }
+                            }
+                        }
+                        break;
+                    }
                 case "disableObject":
                     {
                         if (!modifier.hasChanged && modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
@@ -2804,6 +3057,8 @@ namespace ObjectModifiers.Modifiers
                 case "randomGreater":
                 case "randomLesser":
                 case "randomEquals":
+                case "gravity":
+                case "gravityOther":
                     {
                         modifier.Result = null;
                         break;
