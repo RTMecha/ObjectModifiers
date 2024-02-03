@@ -497,7 +497,7 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "inZenMode":
                     {
-                        return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 0;
+                        return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 0 && (EditorManager.inst == null || RTFunctions.Functions.Components.Player.RTPlayer.ZenModeInEditor);
                     }
                 case "inNormal":
                     {
