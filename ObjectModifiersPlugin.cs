@@ -90,53 +90,70 @@ namespace ObjectModifiers
         [HarmonyPostfix]
         static void UpdatePatch()
         {
-            if (EditorManager.inst && EditorManager.inst.isEditing && ResetVariables.Value)
+            if (EditorManager.inst && EditorManager.inst.isEditing && DataManager.inst && DataManager.inst.gameData != null && DataManager.inst.gameData.beatmapObjects != null
+                && DataManager.inst.gameData.beatmapObjects.Count > 0 && RTHelpers.Playing && ResetVariables.Value)
                 foreach (var b in DataManager.inst.gameData.beatmapObjects.OrderBy(x => x.StartTime))
                 {
                     ((BeatmapObject)b).integerVariable = 0;
                 }
 
-            foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
-            {
-                beatmapObject.modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
+            if (DataManager.inst && DataManager.inst.gameData is GameData && DataManager.inst.gameData.beatmapObjects != null && RTHelpers.Playing)
+                foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
                 {
-                    modifier.Action = ModifierMethods.Action;
-                    modifier.Trigger = ModifierMethods.Trigger;
-                    modifier.Inactive = ModifierMethods.Inactive;
-                });
-
-                var actions = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
-                var triggers = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
-
-                if (beatmapObject.TimeWithinLifespan())
-                {
-                    if (triggers.Count() > 0)
+                    beatmapObject.modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
                     {
-                        if (triggers.All(x => !x.active && (x.Trigger(x) && !x.not || !x.Trigger(x) && x.not)))
-                        {
-                            foreach (var act in actions)
-                            {
-                                if (!act.active)
-                                {
-                                    if (!act.constant)
-                                        act.active = true;
+                        modifier.Action = ModifierMethods.Action;
+                        modifier.Trigger = ModifierMethods.Trigger;
+                        modifier.Inactive = ModifierMethods.Inactive;
+                    });
 
-                                    act.Action?.Invoke(act);
+                    var actions = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
+                    var triggers = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
+
+                    if (beatmapObject.TimeWithinLifespan())
+                    {
+                        if (triggers.Count() > 0)
+                        {
+                            if (triggers.All(x => !x.active && (x.Trigger(x) && !x.not || !x.Trigger(x) && x.not)))
+                            {
+                                foreach (var act in actions)
+                                {
+                                    if (!act.active)
+                                    {
+                                        if (!act.constant)
+                                            act.active = true;
+
+                                        act.Action?.Invoke(act);
+                                    }
+                                }
+
+                                foreach (var trig in triggers)
+                                {
+                                    if (!trig.constant)
+                                        trig.active = true;
                                 }
                             }
-
-                            foreach (var trig in triggers)
+                            else
                             {
-                                if (!trig.constant)
-                                    trig.active = true;
+                                foreach (var act in actions)
+                                {
+                                    act.active = false;
+                                    act.Inactive?.Invoke(act);
+                                }
                             }
                         }
                         else
                         {
                             foreach (var act in actions)
                             {
-                                act.active = false;
-                                act.Inactive?.Invoke(act);
+                                if (!act.active)
+                                {
+                                    if (!act.constant)
+                                    {
+                                        act.active = true;
+                                    }
+                                    act.Action?.Invoke(act);
+                                }
                             }
                         }
                     }
@@ -144,32 +161,17 @@ namespace ObjectModifiers
                     {
                         foreach (var act in actions)
                         {
-                            if (!act.active)
-                            {
-                                if (!act.constant)
-                                {
-                                    act.active = true;
-                                }
-                                act.Action?.Invoke(act);
-                            }
+                            act.active = false;
+                            act.Inactive?.Invoke(act);
+                        }
+
+                        foreach (var trig in triggers)
+                        {
+                            trig.active = false;
+                            trig.Inactive?.Invoke(trig);
                         }
                     }
                 }
-                else
-                {
-                    foreach (var act in actions)
-                    {
-                        act.active = false;
-                        act.Inactive?.Invoke(act);
-                    }
-
-                    foreach (var trig in triggers)
-                    {
-                        trig.active = false;
-                        trig.Inactive?.Invoke(trig);
-                    }
-                }
-            }
 
             foreach (var audioSource in audioSources)
             {
