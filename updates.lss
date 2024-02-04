@@ -1,3 +1,9 @@
+1.4.3 > [Feb 5, 2024]
+- loadLevel, loadLevelInternal and quitToMenu modifiers no longer save to the level.lsb, instead saving to a backup.
+- objectCollide modifier now works due to new rigidbody modifier.
+- Added rigidbody modifier for objectCollide. Beatmap Objects targeted by objectCollide's Object Group value require this in order for the collision detection to work.
+- Added color to copyAxis.
+- Added gravity and gravityOther modifiers. It's not true gravity yet but it works.
 1.4.2 > [Feb 2, 2024]
 - Added delay & multiply and got non-regular keyframes to work with copyAxis modifier.
 1.4.1 > [Feb 1, 2024]
