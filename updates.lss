@@ -1,3 +1,6 @@
+1.4.4 > [Feb 6, 2024]
+- Added vignetteTracksPlayer, making vignette's center always target the player at an offset to whatever the vignette keyframes' center is. This modifier sets the same values as eventOffset and eventOffsetAnimate.
+- Began planning a customCode modifier that's similar to the old C# code modifier, but less possibly destructive.
 1.4.3 > [Feb 5, 2024]
 - loadLevel, loadLevelInternal and quitToMenu modifiers no longer save to the level.lsb, instead saving to a backup.
 - objectCollide modifier now works due to new rigidbody modifier.
