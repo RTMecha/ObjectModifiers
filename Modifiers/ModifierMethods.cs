@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using UnityEngine;
@@ -1870,6 +1871,29 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
+                case "vignetteTracksPlayer":
+                    {
+                        var player = PlayerManager.Players[0].Player;
+
+                        var rb = player.playerObjects["RB Parent"].gameObject;
+
+                        var cameraToViewportPoint = Camera.main.WorldToViewportPoint(rb.transform.position);
+
+                        var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
+
+                        var indexArray = 7;
+                        var indexXValue = 4;
+                        var indexYValue = 5;
+
+                        if (indexArray < list.Count && indexXValue < list[indexArray].Count)
+                            list[indexArray][indexXValue] = cameraToViewportPoint.x;
+                        if (indexArray < list.Count && indexYValue < list[indexArray].Count)
+                            list[indexArray][indexYValue] = cameraToViewportPoint.y;
+
+                        ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+
+                        break;
+                    }
                 case "legacyTail":
                     {
                         //if (!tailDone)
@@ -2924,6 +2948,38 @@ namespace ObjectModifiers.Modifiers
                             
                             //if (toType == 2 && toAxis == 2)
                             //    modifier.modifierObject.rotationOffset.z = bm.Interpolate(fromType, fromAxis);
+                        }
+
+                        break;
+                    }
+                case "code":
+                    {
+                        //string code = "void Action() { Log(0f); Pause(); }";
+                        var code = modifier.value;
+
+                        var matchCollection = Regex.Matches(code, "{(.*?)}");
+
+                        if (matchCollection.Count > 0)
+                        {
+                            foreach (var obj in matchCollection)
+                            {
+                                var match = (Match)obj;
+
+                                var str = match.Groups[1].ToString();
+
+                                var array = str.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+
+                                if (array.Length - 1 > 0)
+                                    for (int i = 0; i < array.Length - 1; i++)
+                                    {
+                                        var methodName = array[i].Substring(0, array[i].IndexOf('('));
+
+                                        var parameters = Regex.Match(array[i], @"\((.*?)\)").Groups[1].ToString().Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+
+                                        if (methodName.ToLower() == "log" && parameters.Length == 1)
+                                            Debug.Log($"{parameters[0]}");
+                                    }
+                            }
                         }
 
                         break;
