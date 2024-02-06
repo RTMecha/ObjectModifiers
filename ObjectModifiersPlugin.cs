@@ -768,6 +768,30 @@ namespace ObjectModifiers
                 constant = false,
                 commands = new List<string>
                 {
+                    "clampVariable",
+                    "0",
+                    "1",
+                },
+                value = "0"
+            }, //clampVariable
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "clampVariableOther",
+                    "0",
+                    "1",
+                },
+                value = "Object Group"
+            }, //clampVariableOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
                     "quitToMenu"
                 },
                 value = "0"
@@ -986,6 +1010,18 @@ namespace ObjectModifiers
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "eventOffsetVariable",
+                    "0", // Type (Move, Zoom, Rotate, etc)
+                    "0", // Value Index (X, Y, etc)
+                },
+                value = "1" // Multiply
+            }, //eventOffsetVariable
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
                 commands = new List<string>
                 {
@@ -1008,6 +1044,16 @@ namespace ObjectModifiers
                 },
                 value = "0" // Value
             }, //vignetteTracksPlayer
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "lensTracksPlayer",
+                },
+                value = "0" // Value
+            }, //lensTracksPlayer
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
