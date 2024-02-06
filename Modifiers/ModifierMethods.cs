@@ -1831,6 +1831,22 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
+                case "eventOffsetVariable":
+                    {
+                        if (ModCompatibility.sharedFunctions.ContainsKey("EventsCoreEventOffsets"))
+                        {
+                            var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
+
+                            var indexArray = Parser.TryParse(modifier.commands[1], 0);
+                            var indexValue = Parser.TryParse(modifier.commands[2], 0);
+
+                            if (indexArray < list.Count && indexValue < list[indexArray].Count)
+                                list[indexArray][indexValue] = modifier.modifierObject.integerVariable * Parser.TryParse(modifier.value, 1f);
+
+                            ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                        }
+                        break;
+                    }
                 case "eventOffsetAnimate":
                     {
                         if (!modifier.constant && ModCompatibility.sharedFunctions.ContainsKey("EventsCoreEventOffsets"))
@@ -1889,6 +1905,29 @@ namespace ObjectModifiers.Modifiers
                             list[indexArray][indexXValue] = cameraToViewportPoint.x;
                         if (indexArray < list.Count && indexYValue < list[indexArray].Count)
                             list[indexArray][indexYValue] = cameraToViewportPoint.y;
+
+                        ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+
+                        break;
+                    }
+                case "lensTracksPlayer":
+                    {
+                        var player = PlayerManager.Players[0].Player;
+
+                        var rb = player.playerObjects["RB Parent"].gameObject;
+
+                        var cameraToViewportPoint = Camera.main.WorldToViewportPoint(rb.transform.position);
+
+                        var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
+
+                        var indexArray = 8;
+                        var indexXValue = 1;
+                        var indexYValue = 2;
+
+                        if (indexArray < list.Count && indexXValue < list[indexArray].Count)
+                            list[indexArray][indexXValue] = cameraToViewportPoint.x - 0.5f;
+                        if (indexArray < list.Count && indexYValue < list[indexArray].Count)
+                            list[indexArray][indexYValue] = cameraToViewportPoint.y - 0.5f;
 
                         ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
 
@@ -2952,7 +2991,7 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-                case "code":
+                case "customCode":
                     {
                         //string code = "void Action() { Log(0f); Pause(); }";
                         var code = modifier.value;
