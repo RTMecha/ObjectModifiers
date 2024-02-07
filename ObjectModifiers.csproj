@@ -4,7 +4,7 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>ObjectModifiers</AssemblyName>
     <Description>The new and improved ObjectModifiers!</Description>
-    <Version>1.4.4</Version>
+    <Version>1.4.5</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
