@@ -1,3 +1,7 @@
+1.4.5 > [Feb 8, 2024]
+- Added clampVariable modifiers to the modifiers list because I forgot to do that before.
+- Added lensTracksPlayer, same thing as vignetteTracksPlayer.
+- Added eventOffsetVariable, this uses the objects' own variable for setting the eventOffset. However, since the variable is only a whole number with no decimal points, the variable can be multiplied by a certain amount.
 1.4.4 > [Feb 6, 2024]
 - Added vignetteTracksPlayer, making vignette's center always target the player at an offset to whatever the vignette keyframes' center is. This modifier sets the same values as eventOffset and eventOffsetAnimate.
 - Began planning a customCode modifier that's similar to the old C# code modifier, but less possibly destructive.
