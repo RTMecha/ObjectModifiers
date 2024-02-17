@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.4.5")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.4.6")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -992,6 +992,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "blackHole",
+                    "False",
                 },
                 value = "0.01"
             }, //blackHole
@@ -1212,7 +1213,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "setTextOther",
-                    "Objects Name", // Objects with tag
+                    "Objects Group", // Objects with tag
                 },
                 value = "Text"
             }, //setTextOther
@@ -1233,7 +1234,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "addTextOther",
-                    "Objects Name", // Objects with tag
+                    "Objects Group", // Objects with tag
                 },
                 value = "Text"
             }, //addTextOther
@@ -1254,7 +1255,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "removeTextOther",
-                    "Objects Name", // Objects with tag
+                    "Objects Group", // Objects with tag
                 },
                 value = "1"
             }, //removeTextOther
@@ -1275,7 +1276,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "removeTextOtherAt",
-                    "Objects Name", // Objects with tag
+                    "Objects Group", // Objects with tag
                 },
                 value = "1"
             }, //removeTextOtherAt
@@ -1296,7 +1297,7 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "setImageOther",
-                    "Objects Name", // Objects with tag
+                    "Objects Group", // Objects with tag
                 },
                 value = "Path"
             }, //setImageOther
@@ -1346,9 +1347,31 @@ namespace ObjectModifiers
                     "0", // To Axis
                     "0", // Delay
                     "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
                 },
                 value = "Object Group"
             }, //copyAxis
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "copyPlayerAxis",
+                    "0", // From Type
+                    "0", // From Axis
+                    "0", // To Type
+                    "0", // To Axis
+                    "1", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                },
+                value = "0"
+            }, //copyPlayerAxis
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1407,6 +1430,16 @@ namespace ObjectModifiers
                 },
                 value = "Object Group"
             }, //gravityOther
+            //new BeatmapObject.Modifier
+            //{
+            //    type = BeatmapObject.Modifier.Type.Action,
+            //    constant = false,
+            //    commands = new List<string>
+            //    {
+            //        "code"
+            //    },
+            //    value = "EditorManager.inst.DisplayNotification(\"Write custom C# code here!\", 2f, EditorManager.NotificationType.Success);"
+            //}, //code
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
@@ -2037,6 +2070,101 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //musicPlaying
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "axisEquals",
+                    "0", // Type
+                    "0", // Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "1", // Comparison
+                    "False", // Use Visual
+                },
+                value = "Object Group"
+            }, //axisEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "axisLesserEquals",
+                    "0", // Type
+                    "0", // Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "1", // Comparison
+                    "False", // Use Visual
+                },
+                value = "Object Group"
+            }, //axisLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "axisGreaterEquals",
+                    "0", // Type
+                    "0", // Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "1", // Comparison
+                    "False", // Use Visual
+                },
+                value = "Object Group"
+            }, //axisGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "axisLesser",
+                    "0", // Type
+                    "0", // Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "1", // Comparison
+                    "False", // Use Visual
+                },
+                value = "Object Group"
+            }, //axisLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "axisGreater",
+                    "0", // Type
+                    "0", // Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "1", // Comparison
+                    "False", // Use Visual
+                },
+                value = "Object Group"
+            }, //axisGreater
         };
     }
 }

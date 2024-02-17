@@ -553,6 +553,331 @@ namespace ObjectModifiers.Modifiers
                     {
                         return AudioManager.inst.CurrentAudioSource.isPlaying;
                     }
+                case "axisEquals":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && float.TryParse(modifier.commands[3], out float delay) && float.TryParse(modifier.commands[4], out float multiply)
+                            && float.TryParse(modifier.commands[5], out float offset) && float.TryParse(modifier.commands[6], out float min) && float.TryParse(modifier.commands[7], out float max)
+                            && float.TryParse(modifier.commands[8], out float equals) && bool.TryParse(modifier.commands[9], out bool visual)
+                            && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
+                            && beatmapObject != null)
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            var bm = beatmapObject as BeatmapObject;
+
+                            fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
+
+                            if (!visual && Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
+                            {
+                                // From Type Position
+                                if (fromType == 0)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max) == equals;
+                                }
+
+                                // From Type Scale
+                                if (fromType == 1)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max) == equals;
+                                }
+
+                                // From Type Rotation
+                                if (fromType == 2)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
+
+                                    return Mathf.Clamp(sequence - offset, min, max) == equals;
+                                }
+                            }
+                            else if (visual && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var tf = levelObject.visualObject.GameObject.transform;
+
+                                if (fromType == 0)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.position.x : fromAxis == 1 ? tf.position.y : tf.position.z) * multiply - offset, min, max) == equals;
+                                }
+
+                                if (fromType == 1)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.lossyScale.x : fromAxis == 1 ? tf.lossyScale.y : tf.lossyScale.z) * multiply - offset, min, max) == equals;
+                                }
+
+                                if (fromType == 2)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.rotation.eulerAngles.x : fromAxis == 1 ? tf.rotation.eulerAngles.y : tf.rotation.eulerAngles.z) * multiply - offset, min, max) == equals;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case "axisLesserEquals":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && float.TryParse(modifier.commands[3], out float delay) && float.TryParse(modifier.commands[4], out float multiply)
+                            && float.TryParse(modifier.commands[5], out float offset) && float.TryParse(modifier.commands[6], out float min) && float.TryParse(modifier.commands[7], out float max)
+                            && float.TryParse(modifier.commands[8], out float equals) && bool.TryParse(modifier.commands[9], out bool visual)
+                            && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
+                            && beatmapObject != null)
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            var bm = beatmapObject as BeatmapObject;
+
+                            fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
+
+                            if (!visual && Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
+                            {
+                                // From Type Position
+                                if (fromType == 0)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max) <= equals;
+                                }
+
+                                // From Type Scale
+                                if (fromType == 1)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max) <= equals;
+                                }
+
+                                // From Type Rotation
+                                if (fromType == 2)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
+
+                                    return Mathf.Clamp(sequence - offset, min, max) <= equals;
+                                }
+                            }
+                            else if (visual && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var tf = levelObject.visualObject.GameObject.transform;
+
+                                if (fromType == 0)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.position.x : fromAxis == 1 ? tf.position.y : tf.position.z) * multiply - offset, min, max) <= equals;
+                                }
+
+                                if (fromType == 1)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.lossyScale.x : fromAxis == 1 ? tf.lossyScale.y : tf.lossyScale.z) * multiply - offset, min, max) <= equals;
+                                }
+
+                                if (fromType == 2)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.rotation.eulerAngles.x : fromAxis == 1 ? tf.rotation.eulerAngles.y : tf.rotation.eulerAngles.z) * multiply - offset, min, max) <= equals;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case "axisGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && float.TryParse(modifier.commands[3], out float delay) && float.TryParse(modifier.commands[4], out float multiply)
+                            && float.TryParse(modifier.commands[5], out float offset) && float.TryParse(modifier.commands[6], out float min) && float.TryParse(modifier.commands[7], out float max)
+                            && float.TryParse(modifier.commands[8], out float equals) && bool.TryParse(modifier.commands[9], out bool visual)
+                            && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
+                            && beatmapObject != null)
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            var bm = beatmapObject as BeatmapObject;
+
+                            fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
+
+                            if (!visual && Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
+                            {
+                                // From Type Position
+                                if (fromType == 0)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max) >= equals;
+                                }
+
+                                // From Type Scale
+                                if (fromType == 1)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max) >= equals;
+                                }
+
+                                // From Type Rotation
+                                if (fromType == 2)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
+
+                                    return Mathf.Clamp(sequence - offset, min, max) >= equals;
+                                }
+                            }
+                            else if (visual && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var tf = levelObject.visualObject.GameObject.transform;
+
+                                if (fromType == 0)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.position.x : fromAxis == 1 ? tf.position.y : tf.position.z) * multiply - offset, min, max) >= equals;
+                                }
+
+                                if (fromType == 1)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.lossyScale.x : fromAxis == 1 ? tf.lossyScale.y : tf.lossyScale.z) * multiply - offset, min, max) >= equals;
+                                }
+
+                                if (fromType == 2)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.rotation.eulerAngles.x : fromAxis == 1 ? tf.rotation.eulerAngles.y : tf.rotation.eulerAngles.z) * multiply - offset, min, max) >= equals;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case "axisLesser":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && float.TryParse(modifier.commands[3], out float delay) && float.TryParse(modifier.commands[4], out float multiply)
+                            && float.TryParse(modifier.commands[5], out float offset) && float.TryParse(modifier.commands[6], out float min) && float.TryParse(modifier.commands[7], out float max)
+                            && float.TryParse(modifier.commands[8], out float equals) && bool.TryParse(modifier.commands[9], out bool visual)
+                            && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
+                            && beatmapObject != null)
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            var bm = beatmapObject as BeatmapObject;
+
+                            fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
+
+                            if (!visual && Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
+                            {
+                                // From Type Position
+                                if (fromType == 0)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max) < equals;
+                                }
+
+                                // From Type Scale
+                                if (fromType == 1)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max) < equals;
+                                }
+
+                                // From Type Rotation
+                                if (fromType == 2)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
+
+                                    return Mathf.Clamp(sequence - offset, min, max) < equals;
+                                }
+                            }
+                            else if (visual && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var tf = levelObject.visualObject.GameObject.transform;
+
+                                if (fromType == 0)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.position.x : fromAxis == 1 ? tf.position.y : tf.position.z) * multiply - offset, min, max) < equals;
+                                }
+
+                                if (fromType == 1)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.lossyScale.x : fromAxis == 1 ? tf.lossyScale.y : tf.lossyScale.z) * multiply - offset, min, max) < equals;
+                                }
+
+                                if (fromType == 2)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.rotation.eulerAngles.x : fromAxis == 1 ? tf.rotation.eulerAngles.y : tf.rotation.eulerAngles.z) * multiply - offset, min, max) < equals;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case "axisGreater":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && float.TryParse(modifier.commands[3], out float delay) && float.TryParse(modifier.commands[4], out float multiply)
+                            && float.TryParse(modifier.commands[5], out float offset) && float.TryParse(modifier.commands[6], out float min) && float.TryParse(modifier.commands[7], out float max)
+                            && float.TryParse(modifier.commands[8], out float equals) && bool.TryParse(modifier.commands[9], out bool visual)
+                            && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
+                            && beatmapObject != null)
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            var bm = beatmapObject as BeatmapObject;
+
+                            fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
+
+                            if (!visual && Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
+                            {
+                                // From Type Position
+                                if (fromType == 0)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max) > equals;
+                                }
+
+                                // From Type Scale
+                                if (fromType == 1)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
+
+                                    return Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max) > equals;
+                                }
+
+                                // From Type Rotation
+                                if (fromType == 2)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
+
+                                    return Mathf.Clamp(sequence - offset, min, max) > equals;
+                                }
+                            }
+                            else if (visual && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var tf = levelObject.visualObject.GameObject.transform;
+
+                                if (fromType == 0)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.position.x : fromAxis == 1 ? tf.position.y : tf.position.z) * multiply - offset, min, max) > equals;
+                                }
+
+                                if (fromType == 1)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.lossyScale.x : fromAxis == 1 ? tf.lossyScale.y : tf.lossyScale.z) * multiply - offset, min, max) > equals;
+                                }
+
+                                if (fromType == 2)
+                                {
+                                    return Mathf.Clamp((fromAxis == 0 ? tf.rotation.eulerAngles.x : fromAxis == 1 ? tf.rotation.eulerAngles.y : tf.rotation.eulerAngles.z) * multiply - offset, min, max) > equals;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
             }
 
             modifier.Inactive?.Invoke(modifier);
@@ -648,16 +973,6 @@ namespace ObjectModifiers.Modifiers
                                     }));
                                 }
 
-                                //string modBackup = str + "level-modifier-backup.lsb";
-                                //if (RTFile.FileExists(modBackup))
-                                //{
-                                //    System.IO.File.Delete(modBackup);
-                                //}
-
-                                //string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
-                                //if (RTFile.FileExists(lvl))
-                                //    System.IO.File.Copy(lvl, modBackup);
-
                                 EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel(modifier.value));
                             }
                         }
@@ -682,22 +997,6 @@ namespace ObjectModifiers.Modifiers
                                     }));
                                 }
 
-                                //if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
-                                //{
-                                //    EditorManager.inst.SaveBeatmap();
-                                //}
-
-                                //string str = RTFile.BasePath;
-                                //string modBackup = str + "level-modifier-backup.lsb";
-                                //if (RTFile.FileExists(modBackup))
-                                //{
-                                //    System.IO.File.Delete(modBackup);
-                                //}
-
-                                //string lvl = RTFile.ApplicationDirectory + str + "level.lsb";
-                                //if (RTFile.FileExists(lvl))
-                                //    System.IO.File.Copy(lvl, modBackup);
-
                                 EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel($"{EditorManager.inst.currentLoadedLevel}/{modifier.value}"));
                             }
                         }
@@ -721,21 +1020,6 @@ namespace ObjectModifiers.Modifiers
                                         EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
                                     }));
                                 }
-
-
-                                //if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
-                                //{
-                                //    EditorManager.inst.SaveBeatmap();
-                                //}
-
-                                //string str = RTFile.BasePath;
-                                //if (RTFile.FileExists(str + "/level-modifier-backup.lsb"))
-                                //{
-                                //    System.IO.File.Delete(str + "/level-modifier-backup.lsb");
-                                //}
-
-                                //if (RTFile.FileExists(str + "/level.lsb"))
-                                //    System.IO.File.Copy(str + "/level.lsb", str + "/level-modifier-backup.lsb");
 
                                 EditorManager.inst.QuitToMenu();
                             }
@@ -2005,7 +2289,15 @@ namespace ObjectModifiers.Modifiers
 
                                     float p = Time.deltaTime * 60f * pitch;
 
-                                    float moveDelay = 1f - Mathf.Pow(1f - Mathf.Clamp(float.Parse(modifier.value), 0.001f, 1f), p);
+                                    if (modifier.commands.Count < 2)
+                                        modifier.commands.Add("false");
+
+                                    float num = Parser.TryParse(modifier.value, 0.01f);
+
+                                    if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool r) && r)
+                                        num = -(modifier.modifierObject.Interpolate(3, 1) - 1f) * num;
+
+                                    float moveDelay = 1f - Mathf.Pow(1f - Mathf.Clamp(num, 0.001f, 1f), p);
 
                                     var vector = new Vector3(pl.position.x, pl.position.y, 0f);
                                     var target = new Vector3(gm.transform.position.x, gm.transform.position.y, 0f);
@@ -2663,10 +2955,20 @@ namespace ObjectModifiers.Modifiers
                         
                         if (modifier.commands.Count < 7)
                             modifier.commands.Add("1");
+                        
+                        if (modifier.commands.Count < 8)
+                            modifier.commands.Add("0");
+                        
+                        if (modifier.commands.Count < 9)
+                            modifier.commands.Add("-99999");
+                        
+                        if (modifier.commands.Count < 10)
+                            modifier.commands.Add("99999");
 
                         if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
                             && int.TryParse(modifier.commands[3], out int toType) && int.TryParse(modifier.commands[4], out int toAxis)
                             && float.TryParse(modifier.commands[5], out float delay) && float.TryParse(modifier.commands[6], out float multiply)
+                            && float.TryParse(modifier.commands[7], out float offset) && float.TryParse(modifier.commands[8], out float min) && float.TryParse(modifier.commands[9], out float max)
                             && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
                             && beatmapObject != null)
                         {
@@ -2686,7 +2988,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.positionOffset.x = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Position
@@ -2696,7 +2998,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.positionOffset.y = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
                                 
                                 // To Type Position
@@ -2706,7 +3008,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.positionOffset.z = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Position
@@ -2716,7 +3018,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.positionOffset.x = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Position
@@ -2726,7 +3028,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.positionOffset.y = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
                                 
                                 // To Type Position
@@ -2736,7 +3038,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.positionOffset.z = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Position
@@ -2746,7 +3048,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
 
-                                    modifier.modifierObject.positionOffset.x = sequence;
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp(sequence - offset, min, max);
                                 }
 
                                 // To Type Position
@@ -2756,7 +3058,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
 
-                                    modifier.modifierObject.positionOffset.y = sequence;
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp(sequence - offset, min, max);
                                 }
 
                                 // To Type Position
@@ -2766,7 +3068,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay) * multiply;
 
-                                    modifier.modifierObject.positionOffset.z = sequence;
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp(sequence - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2776,7 +3078,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.x = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2786,7 +3088,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.y = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2796,7 +3098,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.z = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2806,7 +3108,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.x = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2816,7 +3118,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.y = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2826,7 +3128,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.z = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2836,7 +3138,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.x = sequence * multiply;
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2846,7 +3148,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.y = sequence * multiply;
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
 
                                 // To Type Scale
@@ -2856,7 +3158,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.scaleOffset.z = sequence * multiply;
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2866,7 +3168,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.x = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2876,7 +3178,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.y = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2886,7 +3188,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].Position3DSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.z = (fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply;
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2896,7 +3198,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.x = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2906,7 +3208,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.y = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2916,7 +3218,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].ScaleSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.z = (fromAxis == 0 ? sequence.x : sequence.y) * multiply;
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2926,7 +3228,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.x = sequence * multiply;
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2936,7 +3238,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.y = sequence * multiply;
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
 
                                 // To Type Rotation
@@ -2946,7 +3248,7 @@ namespace ObjectModifiers.Modifiers
                                 {
                                     var sequence = Updater.levelProcessor.converter.cachedSequences[bm.id].RotationSequence.Interpolate(time - bm.StartTime - delay);
 
-                                    modifier.modifierObject.rotationOffset.z = sequence * multiply;
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
 
                                 if (toType == 3 && toAxis == 0 && fromType == 3 && Updater.levelProcessor.converter.cachedSequences[bm.id].ColorSequence != null &&
@@ -2960,33 +3262,302 @@ namespace ObjectModifiers.Modifiers
                                     renderer.material.color = RTMath.Lerp(renderer.material.color, sequence, multiply);
                                 }
                             }
+                        }
 
-                            //if (toType == 0 && toAxis == 0)
-                            //    modifier.modifierObject.positionOffset.x = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 0 && toAxis == 1)
-                            //    modifier.modifierObject.positionOffset.y = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 0 && toAxis == 2)
-                            //    modifier.modifierObject.positionOffset.z = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 1 && toAxis == 0)
-                            //    modifier.modifierObject.scaleOffset.x = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 1 && toAxis == 1)
-                            //    modifier.modifierObject.scaleOffset.y = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 1 && toAxis == 2)
-                            //    modifier.modifierObject.scaleOffset.z = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 2 && toAxis == 0)
-                            //    modifier.modifierObject.rotationOffset.x = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 2 && toAxis == 1)
-                            //    modifier.modifierObject.rotationOffset.y = bm.Interpolate(fromType, fromAxis);
-                            
-                            //if (toType == 2 && toAxis == 2)
-                            //    modifier.modifierObject.rotationOffset.z = bm.Interpolate(fromType, fromAxis);
+                        break;
+                    }
+                case "copyPlayerAxis":
+                    {
+                        /*
+                        From Type: (Pos / Sca / Rot)
+                        From Axis: (X / Y / Z)
+                        Object Group
+                        To Type: (Pos / Sca / Rot)
+                        To Axis: (X / Y / Z)
+                        */
+
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && int.TryParse(modifier.commands[3], out int toType) && int.TryParse(modifier.commands[4], out int toAxis)
+                            && float.TryParse(modifier.commands[5], out float delay) && float.TryParse(modifier.commands[6], out float multiply)
+                            && float.TryParse(modifier.commands[7], out float offset) && float.TryParse(modifier.commands[8], out float min) && float.TryParse(modifier.commands[9], out float max)
+                            && PlayerManager.Players.Count > 0)
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            var player = PlayerManager.Players[0];
+                            var rb = player.Player.playerObjects["RB Parent"].gameObject.transform;
+
+                            {
+                                // To Type Position
+                                // To Axis X
+                                // From Type Position
+                                if (toType == 0 && toAxis == 0 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Y
+                                // From Type Position
+                                if (toType == 0 && toAxis == 1 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Z
+                                // From Type Position
+                                if (toType == 0 && toAxis == 2 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis X
+                                // From Type Scale
+                                if (toType == 0 && toAxis == 0 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Y
+                                // From Type Scale
+                                if (toType == 0 && toAxis == 1 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Z
+                                // From Type Scale
+                                if (toType == 0 && toAxis == 2 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis X
+                                // From Type Rotation
+                                if (toType == 0 && toAxis == 0 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z * multiply;
+
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp(sequence - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Y
+                                // From Type Rotation
+                                if (toType == 0 && toAxis == 1 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z * multiply;
+
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp(sequence - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Z
+                                // From Type Rotation
+                                if (toType == 0 && toAxis == 2 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z * multiply;
+
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp(sequence - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis X
+                                // From Type Position
+                                if (toType == 1 && toAxis == 0 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Y
+                                // From Type Position
+                                if (toType == 1 && toAxis == 1 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Z
+                                // From Type Position
+                                if (toType == 1 && toAxis == 2 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis X
+                                // From Type Scale
+                                if (toType == 1 && toAxis == 0 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Y
+                                // From Type Scale
+                                if (toType == 1 && toAxis == 1 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Z
+                                // From Type Scale
+                                if (toType == 1 && toAxis == 2 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis X
+                                // From Type Rotation
+                                if (toType == 1 && toAxis == 0 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z;
+
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp(sequence * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Y
+                                // From Type Rotation
+                                if (toType == 1 && toAxis == 1 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z;
+
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp(sequence * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Z
+                                // From Type Rotation
+                                if (toType == 1 && toAxis == 2 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z;
+
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp(sequence * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis X
+                                // From Type Position
+                                if (toType == 2 && toAxis == 0 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Y
+                                // From Type Position
+                                if (toType == 2 && toAxis == 1 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Z
+                                // From Type Position
+                                if (toType == 2 && toAxis == 2 && fromType == 0)
+                                {
+                                    var sequence = rb.localPosition;
+
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis X
+                                // From Type Scale
+                                if (toType == 2 && toAxis == 0 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Y
+                                // From Type Scale
+                                if (toType == 2 && toAxis == 1 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Z
+                                // From Type Scale
+                                if (toType == 2 && toAxis == 2 && fromType == 1)
+                                {
+                                    var sequence = rb.localScale;
+
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x : sequence.y) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis X
+                                // From Type Rotation
+                                if (toType == 2 && toAxis == 0 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z;
+
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp(sequence * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Y
+                                // From Type Rotation
+                                if (toType == 2 && toAxis == 1 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z;
+
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp(sequence * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Z
+                                // From Type Rotation
+                                if (toType == 2 && toAxis == 2 && fromType == 2)
+                                {
+                                    var sequence = rb.localRotation.eulerAngles.z;
+
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp(sequence * multiply - offset, min, max);
+                                }
+                            }
                         }
 
                         break;
@@ -3023,6 +3594,19 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                //case "code":
+                //    {
+                //        string id = "a";
+                //        if (modifier.modifierObject)
+                //            id = modifier.modifierObject.id;
+
+                //        string codeToInclude = $"var refID = \"{id}\";";
+
+                //        if (RTCode.Validate(modifier.value))
+                //            RTCode.Evaluate($"{codeToInclude}{modifier.value}");
+
+                //        break;
+                //    }
             }
         }
 
