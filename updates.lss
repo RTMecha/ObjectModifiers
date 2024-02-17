@@ -1,3 +1,8 @@
+1.4.6 > [Feb 17, 2024]
+- Added Offset, Min and Max to copyAxis.
+- Added axisEquals triggers and copyPlayerAxis modifiers.
+- Trying to figure out a viable way to bring back the code modifier.
+- Added "Use Opacity" to blackHole modifier, this allows the blackHole intensity to be animated.
 1.4.5 > [Feb 8, 2024]
 - Added clampVariable modifiers to the modifiers list because I forgot to do that before.
 - Added lensTracksPlayer, same thing as vignetteTracksPlayer.
