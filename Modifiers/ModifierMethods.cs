@@ -878,6 +878,26 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "playerBoostEquals":
+                    {
+                        return int.TryParse(modifier.value, out int num) && LevelManager.BoostCount == num;
+                    }
+                case "playerBoostLesserEquals":
+                    {
+                        return int.TryParse(modifier.value, out int num) && LevelManager.BoostCount <= num;
+                    }
+                case "playerBoostGreaterEquals":
+                    {
+                        return int.TryParse(modifier.value, out int num) && LevelManager.BoostCount >= num;
+                    }
+                case "playerBoostLesser":
+                    {
+                        return int.TryParse(modifier.value, out int num) && LevelManager.BoostCount < num;
+                    }
+                case "playerBoostGreater":
+                    {
+                        return int.TryParse(modifier.value, out int num) && LevelManager.BoostCount > num;
+                    }
             }
 
             modifier.Inactive?.Invoke(modifier);
@@ -1068,7 +1088,7 @@ namespace ObjectModifiers.Modifiers
                 case "blur":
                     {
                         if (modifier.modifierObject &&
-                            modifier.modifierObject.objectType != DataManager.GameData.BeatmapObject.ObjectType.Empty &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
                             Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
                             levelObject.visualObject.Renderer &&
                             float.TryParse(modifier.value, out float num))
@@ -1076,9 +1096,7 @@ namespace ObjectModifiers.Modifiers
                             var rend = levelObject.visualObject.Renderer;
                             rend.material = ObjectModifiersPlugin.blur;
                             if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool r) && r)
-                            {
                                 rend.material.SetFloat("_blurSizeXY", -(modifier.modifierObject.Interpolate(3, 1) - 1f) * num);
-                            }
                             else
                                 rend.material.SetFloat("_blurSizeXY", num);
                         }
