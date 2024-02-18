@@ -110,7 +110,7 @@ namespace ObjectModifiers
                     var actions = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
                     var triggers = beatmapObject.modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
 
-                    if (beatmapObject.TimeWithinLifespan())
+                    if (beatmapObject.ignoreLifespan || beatmapObject.TimeWithinLifespan())
                     {
                         if (triggers.Count() > 0)
                         {
