@@ -898,6 +898,121 @@ namespace ObjectModifiers.Modifiers
                     {
                         return int.TryParse(modifier.value, out int num) && LevelManager.BoostCount > num;
                     }
+                case "levelRankEquals":
+                    {
+                        if (LevelManager.CurrentLevel != null && LevelManager.CurrentLevel.playerData != null && int.TryParse(modifier.value, out int num))
+                        {
+                            var levelRank = LevelManager.GetLevelRank(LevelManager.CurrentLevel);
+
+                            var levelRankIndexes = new Dictionary<string, int>
+                            {
+                                { "-", 0 },
+                                { "SS", 1 },
+                                { "S", 2 },
+                                { "A", 3 },
+                                { "B", 4 },
+                                { "C", 5 },
+                                { "D", 6 },
+                                { "F", 7 },
+                            };
+
+                            return levelRankIndexes[levelRank.name] == num;
+                        }
+
+                        break;
+                    }
+                case "levelRankLesserEquals":
+                    {
+                        if (LevelManager.CurrentLevel != null && LevelManager.CurrentLevel.playerData != null && int.TryParse(modifier.value, out int num))
+                        {
+                            var levelRank = LevelManager.GetLevelRank(LevelManager.CurrentLevel);
+
+                            var levelRankIndexes = new Dictionary<string, int>
+                            {
+                                { "-", 0 },
+                                { "SS", 1 },
+                                { "S", 2 },
+                                { "A", 3 },
+                                { "B", 4 },
+                                { "C", 5 },
+                                { "D", 6 },
+                                { "F", 7 },
+                            };
+
+                            return levelRankIndexes[levelRank.name] <= num;
+                        }
+
+                        break;
+                    }
+                case "levelRankGreaterEquals":
+                    {
+                        if (LevelManager.CurrentLevel != null && LevelManager.CurrentLevel.playerData != null && int.TryParse(modifier.value, out int num))
+                        {
+                            var levelRank = LevelManager.GetLevelRank(LevelManager.CurrentLevel);
+
+                            var levelRankIndexes = new Dictionary<string, int>
+                            {
+                                { "-", 0 },
+                                { "SS", 1 },
+                                { "S", 2 },
+                                { "A", 3 },
+                                { "B", 4 },
+                                { "C", 5 },
+                                { "D", 6 },
+                                { "F", 7 },
+                            };
+
+                            return levelRankIndexes[levelRank.name] >= num;
+                        }
+
+                        break;
+                    }
+                case "levelRankLesser":
+                    {
+                        if (LevelManager.CurrentLevel != null && LevelManager.CurrentLevel.playerData != null && int.TryParse(modifier.value, out int num))
+                        {
+                            var levelRank = LevelManager.GetLevelRank(LevelManager.CurrentLevel);
+
+                            var levelRankIndexes = new Dictionary<string, int>
+                            {
+                                { "-", 0 },
+                                { "SS", 1 },
+                                { "S", 2 },
+                                { "A", 3 },
+                                { "B", 4 },
+                                { "C", 5 },
+                                { "D", 6 },
+                                { "F", 7 },
+                            };
+
+                            return levelRankIndexes[levelRank.name] < num;
+                        }
+
+                        break;
+                    }
+                case "levelRankGreater":
+                    {
+                        if (LevelManager.CurrentLevel != null && LevelManager.CurrentLevel.playerData != null && int.TryParse(modifier.value, out int num))
+                        {
+                            var levelRank = LevelManager.GetLevelRank(LevelManager.CurrentLevel);
+
+                            var levelRankIndexes = new Dictionary<string, int>
+                            {
+                                { "-", 0 },
+                                { "SS", 1 },
+                                { "S", 2 },
+                                { "A", 3 },
+                                { "B", 4 },
+                                { "C", 5 },
+                                { "D", 6 },
+                                { "F", 7 },
+                            };
+
+                            return levelRankIndexes[levelRank.name] > num;
+                        }
+
+                        break;
+                    }
             }
 
             modifier.Inactive?.Invoke(modifier);
@@ -1848,6 +1963,25 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "enableObjectTree":
                     {
+                        if (modifier.value == "0")
+                            modifier.value = "False";
+
+                        if (Parser.TryParse(modifier.value, true))
+                        {
+                            foreach (var cc in modifier.modifierObject.GetChildChain())
+                            {
+                                for (int o = 0; o < cc.Count; o++)
+                                {
+                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                    {
+                                        levelObject.transformChain[0].gameObject.SetActive(true);
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+
                         var parentChain = modifier.modifierObject.GetParentChain();
 
                         foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
@@ -1872,6 +2006,25 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "disableObjectTree":
                     {
+                        if (modifier.value == "0")
+                            modifier.value = "False";
+
+                        if (Parser.TryParse(modifier.value, true))
+                        {
+                            foreach (var cc in modifier.modifierObject.GetChildChain())
+                            {
+                                for (int o = 0; o < cc.Count; o++)
+                                {
+                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                    {
+                                        levelObject.transformChain[0].gameObject.SetActive(false);
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+
                         var parentChain = modifier.modifierObject.GetParentChain();
 
                         foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
@@ -3673,15 +3826,38 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "enableObjectTree":
                     {
-                        var parentChain = modifier.modifierObject.GetParentChain();
-
-                        foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        if (!modifier.hasChanged)
                         {
-                            for (int o = 0; o < cc.Count; o++)
+                            modifier.hasChanged = true;
+                            if (modifier.value == "0")
+                                modifier.value = "False";
+
+                            if (Parser.TryParse(modifier.value, true))
                             {
-                                if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                foreach (var cc in modifier.modifierObject.GetChildChain())
                                 {
-                                    levelObject.transformChain[0].gameObject.SetActive(false);
+                                    for (int o = 0; o < cc.Count; o++)
+                                    {
+                                        if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                        {
+                                            levelObject.transformChain[0].gameObject.SetActive(false);
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+
+                            var parentChain = modifier.modifierObject.GetParentChain();
+
+                            foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                            {
+                                for (int o = 0; o < cc.Count; o++)
+                                {
+                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                    {
+                                        levelObject.transformChain[0].gameObject.SetActive(false);
+                                    }
                                 }
                             }
                         }
@@ -3701,6 +3877,27 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (!modifier.hasChanged)
                         {
+                            modifier.hasChanged = true;
+
+                            if (modifier.value == "0")
+                                modifier.value = "False";
+
+                            if (Parser.TryParse(modifier.value, true))
+                            {
+                                foreach (var cc in modifier.modifierObject.GetChildChain())
+                                {
+                                    for (int o = 0; o < cc.Count; o++)
+                                    {
+                                        if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                        {
+                                            levelObject.transformChain[0].gameObject.SetActive(true);
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+
                             var parentChain = modifier.modifierObject.GetParentChain();
 
                             foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
@@ -3711,7 +3908,6 @@ namespace ObjectModifiers.Modifiers
                                         levelObject.transformChain[0].gameObject.SetActive(true);
                                 }
                             }
-                            modifier.hasChanged = true;
                         }
 
                         break;

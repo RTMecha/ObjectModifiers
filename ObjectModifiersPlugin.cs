@@ -824,7 +824,7 @@ namespace ObjectModifiers
                 {
                     "enableObjectTree"
                 },
-                value = "0"
+                value = "True"
             }, //enableObjectTree
             new BeatmapObject.Modifier
             {
@@ -844,7 +844,7 @@ namespace ObjectModifiers
                 {
                     "disableObjectTree"
                 },
-                value = "0"
+                value = "True"
             }, //disableObjectTree
             new BeatmapObject.Modifier
             {
@@ -2165,6 +2165,106 @@ namespace ObjectModifiers
                 },
                 value = "Object Group"
             }, //axisGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "playerBoostEquals",
+                },
+                value = "0"
+            }, //playerBoostEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "playerBoostLesserEquals",
+                },
+                value = "0"
+            }, //playerBoostLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "playerBoostGreaterEquals",
+                },
+                value = "0"
+            }, //playerBoostGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "playerBoostLesser",
+                },
+                value = "0"
+            }, //playerBoostLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "playerBoostGreater",
+                },
+                value = "0"
+            }, //playerBoostGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "levelRankEquals",
+                },
+                value = "0"
+            }, //levelRankEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "levelRankLesserEquals",
+                },
+                value = "0"
+            }, //levelRankLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "levelRankGreaterEquals",
+                },
+                value = "0"
+            }, //levelRankGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "levelRankLesser",
+                },
+                value = "0"
+            }, //levelRankLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "levelRankGreater",
+                },
+                value = "0"
+            }, //levelRankGreater
         };
     }
 }
