@@ -420,6 +420,16 @@ namespace ObjectModifiers
                 constant = true,
                 commands = new List<string>
                 {
+                    "loadLevelID"
+                },
+                value = "0"
+            }, //loadLevelID
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
                     "loadLevelInternal"
                 },
                 value = "level name"
