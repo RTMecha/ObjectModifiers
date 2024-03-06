@@ -27,6 +27,7 @@ using ObjectModifiers.Functions;
 
 using DG.Tweening;
 using Ease = RTFunctions.Functions.Animation.Ease;
+using UnityEngine.Events;
 
 namespace ObjectModifiers.Modifiers
 {
@@ -1099,43 +1100,107 @@ namespace ObjectModifiers.Modifiers
                         {
                             if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                             {
-                                string str = RTFile.BasePath;
-                                if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                if (ModCompatibility.sharedFunctions.ContainsKey("ShowWarningPopup"))
                                 {
-                                    ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
-                                    {
-                                        EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
-                                    }));
-                                }
+                                    ((Action<string, UnityAction, UnityAction, string, string>)ModCompatibility.sharedFunctions["ShowWarningPopup"])
+                                        .Invoke($"You are about to enter the level {modifier.value}, are you sure you want to continue? Any unsaved progress will be lost!", delegate ()
+                                        {
+                                            string str = RTFile.BasePath;
+                                            if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                            {
+                                                ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
+                                                {
+                                                    EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
+                                                }));
+                                            }
 
-                                EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel(modifier.value));
+                                            EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel(modifier.value));
+                                        }, delegate ()
+                                        {
+                                            EditorManager.inst.HideDialog("Warning Popup");
+                                        }, "Yes", "No");
+                                }
                             }
                         }
                         else if (!EditorManager.inst)
                         {
-                            LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.lsb");
+                            if (RTFile.FileExists($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.lsb"))
+                                LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.lsb");
+                            if (RTFile.FileExists($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.vgd"))
+                                LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{modifier.value}/level.vgd");
+                        }
+                        break;
+                    }
+                case "loadLevelID":
+                    {
+                        if (modifier.value == "0" || modifier.value == "-1")
+                            break;
+
+                        if (EditorManager.inst && EditorManager.inst.isEditing && EditorManager.inst.loadedLevels.Has(x => x.metadata is MetaData metaData && metaData.ID == modifier.value))
+                        {
+                            if (ObjectModifiersPlugin.EditorLoadLevel.Value)
+                            {
+                                var path = System.IO.Path.GetFileName(EditorManager.inst.loadedLevels.Find(x => x.metadata is MetaData metaData && metaData.ID == modifier.value).folder);
+
+                                if (ModCompatibility.sharedFunctions.ContainsKey("ShowWarningPopup"))
+                                {
+                                    ((Action<string, UnityAction, UnityAction, string, string>)ModCompatibility.sharedFunctions["ShowWarningPopup"])
+                                        .Invoke($"You are about to enter the level {path}, are you sure you want to continue? Any unsaved progress will be lost!", delegate ()
+                                        {
+                                            string str = RTFile.BasePath;
+                                            if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                            {
+                                                ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
+                                                {
+                                                    EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
+                                                }));
+                                            }
+
+                                            EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel(path));
+                                        }, delegate ()
+                                        {
+                                            EditorManager.inst.HideDialog("Warning Popup");
+                                        }, "Yes", "No");
+                                }
+                            }
+                        }
+                        else if (!EditorManager.inst && LevelManager.Levels.Has(x => x.id == modifier.value))
+                        {
+                            var level = LevelManager.Levels.Find(x => x.id == modifier.value);
+
+                            ObjectModifiersPlugin.inst.StartCoroutine(LevelManager.Play(level));
                         }
                         break;
                     }
                 case "loadLevelInternal":
                     {
-                        if (EditorManager.inst && EditorManager.inst.isEditing)
+                        if (EditorManager.inst && EditorManager.inst.isEditing && RTFile.FileExists($"{RTFile.BasePath}{EditorManager.inst.currentLoadedLevel}/{modifier.value}/level.lsb"))
                         {
                             if (ObjectModifiersPlugin.EditorLoadLevel.Value)
                             {
-                                string str = RTFile.BasePath;
-                                if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                if (ModCompatibility.sharedFunctions.ContainsKey("ShowWarningPopup"))
                                 {
-                                    ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
-                                    {
-                                        EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
-                                    }));
-                                }
+                                    ((Action<string, UnityAction, UnityAction, string, string>)ModCompatibility.sharedFunctions["ShowWarningPopup"])
+                                        .Invoke($"You are about to enter the level {EditorManager.inst.currentLoadedLevel}/{modifier.value}, are you sure you want to continue? Any unsaved progress will be lost!", delegate ()
+                                        {
+                                            string str = RTFile.BasePath;
+                                            if (ObjectModifiersPlugin.EditorSavesBeforeLoad.Value)
+                                            {
+                                                ObjectModifiersPlugin.inst.StartCoroutine(ProjectData.Writer.SaveData(str + "level-modifier-backup.lsb", GameData.Current, delegate ()
+                                                {
+                                                    EditorManager.inst.DisplayNotification($"Saved backup to {System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(str))}", 2f, EditorManager.NotificationType.Success);
+                                                }));
+                                            }
 
-                                EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel($"{EditorManager.inst.currentLoadedLevel}/{modifier.value}"));
+                                            EditorManager.inst.StartCoroutine(EditorManager.inst.LoadLevel($"{EditorManager.inst.currentLoadedLevel}/{modifier.value}"));
+                                        }, delegate ()
+                                        {
+                                            EditorManager.inst.HideDialog("Warning Popup");
+                                        }, "Yes", "No");
+                                }
                             }
                         }
-                        else if (!EditorManager.inst)
+                        else if (!EditorManager.inst && RTFile.FileExists($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{System.IO.Path.GetFileName(GameManager.inst.basePath.Substring(0, GameManager.inst.basePath.Length - 1))}/{modifier.value}/level.lsb"))
                         {
                             LevelManager.Load($"{RTFile.ApplicationDirectory}{LevelManager.ListSlash}{System.IO.Path.GetFileName(GameManager.inst.basePath.Substring(0, GameManager.inst.basePath.Length - 1))}/{modifier.value}/level.lsb");
                         }
