@@ -97,9 +97,14 @@ namespace ObjectModifiers
                     ((BeatmapObject)b).integerVariable = 0;
                 }
 
+            var order = GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0).ToList();
+
             if (DataManager.inst && DataManager.inst.gameData is GameData && DataManager.inst.gameData.beatmapObjects != null && RTHelpers.Playing)
-                foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
+                for (int i = 0; i < order.Count; i++)
+                //foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
                 {
+                    var beatmapObject = order[i];
+
                     beatmapObject.modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
                     {
                         modifier.Action = ModifierMethods.Action;
@@ -441,10 +446,46 @@ namespace ObjectModifiers
                 commands = new List<string>
                 {
                     "blur",
+                    "False",
                     "False"
                 },
                 value = "0.5"
             }, //blur
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "blurOther",
+                    "Object Group",
+                    "False",
+                },
+                value = "0.5"
+            }, //blurOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "blurVariable",
+                    "False"
+                },
+                value = "0.5"
+            }, //blurVariable
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "blurVariableOther",
+                    "Object Group",
+                    "False"
+                },
+                value = "0.5"
+            }, //blurVariableOther
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
