@@ -1274,11 +1274,69 @@ namespace ObjectModifiers.Modifiers
                             float.TryParse(modifier.value, out float num))
                         {
                             var rend = levelObject.visualObject.Renderer;
-                            rend.material = ObjectModifiersPlugin.blur;
+                            if (modifier.Result == null)
+                            {
+                                modifier.Result = "";
+                                rend.material = ObjectModifiersPlugin.blur;
+                            }
                             if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool r) && r)
                                 rend.material.SetFloat("_blurSizeXY", -(modifier.modifierObject.Interpolate(3, 1) - 1f) * num);
                             else
                                 rend.material.SetFloat("_blurSizeXY", num);
+                        }
+                        break;
+                    }
+                case "blurOther":
+                    {
+                        if (modifier.modifierObject &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
+                            Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                            levelObject.visualObject.Renderer &&
+                            float.TryParse(modifier.value, out float num) && GameData.Current.BeatmapObjects.Has(x => x.tags.Contains(modifier.commands[1])))
+                        {
+                            var rend = levelObject.visualObject.Renderer;
+                            if (modifier.Result == null)
+                            {
+                                modifier.Result = "";
+                                rend.material = ObjectModifiersPlugin.blur;
+                            }
+                            rend.material.SetFloat("_blurSizeXY", -(GameData.Current.BeatmapObjects.Find(x => x.tags.Contains(modifier.commands[1])).Interpolate(3, 1) - 1f) * num);
+                        }
+                        break;
+                    }
+                case "blurVariable":
+                    {
+                        if (modifier.modifierObject &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
+                            Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                            levelObject.visualObject.Renderer &&
+                            float.TryParse(modifier.value, out float num))
+                        {
+                            var rend = levelObject.visualObject.Renderer;
+                            if (modifier.Result == null)
+                            {
+                                modifier.Result = "";
+                                rend.material = ObjectModifiersPlugin.blur;
+                            }
+                            rend.material.SetFloat("_blurSizeXY", modifier.modifierObject.integerVariable * num);
+                        }
+                        break;
+                    }
+                case "blurVariableOther":
+                    {
+                        if (modifier.modifierObject &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
+                            Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                            levelObject.visualObject.Renderer &&
+                            float.TryParse(modifier.value, out float num) && GameData.Current.BeatmapObjects.Has(x => x.tags.Contains(modifier.commands[1])))
+                        {
+                            var rend = levelObject.visualObject.Renderer;
+                            if (modifier.Result == null)
+                            {
+                                modifier.Result = "";
+                                rend.material = ObjectModifiersPlugin.blur;
+                            }
+                            rend.material.SetFloat("_blurSizeXY", GameData.Current.BeatmapObjects.Find(x => x.tags.Contains(modifier.commands[1])).integerVariable * num);
                         }
                         break;
                     }
@@ -3846,10 +3904,53 @@ namespace ObjectModifiers.Modifiers
             }
         }
 
+        public static IEnumerator SetMaterial(VisualObject visualObject)
+        {
+            visualObject.Renderer.material = ObjectManager.inst.norm;
+            yield return null;
+            ((SolidObject)visualObject).material = visualObject.Renderer.material;
+        }
+
         public static void Inactive(BeatmapObject.Modifier modifier)
         {
             switch (modifier.commands[0])
             {
+                case "blur":
+                case "blurOther":
+                case "blurVariableOther":
+                    {
+                        if (modifier.Result != null && modifier.modifierObject &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
+                            Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                            levelObject.visualObject.Renderer && levelObject.visualObject is SolidObject &&
+                            modifier.commands.Count > 2 && bool.TryParse(modifier.commands[2], out bool setNormal) && setNormal)
+                        {
+                            modifier.Result = null;
+
+                            levelObject.visualObject.Renderer.material = ObjectManager.inst.norm;
+
+                            ((SolidObject)levelObject.visualObject).material = levelObject.visualObject.Renderer.material;
+                        }
+
+                        break;
+                    }
+                case "blurVariable":
+                    {
+                        if (modifier.Result != null && modifier.modifierObject &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
+                            Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                            levelObject.visualObject.Renderer && levelObject.visualObject is SolidObject &&
+                            modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool setNormal) && setNormal)
+                        {
+                            modifier.Result = null;
+
+                            levelObject.visualObject.Renderer.material = ObjectManager.inst.norm;
+
+                            ((SolidObject)levelObject.visualObject).material = levelObject.visualObject.Renderer.material;
+                        }
+
+                        break;
+                    }
                 case "spawnPrefab":
                     {
                         if (!modifier.constant && modifier.Result != null && modifier.Result is PrefabObject)
