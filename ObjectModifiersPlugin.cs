@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.5.0")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.5.1")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -816,6 +816,24 @@ namespace ObjectModifiers
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "animateVariableOther",
+                    "0", // From Type
+                    "0", // From Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "99999", // Loop
+                },
+                value = "Object Group"
+            }, //animateVariableOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = false,
                 commands = new List<string>
                 {
@@ -1401,6 +1419,7 @@ namespace ObjectModifiers
                     "0", // Offset
                     "-99999", // Min
                     "99999", // Max
+                    "99999", // Loop
                 },
                 value = "Object Group"
             }, //copyAxis
@@ -2137,6 +2156,7 @@ namespace ObjectModifiers
                     "99999", // Max
                     "1", // Comparison
                     "False", // Use Visual
+                    "99999", // Loop
                 },
                 value = "Object Group"
             }, //axisEquals
@@ -2156,6 +2176,7 @@ namespace ObjectModifiers
                     "99999", // Max
                     "1", // Comparison
                     "False", // Use Visual
+                    "99999", // Loop
                 },
                 value = "Object Group"
             }, //axisLesserEquals
@@ -2175,6 +2196,7 @@ namespace ObjectModifiers
                     "99999", // Max
                     "1", // Comparison
                     "False", // Use Visual
+                    "99999", // Loop
                 },
                 value = "Object Group"
             }, //axisGreaterEquals
@@ -2194,6 +2216,7 @@ namespace ObjectModifiers
                     "99999", // Max
                     "1", // Comparison
                     "False", // Use Visual
+                    "99999", // Loop
                 },
                 value = "Object Group"
             }, //axisLesser
@@ -2213,6 +2236,7 @@ namespace ObjectModifiers
                     "99999", // Max
                     "1", // Comparison
                     "False", // Use Visual
+                    "99999", // Loop
                 },
                 value = "Object Group"
             }, //axisGreater
