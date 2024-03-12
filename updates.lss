@@ -1,3 +1,11 @@
+1.5.0 > [Mar 12, 2024]
+- Added some new values to the blur modifier, as well as added more blur modifiers.
+- Added Ignore Lifespan, so you don't need the object to be alive for the modifiers to activate.
+- Added playerBoostCount trigger modifiers.
+- Added loadLevelID modifier.
+- LoadLevel modifiers should now ask if you want to move to a different level.
+- Added levelRank trigger modifiers.
+- Added Use Self toggle to enable/disableObjectTree modifiers.
 1.4.6 > [Feb 17, 2024]
 - Added Offset, Min and Max to copyAxis.
 - Added axisEquals triggers and copyPlayerAxis modifiers.
