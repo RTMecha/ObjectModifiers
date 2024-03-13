@@ -1,3 +1,5 @@
+1.5.2 > [Mar 14, 2024]
+- Added isPractice trigger.
 1.5.1 > [Mar 12, 2024]
 - Added loop value to axis modifiers.
 - Added animateVariableOther modifier.
