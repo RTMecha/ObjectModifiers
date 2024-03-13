@@ -43,23 +43,23 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerHealthEquals":
                     {
-                        return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players.All(x => x.health == num);
+                        return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players[0].health == num;
                     }
                 case "playerHealthLesserEquals":
                     {
-                        return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players.All(x => x.health <= num);
+                        return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players[0].health <= num;
                     }
                 case "playerHealthGreaterEquals":
                     {
-                            return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players.All(x => x.health >= num);
+                            return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players[0].health >= num;
                     }
                 case "playerHealthLesser":
                     {
-                          return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players.All(x => x.health < num);
+                          return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players[0].health < num;
                     }
                 case "playerHealthGreater":
                     {
-                            return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players.All(x => x.health > num);
+                            return InputDataManager.inst.players.Count > 0 && int.TryParse(modifier.value, out int num) && InputDataManager.inst.players[0].health > num;
                     }
                 case "playerMoving":
                     {
@@ -499,19 +499,23 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "inZenMode":
                     {
-                        return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 0 && (EditorManager.inst == null || RTFunctions.Functions.Components.Player.RTPlayer.ZenModeInEditor);
+                        return PlayerManager.IsZenMode && (EditorManager.inst == null || RTFunctions.Functions.Components.Player.RTPlayer.ZenModeInEditor);
                     }
                 case "inNormal":
                     {
-                        return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 1;
+                        return PlayerManager.IsNormal;
                     }
                 case "in1Life":
                     {
-                        return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 2;
+                        return PlayerManager.Is1Life;
                     }
                 case "inNoHit":
                     {
-                        return DataManager.inst.GetSettingInt("ArcadeDifficulty", 0) == 3;
+                        return PlayerManager.IsNoHit;
+                    }
+                case "inPractice":
+                    {
+                        return PlayerManager.IsPractice;
                     }
                 case "inEditor":
                     {
@@ -2798,8 +2802,14 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "copyColor":
                     {
-                        if (DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject) &&
-                            Updater.TryGetObject(beatmapObject, out LevelObject otherLevelObject) &&
+                        Predicate<DataManager.GameData.BeatmapObject> predicate = x => (x as BeatmapObject).tags.Contains(modifier.value);
+
+                        if (!DataManager.inst.gameData.beatmapObjects.Has(predicate))
+                            break;
+
+                        var beatmapObject = DataManager.inst.gameData.beatmapObjects.Find(predicate);
+
+                        if (Updater.TryGetObject(beatmapObject, out LevelObject otherLevelObject) &&
                             otherLevelObject.visualObject.Renderer &&
                             Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
                             levelObject.visualObject.Renderer)
