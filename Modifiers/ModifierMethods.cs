@@ -282,16 +282,19 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (RTFile.FileExists(RTFile.ApplicationDirectory + "profile/" + modifier.commands[1] + ".ses"))
                         {
-                            string json = FileManager.inst.LoadJSONFile("profile/" + modifier.commands[1] + ".ses");
+                            string json = RTFile.ReadFromFile(RTFile.ApplicationDirectory + "profile/" + modifier.commands[1] + ".ses");
 
-                            if (!string.IsNullOrEmpty(json))
+                            if (modifier.commands.Count < 5)
+                                modifier.commands.Add("0");
+
+                            if (!string.IsNullOrEmpty(json) && int.TryParse(modifier.commands[4], out int type))
                             {
                                 var jn = JSON.Parse(json);
 
                                 return
-                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]) &&
-                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]], out float eq) &&
-                                    float.TryParse(modifier.value, out float num) && eq == num;
+                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]["float"]) && (type == 0 &&
+                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]]["float"], out float eq) &&
+                                    float.TryParse(modifier.value, out float num) && eq == num || type == 1 && jn[modifier.commands[2]][modifier.commands[3]]["string"] == modifier.value);
                             }
                         }
                         break;
@@ -307,8 +310,8 @@ namespace ObjectModifiers.Modifiers
                                 var jn = JSON.Parse(json);
 
                                 return
-                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]) &&
-                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]], out float eq) &&
+                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]["float"]) &&
+                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]]["float"], out float eq) &&
                                     float.TryParse(modifier.value, out float num) && eq <= num;
                             }
                         }
@@ -325,8 +328,8 @@ namespace ObjectModifiers.Modifiers
                                 var jn = JSON.Parse(json);
 
                                 return
-                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]) &&
-                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]], out float eq) &&
+                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]["float"]) &&
+                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]]["float"], out float eq) &&
                                     float.TryParse(modifier.value, out float num) && eq >= num;
                             }
                         }
@@ -343,8 +346,8 @@ namespace ObjectModifiers.Modifiers
                                 var jn = JSON.Parse(json);
 
                                 return
-                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]) &&
-                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]], out float eq) &&
+                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]["float"]) &&
+                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]]["float"], out float eq) &&
                                     float.TryParse(modifier.value, out float num) && eq < num;
                             }
                         }
@@ -361,8 +364,8 @@ namespace ObjectModifiers.Modifiers
                                 var jn = JSON.Parse(json);
 
                                 return
-                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]) &&
-                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]], out float eq) &&
+                                    !string.IsNullOrEmpty(jn[modifier.commands[2]][modifier.commands[3]]["float"]) &&
+                                    float.TryParse(jn[modifier.commands[2]][modifier.commands[3]]["float"], out float eq) &&
                                     float.TryParse(modifier.value, out float num) && eq > num;
                             }
                         }
@@ -2179,34 +2182,27 @@ namespace ObjectModifiers.Modifiers
                         if (modifier.value == "0")
                             modifier.value = "False";
 
-                        if (Parser.TryParse(modifier.value, true))
+                        if (modifier.Result == null)
                         {
-                            foreach (var cc in modifier.modifierObject.GetChildChain())
-                            {
-                                for (int o = 0; o < cc.Count; o++)
-                                {
-                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
-                                    {
-                                        levelObject.transformChain[0].gameObject.SetActive(true);
-                                    }
-                                }
-                            }
+                            var beatmapObject = Parser.TryParse(modifier.value, true) ? modifier.modifierObject : modifier.modifierObject.GetParentChain().Last();
 
-                            break;
+                            modifier.Result = beatmapObject.GetChildChain();
                         }
 
-                        var parentChain = modifier.modifierObject.GetParentChain();
+                        var list = (List<List<DataManager.GameData.BeatmapObject>>)modifier.Result;
 
-                        foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        for (int i = 0; i < list.Count; i++)
                         {
-                            for (int o = 0; o < cc.Count; o++)
+                            var childList = list[i];
+                            for (int j = 0; j < childList.Count; j++)
                             {
-                                if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                if (childList[j] != null && Updater.TryGetObject(childList[j], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
                                 {
                                     levelObject.transformChain[0].gameObject.SetActive(true);
                                 }
                             }
                         }
+
                         break;
                     }
                 case "disableObject":
@@ -2222,50 +2218,87 @@ namespace ObjectModifiers.Modifiers
                         if (modifier.value == "0")
                             modifier.value = "False";
 
-                        if (Parser.TryParse(modifier.value, true))
+                        if (modifier.Result == null)
                         {
-                            foreach (var cc in modifier.modifierObject.GetChildChain())
-                            {
-                                for (int o = 0; o < cc.Count; o++)
-                                {
-                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
-                                    {
-                                        levelObject.transformChain[0].gameObject.SetActive(false);
-                                    }
-                                }
-                            }
+                            var beatmapObject = Parser.TryParse(modifier.value, true) ? modifier.modifierObject : modifier.modifierObject.GetParentChain().Last();
 
-                            break;
+                            modifier.Result = beatmapObject.GetChildChain();
                         }
 
-                        var parentChain = modifier.modifierObject.GetParentChain();
+                        var list = (List<List<DataManager.GameData.BeatmapObject>>)modifier.Result;
 
-                        foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        for (int i = 0; i < list.Count; i++)
                         {
-                            for (int o = 0; o < cc.Count; o++)
+                            var childList = list[i];
+                            for (int j = 0; j < childList.Count; j++)
                             {
-                                if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                                if (childList[j] != null && Updater.TryGetObject(childList[j], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
                                 {
                                     levelObject.transformChain[0].gameObject.SetActive(false);
                                 }
                             }
                         }
+
+                        //if (modifier.value == "0")
+                        //    modifier.value = "False";
+
+                        //if (Parser.TryParse(modifier.value, true))
+                        //{
+                        //    foreach (var cc in modifier.modifierObject.GetChildChain())
+                        //    {
+                        //        for (int o = 0; o < cc.Count; o++)
+                        //        {
+                        //            if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                        //            {
+                        //                levelObject.transformChain[0].gameObject.SetActive(false);
+                        //            }
+                        //        }
+                        //    }
+
+                        //    break;
+                        //}
+
+                        //var parentChain = modifier.modifierObject.GetParentChain();
+
+                        //foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        //{
+                        //    for (int o = 0; o < cc.Count; o++)
+                        //    {
+                        //        if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                        //        {
+                        //            levelObject.transformChain[0].gameObject.SetActive(false);
+                        //        }
+                        //    }
+                        //}
                         break;
                     }
-                case "save":
+                case "saveFloat":
                     {
                         if ((EditorManager.inst == null || !EditorManager.inst.isEditing) && float.TryParse(modifier.value, out float num))
-                        {
                             ObjectModifiersPlugin.SaveProgress(modifier.commands[1], modifier.commands[2], modifier.commands[3], num);
-                        }
+
+                        break;
+                    }
+                case "saveString":
+                    {
+                        if (EditorManager.inst == null || !EditorManager.inst.isEditing)
+                            ObjectModifiersPlugin.SaveProgress(modifier.commands[1], modifier.commands[2], modifier.commands[3], modifier.value);
+
+                        break;
+                    }
+                case "saveText":
+                    {
+                        if ((EditorManager.inst == null || !EditorManager.inst.isEditing) && modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject)
+                            && levelObject.visualObject is TextObject textObject)
+                            ObjectModifiersPlugin.SaveProgress(modifier.commands[1], modifier.commands[2], modifier.commands[3], textObject.Text);
+
                         break;
                     }
                 case "saveVariable":
                     {
                         if (EditorManager.inst == null || !EditorManager.inst.isEditing)
-                        {
                             ObjectModifiersPlugin.SaveProgress(modifier.commands[1], modifier.commands[2], modifier.commands[3], modifier.modifierObject.integerVariable);
-                        }
+
                         break;
                     }
                 case "reactivePos":
@@ -4085,41 +4118,66 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "enableObjectTree":
                     {
-                        if (!modifier.hasChanged)
+                        //if (!modifier.hasChanged)
+                        //{
+                        //    modifier.hasChanged = true;
+                        //    if (modifier.value == "0")
+                        //        modifier.value = "False";
+
+                        //    if (Parser.TryParse(modifier.value, true))
+                        //    {
+                        //        foreach (var cc in modifier.modifierObject.GetChildChain())
+                        //        {
+                        //            for (int o = 0; o < cc.Count; o++)
+                        //            {
+                        //                if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                        //                {
+                        //                    levelObject.transformChain[0].gameObject.SetActive(false);
+                        //                }
+                        //            }
+                        //        }
+
+                        //        break;
+                        //    }
+
+                        //    var parentChain = modifier.modifierObject.GetParentChain();
+
+                        //    foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
+                        //    {
+                        //        for (int o = 0; o < cc.Count; o++)
+                        //        {
+                        //            if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
+                        //            {
+                        //                levelObject.transformChain[0].gameObject.SetActive(false);
+                        //            }
+                        //        }
+                        //    }
+                        //}
+
+                        if (modifier.value == "0")
+                            modifier.value = "False";
+
+                        if (modifier.Result == null)
                         {
-                            modifier.hasChanged = true;
-                            if (modifier.value == "0")
-                                modifier.value = "False";
+                            var beatmapObject = Parser.TryParse(modifier.value, true) ? modifier.modifierObject : modifier.modifierObject.GetParentChain().Last();
 
-                            if (Parser.TryParse(modifier.value, true))
+                            modifier.Result = beatmapObject.GetChildChain();
+                        }
+
+                        var list = (List<List<DataManager.GameData.BeatmapObject>>)modifier.Result;
+
+                        for (int i = 0; i < list.Count; i++)
+                        {
+                            var childList = list[i];
+                            for (int j = 0; j < childList.Count; j++)
                             {
-                                foreach (var cc in modifier.modifierObject.GetChildChain())
+                                if (childList[j] != null && Updater.TryGetObject(childList[j], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
                                 {
-                                    for (int o = 0; o < cc.Count; o++)
-                                    {
-                                        if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
-                                        {
-                                            levelObject.transformChain[0].gameObject.SetActive(false);
-                                        }
-                                    }
-                                }
-
-                                break;
-                            }
-
-                            var parentChain = modifier.modifierObject.GetParentChain();
-
-                            foreach (var cc in parentChain[parentChain.Count - 1].GetChildChain())
-                            {
-                                for (int o = 0; o < cc.Count; o++)
-                                {
-                                    if (cc[o] != null && Updater.TryGetObject(cc[o], out LevelObject levelObject) && levelObject.transformChain != null && levelObject.transformChain.Count > 0 && levelObject.transformChain[0] != null)
-                                    {
-                                        levelObject.transformChain[0].gameObject.SetActive(false);
-                                    }
+                                    levelObject.transformChain[0].gameObject.SetActive(false);
                                 }
                             }
                         }
+
                         break;
                     }
                 case "disableObject":

@@ -318,12 +318,30 @@ namespace ObjectModifiers
 
         public static void SaveProgress(string path, string chapter, string level, float data)
         {
-            if (!RTFile.DirectoryExists(Path.GetDirectoryName(path)))
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
+            if (path.Contains("\\") || path.Contains("/") || path.Contains(".."))
+                return;
+
+            if (!RTFile.DirectoryExists($"{RTFile.ApplicationDirectory}profile"))
+                Directory.CreateDirectory($"{RTFile.ApplicationDirectory}profile");
 
             var jn = JSON.Parse(RTFile.FileExists($"{RTFile.ApplicationDirectory}profile/{path}.ses") ? RTFile.ReadFromFile($"{RTFile.ApplicationDirectory}profile/{path}.ses") : "{}");
 
-            jn[chapter][level] = data.ToString();
+            jn[chapter][level]["float"] = data.ToString();
+
+            RTFile.WriteToFile($"{RTFile.ApplicationDirectory}profile/{path}.ses", jn.ToString(3));
+        }
+        
+        public static void SaveProgress(string path, string chapter, string level, string data)
+        {
+            if (path.Contains("\\") || path.Contains("/") || path.Contains(".."))
+                return;
+
+            if (!RTFile.DirectoryExists($"{RTFile.ApplicationDirectory}profile"))
+                Directory.CreateDirectory($"{RTFile.ApplicationDirectory}profile");
+
+            var jn = JSON.Parse(RTFile.FileExists($"{RTFile.ApplicationDirectory}profile/{path}.ses") ? RTFile.ReadFromFile($"{RTFile.ApplicationDirectory}profile/{path}.ses") : "{}");
+
+            jn[chapter][level]["string"] = data.ToString();
 
             RTFile.WriteToFile($"{RTFile.ApplicationDirectory}profile/{path}.ses", jn.ToString(3));
         }
@@ -1790,7 +1808,8 @@ namespace ObjectModifiers
                     "loadEquals",
                     "save_file",
                     "chapter",
-                    "data"
+                    "data",
+                    "0", // 0 is number, 1 is text
                 },
                 value = "0"
             }, //loadEquals
