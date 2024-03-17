@@ -936,20 +936,33 @@ namespace ObjectModifiers
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
-                constant = true,
+                constant = false,
                 commands = new List<string>
                 {
-                    "save",
+                    "saveFloat",
                     "save_file",
                     "chapter",
                     "data"
                 },
                 value = "0"
-            }, //save
+            }, //saveFloat
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
-                constant = true,
+                constant = false,
+                commands = new List<string>
+                {
+                    "saveString",
+                    "save_file",
+                    "chapter",
+                    "data"
+                },
+                value = "Text"
+            }, //saveString
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
                 commands = new List<string>
                 {
                     "saveVariable",
@@ -959,6 +972,19 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //saveVariable
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "saveText",
+                    "save_file",
+                    "chapter",
+                    "data"
+                },
+                value = "0"
+            }, //saveText
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
