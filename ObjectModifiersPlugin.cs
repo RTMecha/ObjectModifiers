@@ -1527,7 +1527,7 @@ namespace ObjectModifiers
                     "gravity",
                     "0", // Gravity X
                     "-1", // Gravity Y
-                    "0.1", // Gravity Time
+                    //"0.1", // Gravity Time
                 },
                 value = "0"
             }, //gravity
@@ -1540,10 +1540,20 @@ namespace ObjectModifiers
                     "gravityOther",
                     "0", // Gravity X
                     "-1", // Gravity Y
-                    "0.1", // Gravity Time
+                    //"0.1", // Gravity Time
                 },
                 value = "Object Group"
             }, //gravityOther
+            //new BeatmapObject.Modifier
+            //{
+            //    type = BeatmapObject.Modifier.Type.Action,
+            //    constant = true,
+            //    commands = new List<string>
+            //    {
+            //        "test",
+            //    },
+            //    value = "0"
+            //}, //test
             //new BeatmapObject.Modifier
             //{
             //    type = BeatmapObject.Modifier.Type.Action,

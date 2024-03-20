@@ -3324,40 +3324,92 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "gravity":
                     {
-                        if (modifier.Result == null)
-                            modifier.Result = 0f;
+                        //if (modifier.Result == null)
+                        //    modifier.Result = 0f;
 
-                        if (modifier.commands.Count < 4)
-                            modifier.commands.Add("0.1");
+                        //if (modifier.commands.Count < 4)
+                        //    modifier.commands.Add("0.1");
 
-                        if (float.TryParse(modifier.commands[1], out float gravityX) && float.TryParse(modifier.commands[2], out float gravityY))
+                        if (float.TryParse(modifier.commands[1], out float gravityX) && float.TryParse(modifier.commands[2], out float gravityY)
+                            && modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject))
                         {
-                            modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
+                            //modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
 
-                            modifier.modifierObject.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
-                            modifier.modifierObject.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+                            //modifier.modifierObject.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
+                            //modifier.modifierObject.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+
+                            var list = levelObject.parentObjects;
+                            float rotation = 0f;
+
+                            for (int i = 1; i < list.Count; i++)
+                                rotation += list[i].Transform.localRotation.eulerAngles.z;
+
+                            if (modifier.Result == null)
+                            {
+                                modifier.Result = new Vector2(gravityX / 1000f, gravityY / 1000f);
+                            }
+                            else
+                            {
+                                var f = (Vector2)modifier.Result;
+
+                                f *= new Vector2(gravityX, gravityY);
+
+                                modifier.Result = f;
+                            }
+
+                            modifier.modifierObject.positionOffset = RTMath.Rotate((Vector2)modifier.Result, (list[0].Transform.localRotation.eulerAngles.z - rotation));
                         }
 
                         break;
                     }
                 case "gravityOther":
                     {
-                        if (modifier.Result == null)
-                            modifier.Result = 0f;
+                        //if (modifier.Result == null)
+                        //    modifier.Result = 0f;
 
-                        if (modifier.commands.Count < 4)
-                            modifier.commands.Add("0.1");
+                        //if (modifier.commands.Count < 4)
+                        //    modifier.commands.Add("0.1");
 
-                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
+                        var beatmapObjects = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.value));
 
-                        if (list.Count() > 0 && float.TryParse(modifier.commands[1], out float gravityX) && float.TryParse(modifier.commands[2], out float gravityY))
+                        if (beatmapObjects.Count() > 0 && float.TryParse(modifier.commands[1], out float gravityX) && float.TryParse(modifier.commands[2], out float gravityY))
                         {
-                            modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
+                            //modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
 
-                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            foreach (var bm in beatmapObjects.Select(x => x as BeatmapObject))
                             {
-                                bm.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
-                                bm.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+                                //bm.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
+                                //bm.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+
+                                if (Updater.TryGetObject(bm, out LevelObject levelObject))
+                                {
+                                    //modifier.Result = (float)modifier.Result + Parser.TryParse(modifier.commands[3], 0.1f);
+
+                                    //modifier.modifierObject.positionOffset.x += RTMath.Lerp(0f, 0.001f * gravityX, (float)modifier.Result);
+                                    //modifier.modifierObject.positionOffset.y += RTMath.Lerp(0f, 0.001f * gravityY, (float)modifier.Result);
+
+                                    var list = levelObject.parentObjects;
+                                    float rotation = 0f;
+
+                                    for (int i = 1; i < list.Count; i++)
+                                        rotation += list[i].Transform.localRotation.eulerAngles.z;
+
+                                    if (modifier.Result == null)
+                                    {
+                                        modifier.Result = new Vector2(gravityX / 1000f, gravityY / 1000f);
+                                    }
+                                    else
+                                    {
+                                        var f = (Vector2)modifier.Result;
+
+                                        f *= new Vector2(gravityX, gravityY);
+
+                                        modifier.Result = f;
+                                    }
+
+                                    bm.positionOffset = RTMath.Rotate((Vector2)modifier.Result, (list[0].Transform.localRotation.eulerAngles.z - rotation));
+                                }
+
                             }
                         }
 
@@ -3985,6 +4037,34 @@ namespace ObjectModifiers.Modifiers
                                     modifier.modifierObject.rotationOffset.z = Mathf.Clamp(sequence * multiply - offset, min, max);
                                 }
                             }
+                        }
+
+                        break;
+                    }
+                case "test":
+                    {
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject))
+                        {
+                            var list = levelObject.parentObjects;
+                            float rotation = 0f;
+
+                            for (int i = 1; i < list.Count; i++)
+                                rotation += list[i].Transform.localRotation.eulerAngles.z;
+
+                            if (modifier.Result == null)
+                            {
+                                modifier.Result = -0.001f;
+                            }
+                            else
+                            {
+                                var f = (float)modifier.Result;
+
+                                f *= 1.1f;
+
+                                modifier.Result = f;
+                            }
+
+                            modifier.modifierObject.positionOffset = RTMath.Rotate(new Vector3(0f, (float)modifier.Result, 0f), (list[0].Transform.localRotation.eulerAngles.z - rotation));
                         }
 
                         break;
