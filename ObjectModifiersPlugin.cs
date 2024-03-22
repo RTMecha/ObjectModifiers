@@ -38,21 +38,6 @@ namespace ObjectModifiers
         public static ObjectModifiersPlugin inst;
         public static string className = "[<color=#F5501B>ObjectModifiers</color>]\n";
 
-        #region Variables
-
-        public static Material blur;
-        public static Material GetBlur()
-        {
-            var assetBundle = AssetBundle.LoadFromFile(RTFile.ApplicationDirectory + "BepInEx/plugins/Assets/objectmaterials.asset");
-            var assetToLoad = assetBundle.LoadAsset<Material>("blur.mat");
-            var blurMat = Instantiate(assetToLoad);
-            assetBundle.Unload(false);
-
-            return blurMat;
-        }
-
-        #endregion
-
         #region ConfigEntries
         public static ConfigEntry<bool> EditorLoadLevel { get; set; }
         public static ConfigEntry<bool> EditorSavesBeforeLoad { get; set; }
@@ -70,8 +55,6 @@ namespace ObjectModifiers
             ResetVariables = Config.Bind("Editor", "Reset Variable", false, "Resets the variables of every object when not in preview mode.");
 
             harmony.PatchAll(typeof(ObjectModifiersPlugin));
-
-            blur = GetBlur();
 
             SetModifierTypes();
 

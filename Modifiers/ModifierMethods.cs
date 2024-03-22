@@ -1315,7 +1315,7 @@ namespace ObjectModifiers.Modifiers
                             if (modifier.Result == null)
                             {
                                 modifier.Result = "";
-                                rend.material = ObjectModifiersPlugin.blur;
+                                rend.material = RTFunctions.FunctionsPlugin.blur;
                             }
                             if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool r) && r)
                                 rend.material.SetFloat("_blurSizeXY", -(modifier.modifierObject.Interpolate(3, 1) - 1f) * num);
@@ -1336,7 +1336,7 @@ namespace ObjectModifiers.Modifiers
                             if (modifier.Result == null)
                             {
                                 modifier.Result = "";
-                                rend.material = ObjectModifiersPlugin.blur;
+                                rend.material = RTFunctions.FunctionsPlugin.blur;
                             }
                             rend.material.SetFloat("_blurSizeXY", -(GameData.Current.BeatmapObjects.Find(x => x.tags.Contains(modifier.commands[1])).Interpolate(3, 1) - 1f) * num);
                         }
@@ -1354,7 +1354,7 @@ namespace ObjectModifiers.Modifiers
                             if (modifier.Result == null)
                             {
                                 modifier.Result = "";
-                                rend.material = ObjectModifiersPlugin.blur;
+                                rend.material = RTFunctions.FunctionsPlugin.blur;
                             }
                             rend.material.SetFloat("_blurSizeXY", modifier.modifierObject.integerVariable * num);
                         }
@@ -1372,7 +1372,7 @@ namespace ObjectModifiers.Modifiers
                             if (modifier.Result == null)
                             {
                                 modifier.Result = "";
-                                rend.material = ObjectModifiersPlugin.blur;
+                                rend.material = RTFunctions.FunctionsPlugin.blur;
                             }
                             rend.material.SetFloat("_blurSizeXY", GameData.Current.BeatmapObjects.Find(x => x.tags.Contains(modifier.commands[1])).integerVariable * num);
                         }
