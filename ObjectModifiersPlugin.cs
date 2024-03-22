@@ -88,7 +88,7 @@ namespace ObjectModifiers
 
         [HarmonyPatch(typeof(GameManager), "Update")]
         [HarmonyPostfix]
-        static void UpdatePatch()
+        static void GameManagerUpdatePostfix()
         {
             if (EditorManager.inst && EditorManager.inst.isEditing && DataManager.inst && DataManager.inst.gameData != null && DataManager.inst.gameData.beatmapObjects != null
                 && DataManager.inst.gameData.beatmapObjects.Count > 0 && RTHelpers.Playing && ResetVariables.Value)
@@ -99,7 +99,7 @@ namespace ObjectModifiers
 
             var order = GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0).ToList();
 
-            if (DataManager.inst && DataManager.inst.gameData is GameData && DataManager.inst.gameData.beatmapObjects != null && RTHelpers.Playing)
+            if (DataManager.inst.gameData.beatmapObjects != null && RTHelpers.Playing)
                 for (int i = 0; i < order.Count; i++)
                 //foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
                 {
@@ -190,6 +190,79 @@ namespace ObjectModifiers
 
                 }
             }
+        }
+
+        [HarmonyPatch(typeof(BackgroundManager), "Update")]
+        [HarmonyPrefix]
+        static void BackgroundManagerUpdatePostfix(BackgroundManager __instance)
+        {
+            var list = GameData.Current.BackgroundObjects.Where(x => x.modifiers.Count > 0).ToList();
+
+            if (DataManager.inst.gameData.backgroundObjects != null && RTHelpers.Playing)
+                for (int i = 0; i < list.Count; i++)
+                {
+                    var backgroundObject = list[i];
+
+                    for (int j = 0; j < backgroundObject.modifiers.Count; j++)
+                    {
+                        var modifiers = backgroundObject.modifiers[j];
+
+                        modifiers.Where(x => x.Action == null || x.Trigger == null || x.Inactive == null).ToList().ForEach(delegate (BeatmapObject.Modifier modifier)
+                        {
+                            modifier.Action = ModifierMethods.BGAction;
+                            modifier.Trigger = ModifierMethods.BGTrigger;
+                            modifier.Inactive = ModifierMethods.BGInactive;
+                        });
+
+                        var actions = modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Action);
+                        var triggers = modifiers.Where(x => x.type == BeatmapObject.Modifier.Type.Trigger);
+
+                        if (triggers.Count() > 0)
+                        {
+                            if (triggers.All(x => !x.active && (x.Trigger(x) && !x.not || !x.Trigger(x) && x.not)))
+                            {
+                                foreach (var act in actions)
+                                {
+                                    if (!act.active)
+                                    {
+                                        if (!act.constant)
+                                            act.active = true;
+
+                                        act.Action?.Invoke(act);
+                                    }
+                                }
+
+                                foreach (var trig in triggers)
+                                {
+                                    if (!trig.constant)
+                                        trig.active = true;
+                                }
+                            }
+                            else
+                            {
+                                foreach (var act in actions)
+                                {
+                                    act.active = false;
+                                    act.Inactive?.Invoke(act);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (var act in actions)
+                            {
+                                if (!act.active)
+                                {
+                                    if (!act.constant)
+                                    {
+                                        act.active = true;
+                                    }
+                                    act.Action?.Invoke(act);
+                                }
+                            }
+                        }
+                    }
+                }
         }
 
         public static void DeleteKey(string id, AudioSource audioSource)
@@ -363,6 +436,13 @@ namespace ObjectModifiers
             var copy = BeatmapObject.Modifier.DeepCopy(modifierTypes[index]);
             copy.modifierObject = beatmapObject;
             beatmapObject.modifiers.Add(copy);
+        }
+
+        public static void AddModifierToBG(BackgroundObject backgroundObject, List<BeatmapObject.Modifier> modifiers, int index)
+        {
+            var copy = BeatmapObject.Modifier.DeepCopy(null);
+            copy.bgModifierObject = backgroundObject;
+            modifiers.Add(copy);
         }
 
         public static void SetModifierTypes() => ModCompatibility.sharedFunctions.Add("DefaultModifierList", modifierTypes);
@@ -765,7 +845,17 @@ namespace ObjectModifiers
                     "playerDisableBoostAll"
                 },
                 value = "0"
-            }, //playerDisableBoost
+            }, //playerDisableBoostAll
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "playerSpeed",
+                },
+                value = "1"
+            }, //playerSpeed
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -2405,6 +2495,60 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //levelRankGreater
+        };
+
+        public static List<BeatmapObject.Modifier> bgModifierTypes = new List<BeatmapObject.Modifier>
+        {
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "setActive"
+                },
+                value = "False"
+            }, //setActive
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "timeLesser"
+                },
+                value = "0"
+            }, //timeLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "timeGreater"
+                },
+                value = "0"
+            }, //timeGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "timeLesser"
+                },
+                value = "0"
+            }, //timeLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "timeGreater"
+                },
+                value = "0"
+            }, //timeGreater
         };
     }
 }

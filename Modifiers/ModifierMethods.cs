@@ -28,6 +28,7 @@ using ObjectModifiers.Functions;
 using DG.Tweening;
 using Ease = RTFunctions.Functions.Animation.Ease;
 using UnityEngine.Events;
+using RTFunctions.Functions.Components.Player;
 
 namespace ObjectModifiers.Modifiers
 {
@@ -2042,6 +2043,15 @@ namespace ObjectModifiers.Modifiers
                         foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
                             player.Player.canBoost = false;
+                        }
+
+                        break;
+                    }
+                case "playerSpeed":
+                    {
+                        if (float.TryParse(modifier.value, out float speed))
+                        {
+                            RTPlayer.SpeedMultiplier = speed;
                         }
 
                         break;
@@ -4376,6 +4386,31 @@ namespace ObjectModifiers.Modifiers
                         break;
                     }
             }
+        }
+
+        public static bool BGTrigger(BeatmapObject.Modifier modifier)
+        {
+            return false;
+        }
+
+        public static void BGAction(BeatmapObject.Modifier modifier)
+        {
+            modifier.hasChanged = false;
+            switch (modifier.commands[0])
+            {
+                case "setActive":
+                    {
+                        if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool active))
+                            modifier.bgModifierObject.Enabled = active;
+
+                        break;
+                    }
+            }
+        }
+
+        public static void BGInactive(BeatmapObject.Modifier modifier)
+        {
+
         }
     }
 }
