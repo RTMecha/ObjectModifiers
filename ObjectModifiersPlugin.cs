@@ -80,11 +80,10 @@ namespace ObjectModifiers
                     ((BeatmapObject)b).integerVariable = 0;
                 }
 
-            var order = GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0).ToList();
+            var order = DataManager.inst.gameData is GameData gameData ? gameData.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0).ToList() : null;
 
-            if (DataManager.inst.gameData.beatmapObjects != null && RTHelpers.Playing)
+            if (order != null && RTHelpers.Playing)
                 for (int i = 0; i < order.Count; i++)
-                //foreach (var beatmapObject in GameData.Current.BeatmapObjects.OrderBy(x => x.StartTime).Where(x => x.modifiers.Count > 0))
                 {
                     var beatmapObject = order[i];
 
@@ -179,9 +178,9 @@ namespace ObjectModifiers
         [HarmonyPrefix]
         static void BackgroundManagerUpdatePostfix(BackgroundManager __instance)
         {
-            var list = GameData.Current.BackgroundObjects.Where(x => x.modifiers.Count > 0).ToList();
+            var list = DataManager.inst.gameData is GameData gameData && gameData.backgroundObjects != null ? gameData.BackgroundObjects.Where(x => x.modifiers.Count > 0).ToList() : null;
 
-            if (DataManager.inst.gameData.backgroundObjects != null && RTHelpers.Playing)
+            if (RTHelpers.Playing)
                 for (int i = 0; i < list.Count; i++)
                 {
                     var backgroundObject = list[i];
@@ -829,6 +828,26 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //playerDisableBoostAll
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "playerEnableBoost"
+                },
+                value = "0"
+            }, //playerEnableBoost
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "playerEnableBoostAll"
+                },
+                value = "0"
+            }, //playerEnableBoostAll
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1617,16 +1636,29 @@ namespace ObjectModifiers
                 },
                 value = "Object Group"
             }, //gravityOther
-            //new BeatmapObject.Modifier
-            //{
-            //    type = BeatmapObject.Modifier.Type.Action,
-            //    constant = true,
-            //    commands = new List<string>
-            //    {
-            //        "test",
-            //    },
-            //    value = "0"
-            //}, //test
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "setWindowTitle",
+                },
+                value = "Project Arrhythmia"
+            }, //setWindowTitle
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "setDiscordStatus",
+                    "In {3}",
+                    "0",
+                    "0",
+                },
+                value = "{1}: {0}"
+            }, //setDiscordStatus
             //new BeatmapObject.Modifier
             //{
             //    type = BeatmapObject.Modifier.Type.Action,
@@ -2492,6 +2524,22 @@ namespace ObjectModifiers
                 },
                 value = "False"
             }, //setActive
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "animateObject",
+                    "0", // Pos / Sca / Rot
+                    "0", // X
+                    "0", // Y
+                    "0", // Z
+                    "True", // Relative
+                    "Linear", // Easing
+                },
+                value = "1"
+            }, //animateObject
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,

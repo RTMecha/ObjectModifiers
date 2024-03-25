@@ -2021,7 +2021,7 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playerDisableBoost":
                     {
-                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !modifier.constant)
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
                         {
                             var orderedList = PlayerManager.Players
                                 .Where(x => x.Player)
@@ -2043,6 +2043,34 @@ namespace ObjectModifiers.Modifiers
                         foreach (var player in PlayerManager.Players.Where(x => x.Player))
                         {
                             player.Player.canBoost = false;
+                        }
+
+                        break;
+                    }
+                case "playerEnableBoost":
+                    {
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
+                        {
+                            var orderedList = PlayerManager.Players
+                                .Where(x => x.Player)
+                                .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList();
+
+                            if (orderedList.Count > 0)
+                            {
+                                var closest = orderedList[0];
+
+                                if (closest)
+                                    closest.Player.canBoost = true;
+                            }
+                        }
+
+                        break;
+                    }
+                case "playerEnableBoostAll":
+                    {
+                        foreach (var player in PlayerManager.Players.Where(x => x.Player))
+                        {
+                            player.Player.canBoost = true;
                         }
 
                         break;
@@ -4051,31 +4079,32 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
-                case "test":
+                case "setWindowTitle":
                     {
-                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject))
+                        WindowController.SetTitle(modifier.value);
+
+                        break;
+                    }
+                case "setDiscordStatus":
+                    {
+                        string[] discordSubIcons = new string[]
                         {
-                            var list = levelObject.parentObjects;
-                            float rotation = 0f;
+                            "arcade",
+                            "editor",
+                            "play",
+                        };
 
-                            for (int i = 1; i < list.Count; i++)
-                                rotation += list[i].Transform.localRotation.eulerAngles.z;
+                        string[] discordIcons = new string[]
+                        {
+                            "pa_logo_white",
+                            "pa_logo_black",
+                        };
 
-                            if (modifier.Result == null)
-                            {
-                                modifier.Result = -0.001f;
-                            }
-                            else
-                            {
-                                var f = (float)modifier.Result;
-
-                                f *= 1.1f;
-
-                                modifier.Result = f;
-                            }
-
-                            modifier.modifierObject.positionOffset = RTMath.Rotate(new Vector3(0f, (float)modifier.Result, 0f), (list[0].Transform.localRotation.eulerAngles.z - rotation));
-                        }
+                        if (int.TryParse(modifier.commands[2], out int discordSubIcon) && int.TryParse(modifier.commands[3], out int discordIcon))
+                            RTFunctions.FunctionsPlugin.UpdateDiscordStatus(
+                                string.Format(modifier.value, MetaData.Current.song.title, $"{(EditorManager.inst == null ? "Game" : "Editor")}", $"{(EditorManager.inst == null ? "Level" : "Editing")}", $"{(EditorManager.inst == null ? "Arcade" : "Editor")}"),
+                                string.Format(modifier.commands[1], MetaData.Current.song.title, $"{(EditorManager.inst == null ? "Game" : "Editor")}", $"{(EditorManager.inst == null ? "Level" : "Editing")}", $"{(EditorManager.inst == null ? "Arcade" : "Editor")}"),
+                                discordSubIcons[Mathf.Clamp(discordSubIcon, 0, discordSubIcons.Length - 1)], discordIcons[Mathf.Clamp(discordIcon, 0, discordIcons.Length - 1)]);
 
                         break;
                     }
@@ -4177,25 +4206,6 @@ namespace ObjectModifiers.Modifiers
 
                             modifier.Result = null;
                         }
-                        break;
-                    }
-                case "playerDisableBoost":
-                    {
-                        if (!modifier.hasChanged)
-                        {
-                            modifier.hasChanged = true;
-
-                            if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject && !modifier.constant)
-                            {
-                                var closest = PlayerManager.Players
-                                    .Where(x => x.Player)
-                                    .OrderBy(x => Vector2.Distance(x.Player.playerObjects["RB Parent"].gameObject.transform.position, levelObject.visualObject.GameObject.transform.position)).ToList()[0];
-
-                                if (closest)
-                                    closest.Player.canBoost = true;
-                            }
-                        }
-
                         break;
                     }
                 case "enableObject":
