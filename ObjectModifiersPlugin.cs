@@ -2510,6 +2510,16 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //levelRankGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "isFullscreen",
+                },
+                value = "0"
+            }, //isFullscreen
         };
 
         public static List<BeatmapObject.Modifier> bgModifierTypes = new List<BeatmapObject.Modifier>

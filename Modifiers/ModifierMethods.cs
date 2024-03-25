@@ -1052,6 +1052,10 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "isFullscreen":
+                    {
+                        return Screen.fullScreen;
+                    }
             }
 
             modifier.Inactive?.Invoke(modifier);
