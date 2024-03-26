@@ -1,3 +1,9 @@
+1.6.0 > [Mar 26, 2024]
+- Added modifiers to Background Objects.
+- Added isFullscreen trigger.
+- Added setWindowTitle action.
+- Added setDiscordStatus action.
+- gravity modifiers now hopefully properly go down.
 1.5.3 > [Mar 18, 2024]
 - Optimized enableObjectTree and disableObjectTree.
 - Reworked the save modifier into saveFloat, saveString, saveVariable and saveText. saveFloat saves a number, saveString saves a specific text string, saveVariable saves the objects' own variable and saveText saves the objects' text.
