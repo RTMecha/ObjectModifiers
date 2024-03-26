@@ -29,14 +29,14 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.5.3")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.0")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
     {
         readonly Harmony harmony = new Harmony("ObjectModifiers");
         public static ObjectModifiersPlugin inst;
-        public static string className = "[<color=#F5501B>ObjectModifiers</color>]\n";
+        public static string className = $"[<color=#F5501B>ObjectModifiers</color>] {PluginInfo.PLUGIN_VERSION}\n";
 
         #region ConfigEntries
         public static ConfigEntry<bool> EditorLoadLevel { get; set; }
@@ -427,7 +427,11 @@ namespace ObjectModifiers
             modifiers.Add(copy);
         }
 
-        public static void SetModifierTypes() => ModCompatibility.sharedFunctions.Add("DefaultModifierList", modifierTypes);
+        public static void SetModifierTypes()
+        {
+            ModCompatibility.sharedFunctions.Add("DefaultModifierList", modifierTypes);
+            ModCompatibility.sharedFunctions.Add("DefaultBGModifierList", bgModifierTypes);
+        }
 
         public static List<BeatmapObject.Modifier> modifierTypes = new List<BeatmapObject.Modifier>
         {
@@ -2556,7 +2560,7 @@ namespace ObjectModifiers
                 constant = true,
                 commands = new List<string>
                 {
-                    "timeLesser"
+                    "timeLesserEquals"
                 },
                 value = "0"
             }, //timeLesserEquals
@@ -2566,7 +2570,7 @@ namespace ObjectModifiers
                 constant = true,
                 commands = new List<string>
                 {
-                    "timeGreater"
+                    "timeGreaterEquals"
                 },
                 value = "0"
             }, //timeGreaterEquals
