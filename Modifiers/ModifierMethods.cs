@@ -4404,6 +4404,26 @@ namespace ObjectModifiers.Modifiers
 
         public static bool BGTrigger(BeatmapObject.Modifier modifier)
         {
+            switch (modifier.commands[0])
+            {
+                case "timeLesserEquals":
+                    {
+                        return float.TryParse(modifier.value, out float t) && AudioManager.inst.CurrentAudioSource.time <= t;
+                    }
+                case "timeGreaterEquals":
+                    {
+                        return float.TryParse(modifier.value, out float t) && AudioManager.inst.CurrentAudioSource.time >= t;
+                    }
+                case "timeLesser":
+                    {
+                        return float.TryParse(modifier.value, out float t) && AudioManager.inst.CurrentAudioSource.time < t;
+                    }
+                case "timeGreater":
+                    {
+                        return float.TryParse(modifier.value, out float t) && AudioManager.inst.CurrentAudioSource.time > t;
+                    }
+            }
+
             return false;
         }
 
@@ -4414,8 +4434,65 @@ namespace ObjectModifiers.Modifiers
             {
                 case "setActive":
                     {
-                        if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool active))
+                        if (bool.TryParse(modifier.value, out bool active))
                             modifier.bgModifierObject.Enabled = active;
+
+                        break;
+                    }
+                case "animateObject":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int type)
+                            && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
+                            && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
+                        {
+                            Vector3 vector;
+                            if (type == 0)
+                                vector = modifier.bgModifierObject.positionOffset;
+                            else if (type == 1)
+                                vector = modifier.bgModifierObject.scaleOffset;
+                            else
+                                vector = modifier.bgModifierObject.rotationOffset;
+
+                            var setVector = new Vector3(x, y, z) + (relative ? vector : Vector3.zero);
+
+                            if (!modifier.constant)
+                            {
+                                var animation = new AnimationManager.Animation("Animate Object Offset");
+
+                                animation.vector3Animations = new List<AnimationManager.Animation.AnimationObject<Vector3>>
+                                {
+                                    new AnimationManager.Animation.AnimationObject<Vector3>(new List<IKeyframe<Vector3>>
+                                    {
+                                        new Vector3Keyframe(0f, vector, Ease.Linear),
+                                        new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
+                                        Ease.HasEaseFunction(modifier.commands[6]) ? Ease.GetEaseFunction(modifier.commands[6]) : Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
+                                    }, delegate (Vector3 vector3)
+                                    {
+                                        if (type == 0)
+                                            modifier.bgModifierObject.positionOffset = vector3;
+                                        else if (type == 1)
+                                            modifier.bgModifierObject.scaleOffset = vector3;
+                                        else
+                                            modifier.bgModifierObject.rotationOffset = vector3;
+                                    }),
+                                };
+                                animation.onComplete = delegate ()
+                                {
+                                    AnimationManager.inst.RemoveID(animation.id);
+                                };
+                                AnimationManager.inst.Play(animation);
+                            }
+                            else
+                            {
+                                if (type == 0)
+                                    modifier.bgModifierObject.positionOffset = setVector;
+                                else if (type == 1)
+                                    modifier.bgModifierObject.scaleOffset = setVector;
+                                else
+                                    modifier.bgModifierObject.rotationOffset = setVector;
+                            }
+                        }
 
                         break;
                     }
