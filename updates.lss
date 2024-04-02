@@ -1,6 +1,7 @@
 1.6.1 > [Apr 2, 2024]
 - playSound modifier now supports .mp3 files hopefully.
 - Added copyAxis action modifier to Background Object Modifiers. Works the same as the regular copyAxis modifier.
+- Tried fixing some stuff with the blur modifiers.
 1.6.0 > [Mar 26, 2024]
 - Added modifiers to Background Objects.
 - Added isFullscreen trigger.
