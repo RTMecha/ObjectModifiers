@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.0")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.1")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -270,14 +270,20 @@ namespace ObjectModifiers
             
             if (!path.Contains(".wav") && RTFile.FileExists(text + ".wav"))
                 text += ".wav";
+            
+            if (!path.Contains(".mp3") && RTFile.FileExists(text + ".mp3"))
+                text += ".mp3";
 
             if (RTFile.FileExists(text))
             {
-                inst.StartCoroutine(LoadMusicFileRaw(text, delegate (AudioClip _newSound)
-                {
-                    _newSound.name = path;
-                    PlaySound(id, _newSound, pitch, volume, loop);
-                }));
+                if (!text.Contains(".mp3"))
+                    inst.StartCoroutine(LoadMusicFileRaw(text, delegate (AudioClip _newSound)
+                    {
+                        _newSound.name = path;
+                        PlaySound(id, _newSound, pitch, volume, loop);
+                    }));
+                else
+                    PlaySound(id, LSAudio.CreateAudioClipUsingMP3File(text), pitch, volume, loop);
             }
         }
 
@@ -2554,6 +2560,26 @@ namespace ObjectModifiers
                 },
                 value = "1"
             }, //animateObject
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "copyAxis",
+                    "0", // From Type
+                    "0", // From Axis
+                    "0", // To Type
+                    "0", // To Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "99999", // Loop
+                },
+                value = "Object Group"
+            }, //copyAxis
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
