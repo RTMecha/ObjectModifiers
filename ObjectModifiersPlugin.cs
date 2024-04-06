@@ -315,7 +315,7 @@ namespace ObjectModifiers
             audioSource.playOnAwake = true;
             audioSource.loop = loop;
             audioSource.pitch = pitch * AudioManager.inst.CurrentAudioSource.pitch;
-            audioSource.volume = Mathf.Clamp(volume, 0f, 2f) * AudioManager.inst.sfxVol;
+            audioSource.volume = volume * AudioManager.inst.sfxVol;
             audioSource.Play();
 
             float x = pitch * AudioManager.inst.CurrentAudioSource.pitch;
@@ -499,6 +499,17 @@ namespace ObjectModifiers
                 },
                 value = "sounds/audio.wav"
             }, //playSoundOnline
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "audioSource",
+                    "False",
+                },
+                value = "sounds/audio.wav"
+            }, //audioSource
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
@@ -1679,6 +1690,16 @@ namespace ObjectModifiers
             //    },
             //    value = "EditorManager.inst.DisplayNotification(\"Write custom C# code here!\", 2f, EditorManager.NotificationType.Success);"
             //}, //code
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "disableModifier"
+                },
+                value = ""
+            }, //disableModifier
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Trigger,
@@ -2981,5 +3002,6 @@ namespace ObjectModifiers
                 value = "0"
             }, //timeGreater
         };
+
     }
 }
