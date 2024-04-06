@@ -29,6 +29,8 @@ using DG.Tweening;
 using Ease = RTFunctions.Functions.Animation.Ease;
 using UnityEngine.Events;
 using RTFunctions.Functions.Components.Player;
+using ObjectModifiers.Functions.Components;
+using LSFunctions;
 
 namespace ObjectModifiers.Modifiers
 {
@@ -38,6 +40,10 @@ namespace ObjectModifiers.Modifiers
         {
             switch (modifier.commands[0])
             {
+                case "disableModifier":
+                    {
+                        return false;
+                    }
                 case "playerCollide":
                     {
                         return modifier.modifierObject.IsTouchingPlayer();
@@ -1350,6 +1356,47 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
+                case "audioSource":
+                    {
+                        if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null &&
+                            levelObject.visualObject.GameObject != null && bool.TryParse(modifier.commands[1], out bool global))
+                        {
+                            if (modifier.Result == null)
+                            {
+                                string text = RTFile.ApplicationDirectory + "beatmaps/soundlibrary/" + modifier.value;
+
+                                if (!global)
+                                    text = RTFile.BasePath + modifier.value;
+
+                                if (!modifier.value.Contains(".ogg") && RTFile.FileExists(text + ".ogg"))
+                                    text += ".ogg";
+
+                                if (!modifier.value.Contains(".wav") && RTFile.FileExists(text + ".wav"))
+                                    text += ".wav";
+
+                                if (!modifier.value.Contains(".mp3") && RTFile.FileExists(text + ".mp3"))
+                                    text += ".mp3";
+
+                                if (RTFile.FileExists(text))
+                                {
+                                    if (!text.Contains(".mp3"))
+                                        ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.LoadMusicFileRaw(text, delegate (AudioClip audioClip)
+                                        {
+                                            audioClip.name = modifier.value;
+                                            modifier.Result = levelObject.visualObject.GameObject.AddComponent<AudioModifier>();
+                                            ((AudioModifier)modifier.Result).Init(audioClip, modifier.modifierObject, modifier);
+                                        }));
+                                    else
+                                    {
+                                        modifier.Result = levelObject.visualObject.GameObject.AddComponent<AudioModifier>();
+                                        ((AudioModifier)modifier.Result).Init(LSAudio.CreateAudioClipUsingMP3File(text), modifier.modifierObject, modifier);
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
+                    }
                 case "loadLevel":
                     {
                         if (EditorManager.inst && EditorManager.inst.isEditing)
@@ -1532,6 +1579,12 @@ namespace ObjectModifiers.Modifiers
                             var rend = levelObject.visualObject.Renderer;
                             if (modifier.Result == null)
                             {
+                                if (!levelObject.visualObject.GameObject.GetComponent<DestroyModifierResult>())
+                                {
+                                    var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
+                                    onDestroy.Modifier = modifier;
+                                }
+
                                 modifier.Result = levelObject.visualObject.GameObject;
                                 rend.material = RTFunctions.FunctionsPlugin.blur;
                             }
@@ -1557,6 +1610,12 @@ namespace ObjectModifiers.Modifiers
                                     var rend = levelObject.visualObject.Renderer;
                                     if (modifier.Result == null)
                                     {
+                                        if (!levelObject.visualObject.GameObject.GetComponent<DestroyModifierResult>())
+                                        {
+                                            var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
+                                            onDestroy.Modifier = modifier;
+                                        }
+
                                         modifier.Result = levelObject.visualObject.GameObject;
                                         rend.material = RTFunctions.FunctionsPlugin.blur;
                                     }
@@ -1578,6 +1637,12 @@ namespace ObjectModifiers.Modifiers
                             var rend = levelObject.visualObject.Renderer;
                             if (modifier.Result == null)
                             {
+                                if (!levelObject.visualObject.GameObject.GetComponent<DestroyModifierResult>())
+                                {
+                                    var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
+                                    onDestroy.Modifier = modifier;
+                                }
+
                                 modifier.Result = levelObject.visualObject.GameObject;
                                 rend.material = RTFunctions.FunctionsPlugin.blur;
                             }
@@ -1600,6 +1665,12 @@ namespace ObjectModifiers.Modifiers
                                     var rend = levelObject.visualObject.Renderer;
                                     if (modifier.Result == null)
                                     {
+                                        if (!levelObject.visualObject.GameObject.GetComponent<DestroyModifierResult>())
+                                        {
+                                            var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
+                                            onDestroy.Modifier = modifier;
+                                        }
+
                                         modifier.Result = levelObject.visualObject.GameObject;
                                         rend.material = RTFunctions.FunctionsPlugin.blur;
                                     }
