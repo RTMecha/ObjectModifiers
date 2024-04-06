@@ -2530,6 +2530,366 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //isFullscreen
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeSecondEquals",
+                },
+                value = "0"
+            }, //realTimeSecondEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeSecondLesserEquals",
+                },
+                value = "0"
+            }, //realTimeSecondLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeSecondGreaterEquals",
+                },
+                value = "0"
+            }, //realTimeSecondGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeSecondLesser",
+                },
+                value = "0"
+            }, //realTimeSecondLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeSecondGreater",
+                },
+                value = "0"
+            }, //realTimeSecondGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMinuteEquals",
+                },
+                value = "0"
+            }, //realTimeMinuteEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMinuteLesserEquals",
+                },
+                value = "0"
+            }, //realTimeMinuteLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMinuteGreaterEquals",
+                },
+                value = "0"
+            }, //realTimeMinuteGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMinuteLesser",
+                },
+                value = "0"
+            }, //realTimeMinuteLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMinuteGreater",
+                },
+                value = "0"
+            }, //realTimeMinuteGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime12HourEquals",
+                },
+                value = "0"
+            }, //realTime12HourEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime12HourLesserEquals",
+                },
+                value = "0"
+            }, //realTime12HourLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime12HourGreaterEquals",
+                },
+                value = "0"
+            }, //realTime12HourGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime12HourLesser",
+                },
+                value = "0"
+            }, //realTime12HourLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime12HourGreater",
+                },
+                value = "0"
+            }, //realTime12HourGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime24HourEquals",
+                },
+                value = "0"
+            }, //realTime24HourEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime24HourLesserEquals",
+                },
+                value = "0"
+            }, //realTime24HourLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime24HourGreaterEquals",
+                },
+                value = "0"
+            }, //realTime24HourGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime24HourLesser",
+                },
+                value = "0"
+            }, //realTime24HourLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTime24HourGreater",
+                },
+                value = "0"
+            }, //realTime24HourGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeDayEquals",
+                },
+                value = "0"
+            }, //realTimeDayEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeDayLesserEquals",
+                },
+                value = "0"
+            }, //realTimeDayLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeDayGreaterEquals",
+                },
+                value = "0"
+            }, //realTimeDayGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeDayLesser",
+                },
+                value = "0"
+            }, //realTimeDayLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeDayGreater",
+                },
+                value = "0"
+            }, //realTimeDayGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeDayWeekEquals",
+                },
+                value = "Monday"
+            }, //realTimeDayWeekEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMonthEquals",
+                },
+                value = "0"
+            }, //realTimeMonthEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMonthLesserEquals",
+                },
+                value = "0"
+            }, //realTimeMonthLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMonthGreaterEquals",
+                },
+                value = "0"
+            }, //realTimeMonthGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMonthLesser",
+                },
+                value = "0"
+            }, //realTimeMonthLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeMonthGreater",
+                },
+                value = "0"
+            }, //realTimeMonthGreater
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeYearEquals",
+                },
+                value = "0"
+            }, //realTimeYearEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeYearLesserEquals",
+                },
+                value = "0"
+            }, //realTimeYearLesserEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeYearGreaterEquals",
+                },
+                value = "0"
+            }, //realTimeYearGreaterEquals
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeYearLesser",
+                },
+                value = "0"
+            }, //realTimeYearLesser
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Trigger,
+                constant = true,
+                commands = new List<string>
+                {
+                    "realTimeYearGreater",
+                },
+                value = "0"
+            }, //realTimeYearGreater
         };
 
         public static List<BeatmapObject.Modifier> bgModifierTypes = new List<BeatmapObject.Modifier>

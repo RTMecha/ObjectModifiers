@@ -1056,6 +1056,220 @@ namespace ObjectModifiers.Modifiers
                     {
                         return Screen.fullScreen;
                     }
+                case "realTimeSecondEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("ss"), 0) == num;
+                        break;
+                    }
+                case "realTimeSecondLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("ss"), 0) <= num;
+                        break;
+                    }
+                case "realTimeSecondGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("ss"), 0) >= num;
+                        break;
+                    }
+                case "realTimeSecondLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("ss"), 0) < num;
+                        break;
+                    }
+                case "realTimeSecondGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("ss"), 0) > num;
+                        break;
+                    }
+                case "realTimeMinuteEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("mm"), 0) == num;
+                        break;
+                    }
+                case "realTimeMinuteLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("mm"), 0) <= num;
+                        break;
+                    }
+                case "realTimeMinuteGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("mm"), 0) >= num;
+                        break;
+                    }
+                case "realTimeMinuteLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("mm"), 0) < num;
+                        break;
+                    }
+                case "realTimeMinuteGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("mm"), 0) > num;
+                        break;
+                    }
+                case "realTime24HourEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("HH"), 0) == num;
+                        break;
+                    }
+                case "realTime24HourLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("HH"), 0) <= num;
+                        break;
+                    }
+                case "realTime24HourGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("HH"), 0) >= num;
+                        break;
+                    }
+                case "realTime24HourLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("HH"), 0) < num;
+                        break;
+                    }
+                case "realTime24HourGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("HH"), 0) > num;
+                        break;
+                    }
+                case "realTime12HourEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("hh"), 0) == num;
+                        break;
+                    }
+                case "realTime12HourLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("hh"), 0) <= num;
+                        break;
+                    }
+                case "realTime12HourGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("hh"), 0) >= num;
+                        break;
+                    }
+                case "realTime12HourLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("hh"), 0) < num;
+                        break;
+                    }
+                case "realTime12HourGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("hh"), 0) > num;
+                        break;
+                    }
+                case "realTimeDayEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("dd"), 0) == num;
+                        break;
+                    }
+                case "realTimeDayLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("dd"), 0) <= num;
+                        break;
+                    }
+                case "realTimeDayGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("dd"), 0) >= num;
+                        break;
+                    }
+                case "realTimeDayLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("dd"), 0) < num;
+                        break;
+                    }
+                case "realTimeDayGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("dd"), 0) > num;
+                        break;
+                    }
+                case "realTimeDayWeekEquals":
+                    {
+                        return DateTime.Now.ToString("dddd") == modifier.value;
+                    }
+                case "realTimeMonthEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("MM"), 0) == num;
+                        break;
+                    }
+                case "realTimeMonthLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("MM"), 0) <= num;
+                        break;
+                    }
+                case "realTimeMonthGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("MM"), 0) >= num;
+                        break;
+                    }
+                case "realTimeMonthLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("MM"), 0) < num;
+                        break;
+                    }
+                case "realTimeMonthGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("MM"), 0) > num;
+                        break;
+                    }
+                case "realTimeYearEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("yyyy"), 0) == num;
+                        break;
+                    }
+                case "realTimeYearLesserEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("yyyy"), 0) <= num;
+                        break;
+                    }
+                case "realTimeYearGreaterEquals":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("yyyy"), 0) >= num;
+                        break;
+                    }
+                case "realTimeYearLesser":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("yyyy"), 0) < num;
+                        break;
+                    }
+                case "realTimeYearGreater":
+                    {
+                        if (int.TryParse(modifier.value, out int num))
+                            return Parser.TryParse(DateTime.Now.ToString("yyyy"), 0) > num;
+                        break;
+                    }
             }
 
             modifier.Inactive?.Invoke(modifier);
@@ -4122,6 +4336,49 @@ namespace ObjectModifiers.Modifiers
                                 string.Format(modifier.value, MetaData.Current.song.title, $"{(EditorManager.inst == null ? "Game" : "Editor")}", $"{(EditorManager.inst == null ? "Level" : "Editing")}", $"{(EditorManager.inst == null ? "Arcade" : "Editor")}"),
                                 string.Format(modifier.commands[1], MetaData.Current.song.title, $"{(EditorManager.inst == null ? "Game" : "Editor")}", $"{(EditorManager.inst == null ? "Level" : "Editing")}", $"{(EditorManager.inst == null ? "Arcade" : "Editor")}"),
                                 discordSubIcons[Mathf.Clamp(discordSubIcon, 0, discordSubIcons.Length - 1)], discordIcons[Mathf.Clamp(discordIcon, 0, discordIcons.Length - 1)]);
+
+                        break;
+                    }
+                case "saveLevelRank":
+                    {
+                        if (EditorManager.inst || modifier.constant || !LevelManager.CurrentLevel)
+                            break;
+
+                        int prevHits = LevelManager.CurrentLevel.playerData != null ? LevelManager.CurrentLevel.playerData.Hits : -1;
+
+                        if (LevelManager.Saves.Where(x => x.Completed).Count() >= 100)
+                        {
+                            SteamWrapper.inst.achievements.SetAchievement("GREAT_TESTER");
+                        }
+
+                        if (!PlayerManager.IsZenMode && !PlayerManager.IsPractice)
+                        {
+                            if (LevelManager.CurrentLevel.playerData == null)
+                            {
+                                LevelManager.CurrentLevel.playerData = new LevelManager.PlayerData
+                                {
+                                    ID = LevelManager.CurrentLevel.id,
+                                };
+                            }
+
+                            if (LevelManager.CurrentLevel.playerData.Deaths < GameManager.inst.deaths.Count)
+                                LevelManager.CurrentLevel.playerData.Deaths = GameManager.inst.deaths.Count;
+                            if (LevelManager.CurrentLevel.playerData.Hits < GameManager.inst.hits.Count)
+                                LevelManager.CurrentLevel.playerData.Hits = GameManager.inst.hits.Count;
+                            LevelManager.CurrentLevel.playerData.Completed = true;
+                            if (LevelManager.CurrentLevel.playerData.Boosts < LevelManager.BoostCount)
+                                LevelManager.CurrentLevel.playerData.Boosts = LevelManager.BoostCount;
+
+                            if (LevelManager.Saves.Has(x => x.ID == LevelManager.CurrentLevel.id))
+                            {
+                                var saveIndex = LevelManager.Saves.FindIndex(x => x.ID == LevelManager.CurrentLevel.id);
+                                LevelManager.Saves[saveIndex] = LevelManager.CurrentLevel.playerData;
+                            }
+                            else
+                                LevelManager.Saves.Add(LevelManager.CurrentLevel.playerData);
+                        }
+
+                        LevelManager.SaveProgress();
 
                         break;
                     }
