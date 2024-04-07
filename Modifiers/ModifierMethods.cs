@@ -2976,53 +2976,65 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "legacyTail":
                     {
-                        //if (!tailDone)
-                        //{
-                        //    var parent = new GameObject(modifierObject.id);
-                        //    parent.transform.SetParent(ObjectManager.inst.objectParent.transform);
-                        //    parent.transform.localScale = Vector3.one;
-                        //    var legacyTracker = parent.AddComponent<LegacyTracker>();
+                        if (modifier.modifierObject && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject &&
+                            modifier.commands.Count > 1 && DataManager.inst.gameData is GameData gameData)
+                        {
+                            var totalTime = Parser.TryParse(modifier.value, 200f);
 
-                        //    var ch = modifierObject.GetChildChain();
+                            var list = modifier.Result is List<LegacyTracker> ? (List<LegacyTracker>)modifier.Result : new List<LegacyTracker>();
 
-                        //    foreach (var cc in ch)
-                        //    {
-                        //        for (int i = 0; i < cc.Count; i++)
-                        //        {
-                        //            var obj = cc[i];
+                            if (modifier.Result == null)
+                            {
+                                list.Add(new LegacyTracker(modifier.modifierObject, Vector3.zero, Vector3.zero, Quaternion.identity, 0f, 0f));
 
-                        //            if (Objects.beatmapObjects.ContainsKey(obj.id))
-                        //            {
-                        //                var modifier = Objects.beatmapObjects[cc[i].id];
+                                for (int i = 1; i < modifier.commands.Count; i += 3)
+                                {
+                                    var group = gameData.BeatmapObjects.Where(x => x.tags.Contains(modifier.commands[i]));
 
-                        //                var tf = modifier.transformChain;
+                                    if (modifier.commands.Count <= i + 2 || group.Count() < 1)
+                                        break;
 
-                        //                if (tf != null && tf.Count > 0)
-                        //                {
-                        //                    var top = tf[0];
+                                    var distance = Parser.TryParse(modifier.commands[i + 1], 2f);
+                                    var time = Parser.TryParse(modifier.commands[i + 2], 12f);
 
-                        //                    var id = LSFunctions.LSText.randomNumString(16);
+                                    for (int j = 0; j < group.Count(); j++)
+                                    {
+                                        var beatmapObject = group.ElementAt(j);
+                                        list.Add(new LegacyTracker(beatmapObject, beatmapObject.positionOffset, beatmapObject.positionOffset, Quaternion.Euler(beatmapObject.rotationOffset), distance, time));
+                                    }
+                                }
 
-                        //                    var rt = new LegacyTracker.RTObject(top.gameObject);
-                        //                    rt.values.Add("Renderer", top.GetComponentInChildren<Renderer>());
-                        //                    legacyTracker.originals.Add(id, rt);
-                        //                }
-                        //            }
-                        //        }
-                        //    }
+                                var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
 
-                        //    legacyTracker.distance = float.Parse(value);
-                        //    if (command.Count > 1)
-                        //        legacyTracker.tailCount = int.Parse(modifier.commands[1]);
-                        //    if (command.Count > 2)
-                        //        legacyTracker.transformSpeed = float.Parse(modifier.commands[2]);
-                        //    if (command.Count > 3)
-                        //        legacyTracker.distanceSpeed = float.Parse(modifier.commands[3]);
+                                onDestroy.Modifier = modifier;
 
-                        //    legacyTracker.Setup();
+                                modifier.Result = list;
+                            }
 
-                        //    tailDone = true;
-                        //}
+                            list[0].pos = levelObject.visualObject.GameObject.transform.position;
+                            list[0].rot = levelObject.visualObject.GameObject.transform.rotation;
+
+                            float num = Time.deltaTime * totalTime;
+
+                            for (int i = 1; i < list.Count; i++)
+                            {
+                                var tracker = list[i];
+                                var prevTracker = list[i - 1];
+                                if (Vector3.Distance(tracker.pos, prevTracker.pos) > tracker.distance)
+                                {
+                                    var vector = Vector3.Lerp(tracker.pos, prevTracker.pos, Time.deltaTime * tracker.time);
+                                    var quaternion = Quaternion.Lerp(tracker.rot, prevTracker.rot, Time.deltaTime * tracker.time);
+                                    list[i].pos = vector;
+                                    list[i].rot = quaternion;
+                                }
+
+                                num *= Vector3.Distance(prevTracker.lastPos, tracker.pos);
+                                tracker.beatmapObject.positionOffset = Vector3.MoveTowards(prevTracker.lastPos, tracker.pos, num);
+                                prevTracker.lastPos = tracker.pos;
+                                tracker.beatmapObject.rotationOffset = tracker.rot.eulerAngles;
+                            }
+                        }
+
                         break;
                     }
                 case "blackHole":

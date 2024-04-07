@@ -1680,6 +1680,16 @@ namespace ObjectModifiers
                 },
                 value = "{1}: {0}"
             }, //setDiscordStatus
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "legacyTail",
+                },
+                value = "200"
+            }, //legacyTail
             //new BeatmapObject.Modifier
             //{
             //    type = BeatmapObject.Modifier.Type.Action,
