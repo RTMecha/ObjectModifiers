@@ -1,3 +1,10 @@
+1.6.2 > [Apr 14, 2024]
+- Updating an object no longer breaks the blur modifiers.
+- blurOther modifiers now affects every object in a group, rather than just the first one it finds.
+- Added realTime trigger modifiers, this allows you to check the current date time of the user. This'll be good for seasonal effects on levels depending on month, such as June 15th could be an anniversary party. (i completely forgot to carry this triggers over from the old ObjectTags mod, my bad)
+- Added audioSource action modifier. This modifier acts like the playSound modifiers, except the time of the audio is aligned with the time the main level audio is at, offset by the start time of the Beatmap Object. Pitch and Volume can be animated via the scale keyframe, so you probably should turn the opacity down to 0 on the object. The modifier does NOT work with Empty objects, due to the modifier being a component and requiring a visible Unity object.
+- Added legacyTail action modifier. One of the more unique modifiers, allowing the user to add as many values to the modifier as they want. This modifier allows you to have mutliple groups of objects follow in a chain the same way the Legacy Player Tail works.
+- Added saveLevelRank action modifier. This can be good for levels that never end up using the end of level screen but you still want to save the users' progress.
 1.6.1 > [Apr 2, 2024]
 - playSound modifier now supports .mp3 files hopefully.
 - Added copyAxis action modifier to Background Object Modifiers. Works the same as the regular copyAxis modifier.
