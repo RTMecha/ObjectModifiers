@@ -3605,6 +3605,175 @@ namespace ObjectModifiers.Modifiers
 
                         break;
                     }
+                case "animateSignal":
+                    {
+                        if (int.TryParse(modifier.commands[1], out int type)
+                            && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
+                            && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
+                        {
+                            if (!Parser.TryParse(modifier.commands[9], true))
+                            {
+                                var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[7]));
+
+                                foreach (var bm in list)
+                                {
+                                    if ((bm as BeatmapObject).modifiers.Count > 0 && (bm as BeatmapObject).modifiers.Where(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger).Count() > 0 &&
+                                        (bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                                    {
+                                        m.Result = null;
+                                    }
+                                }
+                            }
+
+                            string easing = modifier.commands[6];
+                            if (int.TryParse(modifier.commands[6], out int e) && e >= 0 && e < DataManager.inst.AnimationList.Count)
+                                easing = DataManager.inst.AnimationList[e].Name;
+
+                            Vector3 vector;
+                            if (type == 0)
+                                vector = modifier.modifierObject.positionOffset;
+                            else if (type == 1)
+                                vector = modifier.modifierObject.scaleOffset;
+                            else
+                                vector = modifier.modifierObject.rotationOffset;
+
+                            var setVector = new Vector3(x, y, z) + (relative ? vector : Vector3.zero);
+
+                            if (!modifier.constant)
+                            {
+                                var animation = new AnimationManager.Animation("Animate Object Offset");
+
+                                animation.vector3Animations = new List<AnimationManager.Animation.AnimationObject<Vector3>>
+                                {
+                                    new AnimationManager.Animation.AnimationObject<Vector3>(new List<IKeyframe<Vector3>>
+                                    {
+                                        new Vector3Keyframe(0f, vector, Ease.Linear),
+                                        new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
+                                        Ease.HasEaseFunction(easing) ? Ease.GetEaseFunction(easing) : Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
+                                    }, delegate (Vector3 vector3)
+                                    {
+                                        if (type == 0)
+                                            modifier.modifierObject.positionOffset = vector3;
+                                        else if (type == 1)
+                                            modifier.modifierObject.scaleOffset = vector3;
+                                        else
+                                            modifier.modifierObject.rotationOffset = vector3;
+                                    }),
+                                };
+                                animation.onComplete = delegate ()
+                                {
+                                    AnimationManager.inst.RemoveID(animation.id);
+
+                                    var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[7]));
+
+                                    foreach (var bm in list)
+                                    {
+                                        ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ActivateModifier((BeatmapObject)bm, Parser.TryParse(modifier.commands[8], 0f)));
+                                    }
+                                };
+                                AnimationManager.inst.Play(animation);
+                            }
+                            else
+                            {
+                                if (type == 0)
+                                    modifier.modifierObject.positionOffset = setVector;
+                                else if (type == 1)
+                                    modifier.modifierObject.scaleOffset = setVector;
+                                else
+                                    modifier.modifierObject.rotationOffset = setVector;
+                            }
+                        }
+
+                        break;
+                    }
+                case "animateSignalOther":
+                    {
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[7]));
+
+                        if (list.Count() > 0 && int.TryParse(modifier.commands[1], out int type)
+                            && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
+                            && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
+                        {
+                            if (!Parser.TryParse(modifier.commands[10], true))
+                            {
+                                var list2 = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[8]));
+
+                                foreach (var bm in list2)
+                                {
+                                    if ((bm as BeatmapObject).modifiers.Count > 0 && (bm as BeatmapObject).modifiers.Where(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger).Count() > 0 &&
+                                        (bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                                    {
+                                        m.Result = null;
+                                    }
+                                }
+                            }
+
+                            string easing = modifier.commands[6];
+                            if (int.TryParse(modifier.commands[6], out int e) && e >= 0 && e < DataManager.inst.AnimationList.Count)
+                                easing = DataManager.inst.AnimationList[e].Name;
+
+                            foreach (var bm in list.Select(x => x as BeatmapObject))
+                            {
+                                Vector3 vector;
+                                if (type == 0)
+                                    vector = bm.positionOffset;
+                                else if (type == 1)
+                                    vector = bm.scaleOffset;
+                                else
+                                    vector = bm.rotationOffset;
+
+                                var setVector = new Vector3(x, y, z) + (relative ? vector : Vector3.zero);
+
+                                if (!modifier.constant)
+                                {
+                                    var animation = new AnimationManager.Animation("Animate Other Object Offset");
+
+                                    animation.vector3Animations = new List<AnimationManager.Animation.AnimationObject<Vector3>>
+                                    {
+                                        new AnimationManager.Animation.AnimationObject<Vector3>(new List<IKeyframe<Vector3>>
+                                        {
+                                            new Vector3Keyframe(0f, vector, Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
+                                            Ease.HasEaseFunction(easing) ? Ease.GetEaseFunction(easing) : Ease.Linear),
+                                            new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
+                                        }, delegate (Vector3 vector3)
+                                        {
+                                            if (type == 0)
+                                                bm.positionOffset = vector3;
+                                            else if (type == 1)
+                                                bm.scaleOffset = vector3;
+                                            else
+                                                bm.rotationOffset = vector3;
+                                        }),
+                                    };
+                                    animation.onComplete = delegate ()
+                                    {
+                                        AnimationManager.inst.RemoveID(animation.id);
+
+                                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[8]));
+
+                                        foreach (var bm in list)
+                                        {
+                                            ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.ActivateModifier((BeatmapObject)bm, Parser.TryParse(modifier.commands[9], 0f)));
+                                        }
+                                    };
+                                    AnimationManager.inst.Play(animation);
+                                }
+                                else
+                                {
+                                    if (type == 0)
+                                        bm.positionOffset = setVector;
+                                    else if (type == 1)
+                                        bm.scaleOffset = setVector;
+                                    else
+                                        bm.rotationOffset = setVector;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
                 case "rigidbody":
                     {
                         if (modifier.modifierObject.levelObject && modifier.modifierObject.levelObject.visualObject != null
@@ -3807,11 +3976,14 @@ namespace ObjectModifiers.Modifiers
                         if (modifier.commands.Count < 11)
                             modifier.commands.Add("9999");
 
+                        if (modifier.commands.Count < 12)
+                            modifier.commands.Add("False");
+
                         if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
                             && int.TryParse(modifier.commands[3], out int toType) && int.TryParse(modifier.commands[4], out int toAxis)
                             && float.TryParse(modifier.commands[5], out float delay) && float.TryParse(modifier.commands[6], out float multiply)
                             && float.TryParse(modifier.commands[7], out float offset) && float.TryParse(modifier.commands[8], out float min) && float.TryParse(modifier.commands[9], out float max)
-                            && float.TryParse(modifier.commands[10], out float loop)
+                            && float.TryParse(modifier.commands[10], out float loop) && bool.TryParse(modifier.commands[11], out bool useVisual)
                             && DataManager.inst.gameData.beatmapObjects.TryFind(x => (x as BeatmapObject).tags.Contains(modifier.value), out DataManager.GameData.BeatmapObject beatmapObject)
                             && beatmapObject != null)
                         {
@@ -3822,7 +3994,7 @@ namespace ObjectModifiers.Modifiers
                             fromType = Mathf.Clamp(fromType, 0, bm.events.Count);
                             fromAxis = Mathf.Clamp(fromAxis, 0, bm.events[fromType][0].eventValues.Length);
 
-                            if (Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
+                            if (!useVisual && Updater.levelProcessor.converter.cachedSequences.ContainsKey(bm.id))
                             {
                                 // To Type Position
                                 // To Axis X
@@ -4103,6 +4275,280 @@ namespace ObjectModifiers.Modifiers
                                     var renderer = modifier.modifierObject.levelObject.visualObject.Renderer;
 
                                     renderer.material.color = RTMath.Lerp(renderer.material.color, sequence, multiply);
+                                }
+                            }
+                            else if (useVisual && Updater.TryGetObject(bm, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var transform = levelObject.visualObject.GameObject.transform;
+
+                                // To Type Position
+                                // To Axis X
+                                // From Type Position
+                                if (toType == 0 && toAxis == 0 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Y
+                                // From Type Position
+                                if (toType == 0 && toAxis == 1 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Z
+                                // From Type Position
+                                if (toType == 0 && toAxis == 2 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis X
+                                // From Type Scale
+                                if (toType == 0 && toAxis == 0 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Y
+                                // From Type Scale
+                                if (toType == 0 && toAxis == 1 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Z
+                                // From Type Scale
+                                if (toType == 0 && toAxis == 2 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis X
+                                // From Type Rotation
+                                if (toType == 0 && toAxis == 0 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.positionOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Y
+                                // From Type Rotation
+                                if (toType == 0 && toAxis == 1 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.positionOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Position
+                                // To Axis Z
+                                // From Type Rotation
+                                if (toType == 0 && toAxis == 2 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.positionOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis X
+                                // From Type Position
+                                if (toType == 1 && toAxis == 0 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Y
+                                // From Type Position
+                                if (toType == 1 && toAxis == 1 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Z
+                                // From Type Position
+                                if (toType == 1 && toAxis == 2 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis X
+                                // From Type Scale
+                                if (toType == 1 && toAxis == 0 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Y
+                                // From Type Scale
+                                if (toType == 1 && toAxis == 1 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Z
+                                // From Type Scale
+                                if (toType == 1 && toAxis == 2 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis X
+                                // From Type Rotation
+                                if (toType == 1 && toAxis == 0 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.scaleOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Y
+                                // From Type Rotation
+                                if (toType == 1 && toAxis == 1 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.scaleOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Scale
+                                // To Axis Z
+                                // From Type Rotation
+                                if (toType == 1 && toAxis == 2 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.scaleOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis X
+                                // From Type Position
+                                if (toType == 2 && toAxis == 0 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Y
+                                // From Type Position
+                                if (toType == 2 && toAxis == 1 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Z
+                                // From Type Position
+                                if (toType == 2 && toAxis == 2 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis X
+                                // From Type Scale
+                                if (toType == 2 && toAxis == 0 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Y
+                                // From Type Scale
+                                if (toType == 2 && toAxis == 1 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Z
+                                // From Type Scale
+                                if (toType == 2 && toAxis == 2 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis X
+                                // From Type Rotation
+                                if (toType == 2 && toAxis == 0 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.rotationOffset.x = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Y
+                                // From Type Rotation
+                                if (toType == 2 && toAxis == 1 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.rotationOffset.y = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
+                                }
+
+                                // To Type Rotation
+                                // To Axis Z
+                                // From Type Rotation
+                                if (toType == 2 && toAxis == 2 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+
+                                    modifier.modifierObject.rotationOffset.z = Mathf.Clamp((fromAxis == 0 ? sequence.x % loop : fromAxis == 1 ? sequence.y % loop : sequence.z % loop) * multiply - offset, min, max);
                                 }
                             }
                         }
@@ -4720,6 +5166,26 @@ namespace ObjectModifiers.Modifiers
                 case "mouseOverSignalModifier":
                     {
                         var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && !modifier.constant)
+                            foreach (var bm in list)
+                            {
+                                if ((bm as BeatmapObject).modifiers.Count > 0 && (bm as BeatmapObject).modifiers.Where(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger).Count() > 0 &&
+                                    (bm as BeatmapObject).modifiers.TryFind(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger, out BeatmapObject.Modifier m))
+                                {
+                                    m.Result = null;
+                                }
+                            }
+
+                        break;
+                    }
+                case "animateSignal":
+                case "animateSignalOther":
+                    {
+                        if (!Parser.TryParse(modifier.commands[!modifier.commands[0].Contains("Other") ? 9 : 10], true))
+                            return;
+
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[!modifier.commands[0].Contains("Other") ? 7 : 8]));
 
                         if (list.Count() > 0 && !modifier.constant)
                             foreach (var bm in list)
