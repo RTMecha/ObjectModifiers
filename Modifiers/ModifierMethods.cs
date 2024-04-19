@@ -2892,6 +2892,10 @@ namespace ObjectModifiers.Modifiers
                     {
                         if (!modifier.constant && ModCompatibility.sharedFunctions.ContainsKey("EventsCoreEventOffsets"))
                         {
+                            string easing = modifier.commands[4];
+                            if (int.TryParse(modifier.commands[4], out int e) && e >= 0 && e < DataManager.inst.AnimationList.Count)
+                                easing = DataManager.inst.AnimationList[e].Name;
+
                             var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
 
                             var indexArray = Parser.TryParse(modifier.commands[1], 0);
@@ -2910,7 +2914,7 @@ namespace ObjectModifiers.Modifiers
                                     new AnimationManager.Animation.AnimationObject<float>(new List<IKeyframe<float>>
                                     {
                                         new FloatKeyframe(0f, list[indexArray][indexValue], Ease.Linear),
-                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f), value, Ease.HasEaseFunction(modifier.commands[4]) ? Ease.GetEaseFunction(modifier.commands[4]) : Ease.Linear),
+                                        new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f), value, Ease.HasEaseFunction(easing) ? Ease.GetEaseFunction(easing) : Ease.Linear),
                                         new FloatKeyframe(Parser.TryParse(modifier.commands[3], 1f) + 0.1f, value, Ease.Linear),
                                     }, delegate (float x)
                                     {
@@ -3480,6 +3484,10 @@ namespace ObjectModifiers.Modifiers
                             && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
                             && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
                         {
+                            string easing = modifier.commands[6];
+                            if (int.TryParse(modifier.commands[6], out int e) && e >= 0 && e < DataManager.inst.AnimationList.Count)
+                                easing = DataManager.inst.AnimationList[e].Name;
+
                             Vector3 vector;
                             if (type == 0)
                                 vector = modifier.modifierObject.positionOffset;
@@ -3500,7 +3508,7 @@ namespace ObjectModifiers.Modifiers
                                     {
                                         new Vector3Keyframe(0f, vector, Ease.Linear),
                                         new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
-                                        Ease.HasEaseFunction(modifier.commands[6]) ? Ease.GetEaseFunction(modifier.commands[6]) : Ease.Linear),
+                                        Ease.HasEaseFunction(easing) ? Ease.GetEaseFunction(easing) : Ease.Linear),
                                             new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
                                     }, delegate (Vector3 vector3)
                                     {
@@ -3539,6 +3547,10 @@ namespace ObjectModifiers.Modifiers
                             && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
                             && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
                         {
+                            string easing = modifier.commands[6];
+                            if (int.TryParse(modifier.commands[6], out int e) && e >= 0 && e < DataManager.inst.AnimationList.Count)
+                                easing = DataManager.inst.AnimationList[e].Name;
+
                             foreach (var bm in list.Select(x => x as BeatmapObject))
                             {
                                 Vector3 vector;
@@ -3561,7 +3573,7 @@ namespace ObjectModifiers.Modifiers
                                         {
                                             new Vector3Keyframe(0f, vector, Ease.Linear),
                                             new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
-                                            Ease.HasEaseFunction(modifier.commands[6]) ? Ease.GetEaseFunction(modifier.commands[6]) : Ease.Linear),
+                                            Ease.HasEaseFunction(easing) ? Ease.GetEaseFunction(easing) : Ease.Linear),
                                             new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
                                         }, delegate (Vector3 vector3)
                                         {
@@ -4798,6 +4810,10 @@ namespace ObjectModifiers.Modifiers
                             && float.TryParse(modifier.commands[2], out float x) && float.TryParse(modifier.commands[3], out float y) && float.TryParse(modifier.commands[4], out float z)
                             && bool.TryParse(modifier.commands[5], out bool relative) && float.TryParse(modifier.value, out float time))
                         {
+                            string easing = modifier.commands[6];
+                            if (int.TryParse(modifier.commands[6], out int e) && e >= 0 && e < DataManager.inst.AnimationList.Count)
+                                easing = DataManager.inst.AnimationList[e].Name;
+
                             Vector3 vector;
                             if (type == 0)
                                 vector = modifier.bgModifierObject.positionOffset;
@@ -4818,7 +4834,7 @@ namespace ObjectModifiers.Modifiers
                                     {
                                         new Vector3Keyframe(0f, vector, Ease.Linear),
                                         new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f), setVector,
-                                        Ease.HasEaseFunction(modifier.commands[6]) ? Ease.GetEaseFunction(modifier.commands[6]) : Ease.Linear),
+                                        Ease.HasEaseFunction(easing) ? Ease.GetEaseFunction(easing) : Ease.Linear),
                                             new Vector3Keyframe(Mathf.Clamp(time, 0f, 9999f) + 0.1f, setVector, Ease.Linear),
                                     }, delegate (Vector3 vector3)
                                     {
