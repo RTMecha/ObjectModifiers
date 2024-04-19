@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.3")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.4")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -1563,6 +1563,45 @@ namespace ObjectModifiers
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "animateSignal",
+                    "0", // Pos / Sca / Rot
+                    "0", // X
+                    "0", // Y
+                    "0", // Z
+                    "True", // Relative
+                    "0", // Easing
+                    "Object Group", // Objects with tag (signal)
+                    "0", // Delay
+                    "True", // Deactivate
+                },
+                value = "1"
+            }, //animateSignal
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = false,
+                commands = new List<string>
+                {
+                    "animateSignalOther",
+                    "0", // Pos / Sca / Rot
+                    "0", // X
+                    "0", // Y
+                    "0", // Z
+                    "True", // Relative
+                    "0", // Easing
+                    "Object Group", // Objects with tag
+                    "Object Group", // Objects with tag (signal)
+                    "0", // Delay
+                    "True", // Deactivate
+                },
+                value = "1"
+            }, //animateSignalOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
                 constant = true,
                 commands = new List<string>
                 {
@@ -1577,6 +1616,7 @@ namespace ObjectModifiers
                     "-99999", // Min
                     "99999", // Max
                     "99999", // Loop
+                    "False", // Use Visual
                 },
                 value = "Object Group"
             }, //copyAxis
