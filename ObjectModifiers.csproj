@@ -4,10 +4,27 @@
     <TargetFramework>net46</TargetFramework>
     <AssemblyName>ObjectModifiers</AssemblyName>
     <Description>The new and improved ObjectModifiers!</Description>
-    <Version>1.6.2</Version>
+    <Version>1.6.3</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Change this to your BepInEx plugins folder -->
+    <PluginGamePath>E:/Project Launcher/instances/System Error Creating/BepInEx/plugins/</PluginGamePath>
+  </PropertyGroup>
+
+  <!-- Post-build event for Debug configuration -->
+  <Target Name="PostBuildEventDebug" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+    <Message Text="Debug post-build event running..." Importance="high" />
+    <Exec Command="echo F|xcopy /Y &quot;$(MSBuildProjectDirectory)\$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginGamePath)$(AssemblyName).dll&quot;" />
+  </Target>
+
+  <!-- Post-build event for Release configuration -->
+  <Target Name="PostBuildEventRelease" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+    <Message Text="Release post-build event running..." Importance="high" />
+    <Exec Command="echo F|xcopy /Y &quot;$(MSBuildProjectDirectory)\$(OutDir)$(AssemblyName).dll&quot; &quot;$(PluginGamePath)$(AssemblyName).dll&quot;" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />

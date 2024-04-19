@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.2")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.3")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -1256,7 +1256,7 @@ namespace ObjectModifiers
                     "0", // Type (Move, Zoom, Rotate, etc)
                     "0", // Value Index (X, Y, etc)
                     "1", // Time
-                    "Linear", // Ease
+                    "0", // Ease
                     "False", // Relative
                 },
                 value = "1" // Value
@@ -1539,7 +1539,7 @@ namespace ObjectModifiers
                     "0", // Y
                     "0", // Z
                     "True", // Relative
-                    "Linear", // Easing
+                    "0", // Easing
                 },
                 value = "1"
             }, //animateObject
@@ -1555,7 +1555,7 @@ namespace ObjectModifiers
                     "0", // Y
                     "0", // Z
                     "True", // Relative
-                    "Linear", // Easing
+                    "0", // Easing
                     "Object Group", // Objects with tag
                 },
                 value = "1"
@@ -2947,7 +2947,7 @@ namespace ObjectModifiers
                     "0", // Y
                     "0", // Z
                     "True", // Relative
-                    "Linear", // Easing
+                    "0", // Easing
                 },
                 value = "1"
             }, //animateObject
