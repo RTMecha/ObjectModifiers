@@ -5165,9 +5165,9 @@ namespace ObjectModifiers.Modifiers
                 case "signalModifier":
                 case "mouseOverSignalModifier":
                     {
-                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => (x as BeatmapObject).tags.Contains(modifier.commands[1]));
+                        var list = DataManager.inst.gameData.beatmapObjects.Where(x => x is BeatmapObject beatmapObject && beatmapObject.tags.Contains(modifier.commands[1]) && beatmapObject.modifiers.Any(y => y.Result != null));
 
-                        if (list.Count() > 0 && !modifier.constant)
+                        if (list.Count() > 0)
                             foreach (var bm in list)
                             {
                                 if ((bm as BeatmapObject).modifiers.Count > 0 && (bm as BeatmapObject).modifiers.Where(x => x.commands[0] == "requireSignal" && x.type == BeatmapObject.Modifier.Type.Trigger).Count() > 0 &&
