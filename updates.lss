@@ -1,3 +1,5 @@
+1.6.5 > [Apr 20, 2024]
+- Fixed signalModifier modifiers not activating issues.
 1.6.4 > [Apr 20, 2024]
 - Added animateSignal modifiers, these are basically animateObject and singalModifier modifiers combined. When an animation completes, the modifier will signal a group of modifiers with a specified tag and a requireSignal trigger.
 - Added Use Visual toggle to copyAxis modifier.
