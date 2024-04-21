@@ -4,6 +4,7 @@ using System.Linq;
 
 using UnityEngine;
 
+using RTFunctions.Functions.Data;
 using RTFunctions.Functions.Optimization;
 using RTFunctions.Functions.Optimization.Objects;
 
@@ -71,6 +72,46 @@ namespace ObjectModifiers.Functions
             }
 
             return list.Any(x => x == true);
+        }
+
+        public static void SetTransform(this BeatmapObject beatmapObject, int toType, int toAxis, float value)
+        {
+            switch (toType)
+            {
+                case 0:
+                    {
+                        if (toAxis == 0)
+                            beatmapObject.positionOffset.x = value;
+                        if (toAxis == 1)
+                            beatmapObject.positionOffset.y = value;
+                        if (toAxis == 2)
+                            beatmapObject.positionOffset.z = value;
+
+                        break;
+                    }
+                case 1:
+                    {
+                        if (toAxis == 0)
+                            beatmapObject.scaleOffset.x = value;
+                        if (toAxis == 1)
+                            beatmapObject.scaleOffset.y = value;
+                        if (toAxis == 2)
+                            beatmapObject.scaleOffset.z = value;
+
+                        break;
+                    }
+                case 2:
+                    {
+                        if (toAxis == 0)
+                            beatmapObject.rotationOffset.x = value;
+                        if (toAxis == 1)
+                            beatmapObject.rotationOffset.y = value;
+                        if (toAxis == 2)
+                            beatmapObject.rotationOffset.z = value;
+
+                        break;
+                    }
+            }
         }
     }
 }
