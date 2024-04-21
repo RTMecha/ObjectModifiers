@@ -1,3 +1,5 @@
+1.6.6 > [Apr 21, 2024]
+- Reworked copyAxis modifier math to be more consistent.
 1.6.5 > [Apr 20, 2024]
 - Fixed signalModifier modifiers not activating issues.
 1.6.4 > [Apr 20, 2024]
