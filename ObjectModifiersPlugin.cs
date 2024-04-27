@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.6")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.7")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -471,6 +471,26 @@ namespace ObjectModifiers
                 },
                 value = "0"
             }, //setMusicTime
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "setMusicTimeStartTime"
+                },
+                value = "0"
+            }, //setMusicTimeStartTime
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "setMusicTimeAutokill"
+                },
+                value = "0"
+            }, //setMusicTimeAutokill
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
