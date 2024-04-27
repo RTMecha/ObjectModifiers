@@ -1341,6 +1341,16 @@ namespace ObjectModifiers.Modifiers
                             AudioManager.inst.SetMusicTime(num);
                         break;
                     }
+                case "setMusicTimeStartTime":
+                    {
+                        AudioManager.inst.SetMusicTime(modifier.modifierObject.StartTime);
+                        break;
+                    }
+                case "setMusicTimeAutokill":
+                    {
+                        AudioManager.inst.SetMusicTime(modifier.modifierObject.StartTime + modifier.modifierObject.GetObjectLifeLength(_oldStyle: true));
+                        break;
+                    }
                 case "playSound":
                     {
                         if (modifier.commands.Count > 4 && bool.TryParse(modifier.commands[1], out bool global) && float.TryParse(modifier.commands[2], out float pitch) && float.TryParse(modifier.commands[3], out float vol) && bool.TryParse(modifier.commands[4], out bool loop))
