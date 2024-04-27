@@ -65,6 +65,22 @@ namespace ObjectModifiers
                 ModCompatibility.mods.Add("ObjectModifiers", mod);
             }
 
+            RTHelpers.VerifyModifier = delegate (BeatmapObject.Modifier modifier)
+            {
+                if (modifier.commands.Count < 1)
+                    return;
+
+                if (modifierTypes.TryFind(x => x.commands[0] == modifier.commands[0] && x.type == modifier.type, out BeatmapObject.Modifier defaultModifier))
+                {
+                    int num = modifier.commands.Count;
+                    while (modifier.commands.Count < defaultModifier.commands.Count)
+                    {
+                        modifier.commands.Add(defaultModifier.commands[num]);
+                        num++;
+                    }
+                }
+            };
+
             // Plugin startup logic
             Logger.LogInfo($"Plugin Object Modifiers is loaded!");
         }
