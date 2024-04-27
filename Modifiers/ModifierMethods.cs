@@ -38,6 +38,15 @@ namespace ObjectModifiers.Modifiers
     {
         public static bool Trigger(BeatmapObject.Modifier modifier)
         {
+            if (!modifier.verified)
+            {
+                modifier.verified = true;
+                RTHelpers.VerifyModifier?.Invoke(modifier);
+            }
+
+            if (modifier.commands.Count < 1)
+                return false;
+
             switch (modifier.commands[0])
             {
                 case "disableModifier":
@@ -1297,6 +1306,16 @@ namespace ObjectModifiers.Modifiers
         public static void Action(BeatmapObject.Modifier modifier)
         {
             modifier.hasChanged = false;
+
+            if (!modifier.verified)
+            {
+                modifier.verified = true;
+                RTHelpers.VerifyModifier?.Invoke(modifier);
+            }
+
+            if (modifier.commands.Count < 1)
+                return;
+
             switch (modifier.commands[0])
             {
                 case "setPitch":
@@ -4502,6 +4521,15 @@ namespace ObjectModifiers.Modifiers
 
         public static void Inactive(BeatmapObject.Modifier modifier)
         {
+            if (!modifier.verified)
+            {
+                modifier.verified = true;
+                RTHelpers.VerifyModifier?.Invoke(modifier);
+            }
+
+            if (modifier.commands.Count < 1)
+                return;
+
             switch (modifier.commands[0])
             {
                 case "blur":
