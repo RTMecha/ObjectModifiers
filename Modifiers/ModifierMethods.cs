@@ -44,7 +44,7 @@ namespace ObjectModifiers.Modifiers
                 RTHelpers.VerifyModifier?.Invoke(modifier);
             }
 
-            if (modifier.commands.Count < 1)
+            if (!modifier.IsValid(ObjectModifiersPlugin.modifierTypes))
                 return false;
 
             switch (modifier.commands[0])
@@ -1313,7 +1313,7 @@ namespace ObjectModifiers.Modifiers
                 RTHelpers.VerifyModifier?.Invoke(modifier);
             }
 
-            if (modifier.commands.Count < 1)
+            if (!modifier.IsValid(ObjectModifiersPlugin.modifierTypes))
                 return;
 
             switch (modifier.commands[0])
@@ -1372,29 +1372,16 @@ namespace ObjectModifiers.Modifiers
                     }
                 case "playSound":
                     {
-                        if (modifier.commands.Count > 4 && bool.TryParse(modifier.commands[1], out bool global) && float.TryParse(modifier.commands[2], out float pitch) && float.TryParse(modifier.commands[3], out float vol) && bool.TryParse(modifier.commands[4], out bool loop))
-                        {
+                        if (bool.TryParse(modifier.commands[1], out bool global) && float.TryParse(modifier.commands[2], out float pitch) && float.TryParse(modifier.commands[3], out float vol) && bool.TryParse(modifier.commands[4], out bool loop))
                             ObjectModifiersPlugin.GetSoundPath(modifier.modifierObject.id, modifier.value, global, pitch, vol, loop);
-                        }
-                        else
-                        {
-                            ObjectModifiersPlugin.GetSoundPath(modifier.modifierObject.id, modifier.value);
-                        }
+
                         break;
                     }
                 case "playSoundOnline":
                     {
-                        if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool global) && float.TryParse(modifier.commands[2], out float pitch) && float.TryParse(modifier.commands[3], out float vol) && bool.TryParse(modifier.commands[4], out bool loop))
-                        {
-                            if (!string.IsNullOrEmpty(modifier.value))
-                            {
-                                ObjectModifiersPlugin.DownloadSoundAndPlay(modifier.modifierObject.id, modifier.value, pitch, vol, loop);
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(modifier.value))
-                        {
-                            ObjectModifiersPlugin.DownloadSoundAndPlay(modifier.modifierObject.id, modifier.value);
-                        }
+                        if (bool.TryParse(modifier.commands[1], out bool global) && float.TryParse(modifier.commands[2], out float pitch) && float.TryParse(modifier.commands[3], out float vol) && bool.TryParse(modifier.commands[4], out bool loop) && !string.IsNullOrEmpty(modifier.value))
+                            ObjectModifiersPlugin.DownloadSoundAndPlay(modifier.modifierObject.id, modifier.value, pitch, vol, loop);
+
                         break;
                     }
                 case "audioSource":
@@ -1402,38 +1389,39 @@ namespace ObjectModifiers.Modifiers
                         if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null &&
                             levelObject.visualObject.GameObject != null && bool.TryParse(modifier.commands[1], out bool global))
                         {
-                            if (modifier.Result == null)
+                            if (modifier.Result != null)
+                                break;
+
+                            string text = RTFile.ApplicationDirectory + "beatmaps/soundlibrary/" + modifier.value;
+
+                            if (!global)
+                                text = RTFile.BasePath + modifier.value;
+
+                            if (!modifier.value.Contains(".ogg") && RTFile.FileExists(text + ".ogg"))
+                                text += ".ogg";
+
+                            if (!modifier.value.Contains(".wav") && RTFile.FileExists(text + ".wav"))
+                                text += ".wav";
+
+                            if (!modifier.value.Contains(".mp3") && RTFile.FileExists(text + ".mp3"))
+                                text += ".mp3";
+
+                            if (!RTFile.FileExists(text))
+                                break;
+
+                            if (text.Contains(".mp3"))
                             {
-                                string text = RTFile.ApplicationDirectory + "beatmaps/soundlibrary/" + modifier.value;
-
-                                if (!global)
-                                    text = RTFile.BasePath + modifier.value;
-
-                                if (!modifier.value.Contains(".ogg") && RTFile.FileExists(text + ".ogg"))
-                                    text += ".ogg";
-
-                                if (!modifier.value.Contains(".wav") && RTFile.FileExists(text + ".wav"))
-                                    text += ".wav";
-
-                                if (!modifier.value.Contains(".mp3") && RTFile.FileExists(text + ".mp3"))
-                                    text += ".mp3";
-
-                                if (RTFile.FileExists(text))
-                                {
-                                    if (!text.Contains(".mp3"))
-                                        ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.LoadMusicFileRaw(text, delegate (AudioClip audioClip)
-                                        {
-                                            audioClip.name = modifier.value;
-                                            modifier.Result = levelObject.visualObject.GameObject.AddComponent<AudioModifier>();
-                                            ((AudioModifier)modifier.Result).Init(audioClip, modifier.modifierObject, modifier);
-                                        }));
-                                    else
-                                    {
-                                        modifier.Result = levelObject.visualObject.GameObject.AddComponent<AudioModifier>();
-                                        ((AudioModifier)modifier.Result).Init(LSAudio.CreateAudioClipUsingMP3File(text), modifier.modifierObject, modifier);
-                                    }
-                                }
+                                modifier.Result = levelObject.visualObject.GameObject.AddComponent<AudioModifier>();
+                                ((AudioModifier)modifier.Result).Init(LSAudio.CreateAudioClipUsingMP3File(text), modifier.modifierObject, modifier);
+                                break;
                             }
+
+                            ObjectModifiersPlugin.inst.StartCoroutine(ObjectModifiersPlugin.LoadMusicFileRaw(text, delegate (AudioClip audioClip)
+                            {
+                                audioClip.name = modifier.value;
+                                modifier.Result = levelObject.visualObject.GameObject.AddComponent<AudioModifier>();
+                                ((AudioModifier)modifier.Result).Init(audioClip, modifier.modifierObject, modifier);
+                            }));
                         }
 
                         break;
@@ -2969,6 +2957,88 @@ namespace ObjectModifiers.Modifiers
                                 };
 
                                 AnimationManager.inst.Play(animation);
+                            }
+                        }
+                        break;
+                    }
+                case "eventOffsetCopyAxis":
+                    {
+                        if (!ModCompatibility.sharedFunctions.ContainsKey("EventsCoreEventOffsets"))
+                            break;
+
+                        var list = (List<List<float>>)ModCompatibility.sharedFunctions["EventsCoreEventOffsets"];
+
+                        if (int.TryParse(modifier.commands[1], out int fromType) && int.TryParse(modifier.commands[2], out int fromAxis)
+                            && int.TryParse(modifier.commands[3], out int toType) && int.TryParse(modifier.commands[4], out int toAxis)
+                            && float.TryParse(modifier.commands[5], out float delay) && float.TryParse(modifier.commands[6], out float multiply)
+                            && float.TryParse(modifier.commands[7], out float offset) && float.TryParse(modifier.commands[8], out float min) && float.TryParse(modifier.commands[9], out float max)
+                            && float.TryParse(modifier.commands[10], out float loop) && bool.TryParse(modifier.commands[11], out bool useVisual))
+                        {
+                            var time = AudioManager.inst.CurrentAudioSource.time;
+
+                            fromType = Mathf.Clamp(fromType, 0, modifier.modifierObject.events.Count - 1);
+                            fromAxis = Mathf.Clamp(fromAxis, 0, modifier.modifierObject.events[fromType][0].eventValues.Length - 1);
+                            toType = Mathf.Clamp(toType, 0, list.Count - 1);
+                            toAxis = Mathf.Clamp(toAxis, 0, list[toType].Count - 1);
+
+                            if (!useVisual)
+                            {
+                                if (fromType == 0)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[modifier.modifierObject.id].Position3DSequence.Interpolate(time - modifier.modifierObject.StartTime - delay);
+                                    float value = ((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) - offset) * multiply % loop;
+
+                                    list[toType][toAxis] = Mathf.Clamp(value, min, max);
+                                    ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                }
+
+                                if (fromType == 1)
+                                {
+                                    var sequence = Updater.levelProcessor.converter.cachedSequences[modifier.modifierObject.id].ScaleSequence.Interpolate(time - modifier.modifierObject.StartTime - delay);
+                                    float value = ((fromAxis == 0 ? sequence.x : sequence.y) - offset) * multiply % loop;
+
+                                    list[toType][toAxis] = Mathf.Clamp(value, min, max);
+                                    ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                }
+
+                                if (fromType == 2)
+                                {
+                                    var sequence = (Updater.levelProcessor.converter.cachedSequences[modifier.modifierObject.id].RotationSequence.Interpolate(time - modifier.modifierObject.StartTime - delay) - offset) * multiply % loop;
+
+                                    list[toType][toAxis] = Mathf.Clamp(sequence, min, max);
+                                    ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                }
+                            }
+                            else if (Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject != null && levelObject.visualObject.GameObject)
+                            {
+                                var transform = levelObject.visualObject.GameObject.transform;
+
+                                if (toType >= 0 && toType < 3 && fromType == 0)
+                                {
+                                    var sequence = transform.position;
+                                    float value = ((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) - offset) * multiply % loop;
+
+                                    list[toType][toAxis] = Mathf.Clamp(value, min, max);
+                                    ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                }
+
+                                if (toType >= 0 && toType < 3 && fromType == 1)
+                                {
+                                    var sequence = transform.lossyScale;
+                                    float value = ((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) - offset) * multiply % loop;
+
+                                    list[toType][toAxis] = Mathf.Clamp(value, min, max);
+                                    ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                }
+
+                                if (toType >= 0 && toType < 3 && fromType == 2)
+                                {
+                                    var sequence = transform.rotation.eulerAngles;
+                                    float value = ((fromAxis == 0 ? sequence.x : fromAxis == 1 ? sequence.y : sequence.z) - offset) * multiply % loop;
+
+                                    list[toType][toAxis] = Mathf.Clamp(value, min, max);
+                                    ModCompatibility.sharedFunctions["EventsCoreEventOffsets"] = list;
+                                }
                             }
                         }
                         break;
@@ -4527,7 +4597,7 @@ namespace ObjectModifiers.Modifiers
                 RTHelpers.VerifyModifier?.Invoke(modifier);
             }
 
-            if (modifier.commands.Count < 1)
+            if (!modifier.IsValid(ObjectModifiersPlugin.modifierTypes))
                 return;
 
             switch (modifier.commands[0])
