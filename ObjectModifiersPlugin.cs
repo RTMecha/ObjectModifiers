@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.8")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.9")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -623,6 +623,30 @@ namespace ObjectModifiers
                 },
                 value = "0.5"
             }, //blurVariableOther
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "blurColored",
+                    "False",
+                    "False"
+                },
+                value = "0.5"
+            }, //blurColored
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "blurColoredOther",
+                    "Object Group",
+                    "False",
+                },
+                value = "0.5"
+            }, //blurColoredOther
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
