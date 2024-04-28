@@ -1,3 +1,6 @@
+1.6.8 > [Apr 28, 2024]
+- Modifiers now verify if their name and values are valid. If the name is invalid, the modifier will not work. If the name is valid but the value count does not match the default value count, it will add the values to the modifier from the default.
+- Added eventOffsetCopyAxis modifier. This is basically eventOffset and copyAxis combined, hence the name.
 1.6.7 > [Apr 27, 2024]
 - Added setMusicTimeStartTime and setMusicTimeAutokill modifiers. These are the ease of access versions of the setMusicTime modifier.
 1.6.6 > [Apr 21, 2024]
