@@ -1,3 +1,5 @@
+1.6.9 > [Apr 29, 2024]
+- Added blurColored modifiers. Works the same as the usual modifier, except it can be colored via the color keyframe.
 1.6.8 > [Apr 28, 2024]
 - Modifiers now verify if their name and values are valid. If the name is invalid, the modifier will not work. If the name is valid but the value count does not match the default value count, it will add the values to the modifier from the default.
 - Added eventOffsetCopyAxis modifier. This is basically eventOffset and copyAxis combined, hence the name.
