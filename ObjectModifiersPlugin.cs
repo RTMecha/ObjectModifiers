@@ -29,7 +29,7 @@ using RTFunctions.Functions.Optimization;
 
 namespace ObjectModifiers
 {
-    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.7")]
+    [BepInPlugin("com.mecha.objectmodifiers", "Object Modifiers", "1.6.8")]
     [BepInDependency("com.mecha.rtfunctions")]
     [BepInProcess("Project Arrhythmia.exe")]
     public class ObjectModifiersPlugin : BaseUnityPlugin
@@ -1297,6 +1297,27 @@ namespace ObjectModifiers
                 },
                 value = "1" // Value
             }, //eventOffsetAnimate
+            new BeatmapObject.Modifier
+            {
+                type = BeatmapObject.Modifier.Type.Action,
+                constant = true,
+                commands = new List<string>
+                {
+                    "eventOffsetCopyAxis",
+                    "0", // From Type
+                    "0", // From Axis
+                    "0", // To Type
+                    "0", // To Axis
+                    "0", // Delay
+                    "1", // Multiply
+                    "0", // Offset
+                    "-99999", // Min
+                    "99999", // Max
+                    "99999", // Loop
+                    "False", // Use Visual
+                },
+                value = "0"
+            }, //eventOffsetCopyAxis
             new BeatmapObject.Modifier
             {
                 type = BeatmapObject.Modifier.Type.Action,
