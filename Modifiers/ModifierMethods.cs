@@ -1709,6 +1709,65 @@ namespace ObjectModifiers.Modifiers
                         }
                         break;
                     }
+                case "blurColored":
+                    {
+                        if (modifier.modifierObject &&
+                            modifier.modifierObject.objectType != BeatmapObject.ObjectType.Empty &&
+                            Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) &&
+                            levelObject.visualObject.Renderer &&
+                            float.TryParse(modifier.value, out float num))
+                        {
+                            var rend = levelObject.visualObject.Renderer;
+                            if (modifier.Result == null)
+                            {
+                                if (!levelObject.visualObject.GameObject.GetComponent<DestroyModifierResult>())
+                                {
+                                    var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
+                                    onDestroy.Modifier = modifier;
+                                }
+
+                                modifier.Result = levelObject.visualObject.GameObject;
+                                rend.material.shader = RTFunctions.FunctionsPlugin.blurColored;
+                            }
+
+                            if (modifier.commands.Count > 1 && bool.TryParse(modifier.commands[1], out bool r) && r)
+                                rend.material.SetFloat("_Size", -(modifier.modifierObject.Interpolate(3, 1) - 1f) * num);
+                            else
+                                rend.material.SetFloat("_Size", num);
+                        }
+                        break;
+                    }
+                case "blurColoredOther":
+                    {
+                        var list = GameData.Current.BeatmapObjects.Where(x => x.tags.Contains(modifier.commands[1]));
+
+                        if (list.Count() > 0 && float.TryParse(modifier.value, out float num))
+                        {
+                            foreach (var beatmapObject in list)
+                            {
+                                if (beatmapObject.objectType != BeatmapObject.ObjectType.Empty &&
+                                    Updater.TryGetObject(beatmapObject, out LevelObject levelObject) &&
+                                    levelObject.visualObject.Renderer)
+                                {
+                                    var rend = levelObject.visualObject.Renderer;
+                                    if (modifier.Result == null)
+                                    {
+                                        if (!levelObject.visualObject.GameObject.GetComponent<DestroyModifierResult>())
+                                        {
+                                            var onDestroy = levelObject.visualObject.GameObject.AddComponent<DestroyModifierResult>();
+                                            onDestroy.Modifier = modifier;
+                                        }
+
+                                        modifier.Result = levelObject.visualObject.GameObject;
+                                        rend.material.shader = RTFunctions.FunctionsPlugin.blurColored;
+                                    }
+                                    rend.material.SetFloat("_Size", -(beatmapObject.Interpolate(3, 1) - 1f) * num);
+                                }
+                            }
+                        }
+
+                        break;
+                    }
                 case "particleSystem":
                     {
                         if (modifier.modifierObject != null && Updater.TryGetObject(modifier.modifierObject, out LevelObject levelObject) && levelObject.visualObject.GameObject)
